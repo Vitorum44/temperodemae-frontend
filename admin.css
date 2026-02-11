@@ -829,5 +829,20 @@ body.admin-page {
   background: #059669;
 }
 
+@media (max-width: 768px) {
+  .order-actions {
+    flex-direction: column;
+  }
+
+  .order-actions .btn {
+    width: 100%;
+  }
+
+  .btn-print {
+    width: 100%;
+  }
+}
+
+
 
 
