@@ -843,6 +843,17 @@ body.admin-page {
   }
 }
 
+@media (max-width: 768px) {
+  .customer-info {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .customer-info div {
+    margin-bottom: 4px;
+  }
+}
+
 
 
 
