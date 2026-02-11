@@ -854,6 +854,65 @@ body.admin-page {
   }
 }
 
+/* ======== AJUSTES FINOS PARA MOBILE ======== */
+@media (max-width: 600px) {
+
+  /* O card do pedido */
+  .order-card {
+    padding: 12px;
+    margin: 8px 0;
+  }
+
+  /* Cabeçalho do pedido (#9 e horário) */
+  .order-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Linha do item (foto + nome + preço) */
+  .order-item {
+    gap: 8px;
+  }
+
+  .order-item img {
+    width: 45px;
+    height: 45px;
+  }
+
+  /* Nome do produto quebrar linha melhor */
+  .order-item-name {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  /* Endereço quebrar linha certinho */
+  .order-address {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  /* Distância e total alinhados */
+  .order-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  /* Botões maiores e empilhados */
+  .order-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-delivery,
+  .btn-cancel {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px;
+  }
+}
+
+
 
 
 
