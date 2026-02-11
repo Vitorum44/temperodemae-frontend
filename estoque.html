@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Estoque</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-estoque.css">
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="icon" href="data:,">
+</head>
+
+<body>
+
+  <header class="topbar">
+    <div class="topbar-content">
+      <div style="display:flex; align-items:center; gap:30px;">
+        <h2 style="margin:0; color:white;">🍔 Estoque</h2>
+
+        <nav class="nav-menu">
+          <a href="admin.html" class="nav-link">Pedidos</a>
+          <a href="estoque.html" class="nav-link active">Estoque</a>
+          <a href="cardapio.html" class="nav-link">Cardápio</a>
+        </nav>
+      </div>
+
+      <button class="btn-logout" id="btn-logout">SAIR</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ================= CATEGORIAS ================= -->
+    <section class="section-box">
+      <div class="page-header">
+        <div>
+          <h2>Categorias</h2>
+          <p class="subtitle">Organize seu cardápio criando categorias e subcategorias.</p>
+        </div>
+
+        <button class="btn-primary" onclick="openCategoryModal()">Criar categoria</button>
+      </div>
+
+      <div id="category-list" class="category-tree"></div>
+    </section>
+
+    <!-- ================= PRODUTOS (INALTERADO) ================= -->
+    <section class="section-box">
+  <div class="page-header">
+    <div>
+      <h2>Produtos</h2>
+      <p class="subtitle">Gerencie seus lanches, preços e estoque.</p>
+    </div>
+
+    <button class="btn-primary" onclick="openNewProduct()">
+      + Novo Produto
+    </button>
+  </div>
+
+  <!-- 🔍 CAMPO DE BUSCA -->
+  <div class="estoque-search-container" style="margin: 16px 0;">
+    <div class="search-box" style="position: relative; max-width: 350px;">
+      <input 
+        type="text" 
+        id="search-product" 
+        placeholder="🔍 Buscar produto..." 
+        style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none;"
+      >
+    </div>
+  </div>
+
+  <table class="inventory-table">
+    <thead>
+      <tr>
+        <th>Foto</th>
+        <th>Nome</th>
+        <th>Categoria</th>
+        <th>Subcategoria</th>
+        <th>Preço</th>
+        <th>Estoque</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="inventory-list"></tbody>
+  </table>
+</section>
+
+
+  </main>
+
+  <!-- ================= MODAL CRIAR CATEGORIA ================= -->
+  <div id="category-modal" class="modal-overlay hidden">
+  <div class="modal-card modal-small"> <div class="modal-header">
+      <h3>Nova Categoria</h3>
+      <button class="modal-close" onclick="closeCategoryModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="category-name-input">Nome da categoria</label>
+        <div class="input-wrapper">
+          <input type="text" id="category-name-input" placeholder="Ex: Bebidas, Promoções..." autocomplete="off">
+        </div>
+        <p class="input-hint">Pressione Enter para salvar rapidamente.</p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeCategoryModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="saveCategory()">Salvar</button>
+    </div>
+
+  </div>
+</div>
+
+
+  <!-- MODAL PRODUTO -->
+  <div id="product-modal" class="modal-overlay hidden" onclick="closeOnOverlay(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3 id="product-modal-title">Novo Produto</h3>
+        <button class="modal-close" onclick="closeProductModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <input type="hidden" id="prod-id">
+
+        <!-- FOTO -->
+        <div class="form-group">
+          <label>Foto do produto</label>
+
+          <div class="upload-box">
+
+            <!-- INPUT FILE -->
+            <input type="file" id="prod-image" accept="image/*" hidden onchange="previewImage(event)">
+
+            <!-- BOTÕES SOBRE A IMAGEM -->
+            <div id="image-actions" class="image-actions hidden">
+              <button type="button" class="img-btn edit" onclick="openImagePicker()" title="Alterar foto">✏️</button>
+
+              <button type="button" class="img-btn remove" onclick="removeImage()" title="Remover foto">✖️</button>
+            </div>
+
+            <!-- PLACEHOLDER -->
+            <div class="upload-content" id="upload-placeholder" onclick="openImagePicker()">
+              <div class="upload-icon">＋</div>
+              <p><strong>Arraste e solte</strong>, ou selecione fotos do produto</p>
+            </div>
+
+            <!-- PREVIEW -->
+            <img id="image-preview" class="upload-preview hidden">
+          </div>
+        </div>
+
+        <!-- DADOS -->
+        <div class="form-group">
+          <label>Nome</label>
+          <input id="prod-name" placeholder="Nome do produto">
+        </div>
+
+        <div class="form-group">
+          <label>Descrição</label>
+          <input id="prod-description" placeholder="Descrição">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Preço</label>
+            <input id="prod-price" type="number">
+          </div>
+
+          <div class="form-group">
+            <label>Estoque</label>
+            <input id="prod-stock" type="number">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="prod-category"></select>
+        </div>
+
+        <div class="form-group">
+          <label>Subcategoria</label>
+          <select id="prod-subcategory"></select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeProductModal()">Cancelar</button>
+        <button class="btn-confirm" onclick="saveProduct()">Salvar</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="edit-modal" class="modal-overlay hidden">
+  <div class="modal-card modal-small">
+    
+    <div class="modal-header">
+      <h3 id="edit-modal-title">Editar</h3>
+      <button class="modal-close" onclick="closeEditModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="edit-input">Nome</label>
+        <input type="text" id="edit-input" autocomplete="off">
+        <input type="hidden" id="edit-id">
+        <input type="hidden" id="edit-type"> 
+      </div>
+      <p class="input-hint">Pressione Enter para salvar.</p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="saveEdit()">Salvar Alterações</button>
+    </div>
+
+  </div>
+</div>
+
+<div id="delete-modal" class="modal-overlay hidden">
+  <div class="modal-card modal-small">
+    
+    <div class="modal-header">
+      <h3>Excluir Item</h3>
+      <button class="modal-close" onclick="closeDeleteModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <p id="delete-message" style="color: #374151; font-size: 15px; line-height: 1.5;">
+        Tem certeza?
+      </p>
+      <p style="color: #6b7280; font-size: 13px; margin-top: 8px;">
+        Essa ação não poderá ser desfeita.
+      </p>
+      
+      <input type="hidden" id="delete-id">
+      <input type="hidden" id="delete-type">
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancelar</button>
+      <button class="btn-danger" onclick="confirmDelete()">Sim, Excluir</button>
+    </div>
+
+  </div>
+</div>
+
+  <!-- SCRIPT -->
+  <script src="js/estoque.js"></script>
+
+
+  <script>
+    document.getElementById("btn-logout").onclick = () => {
+      localStorage.removeItem("token");
+      window.location.href = "admin.html";
+    };
+  </script>
+
+</body>
+
+</html>

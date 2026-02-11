@@ -1,0 +1,64 @@
+/* ===== styles.css (CLIENTE - TEMA CLARO/BURGER KING) ===== */
+* { box-sizing: border-box; }
+
+/* --- CORREÇÃO DE SCROLL E FUNDO BRANCO --- */
+/* Deixa o HTML livre para rolar verticalmente */
+html {
+  overflow-x: initial;
+  height: auto;
+}
+
+/* Aplica o corte lateral apenas no corpo */
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Remove a barra branca na lateral direita */
+  width: 100%;
+  position: relative;
+}
+
+:root {
+  --bg: #f5ebdc;         /* Creme */
+  --panel: #ffffff;      /* Branco */
+  --text: #502314;       /* Marrom */
+  --muted: #846a6a;
+  --primary: #d62300;    /* Vermelho */
+  --secondary: #faaf18;  /* Amarelo */
+  --radius: 16px;
+  --font-main: 'Nunito', sans-serif;
+  --font-display: 'Fredoka', cursive;
+}
+
+/* Estilos visuais do corpo */
+body {
+  background-color: var(--bg-page);
+  color: var(--text);
+  font-family: var(--font-main);
+}
+
+a { text-decoration: none; color: inherit; }
+.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+.row { display: flex; gap: 10px; }
+.col { display: flex; flex-direction: column; }
+.center { align-items: center; }
+.between { justify-content: space-between; }
+.gap { gap: 12px; }
+
+/* Botões do Cliente */
+.btn {
+  border: none; padding: 12px 20px; border-radius: 50px;
+  cursor: pointer; font-weight: 800; text-transform: uppercase;
+  font-family: var(--font-main);
+}
+.btn.primary { background: var(--primary); color: white; box-shadow: 0 4px 0 #a31b00; }
+.btn.primary:hover { filter: brightness(1.1); }
+
+/* Inputs do Cliente */
+.input {
+  width: 100%; padding: 14px; background: #fff;
+  border: 2px solid #dacabb; border-radius: 12px; color: var(--text);
+}
+.input:focus { outline: none; border-color: var(--primary); }
+
+/* Esconde telas trocadas */
+[hidden] { display: none !important; }
