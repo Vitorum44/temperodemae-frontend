@@ -1029,6 +1029,23 @@ async function tryLoadMe() { if (!state.token) return; try { const me = await ap
 function setUser(u) { state.user = u || null; if (u) { if (btnProfile) btnProfile.textContent = `Olá, ${u.name.split(' ')[0]}`; if (inputName) inputName.value = u.name || ''; if (inputPhone) inputPhone.value = u.phone || ''; if (inputEmail) inputEmail.value = u.email || ''; } else { if (btnProfile) btnProfile.textContent = '👤 Perfil'; } }
 function setToken(t) { state.token = t || ''; if (t) localStorage.setItem('token', t); else localStorage.removeItem('token'); }
 btnProfile?.addEventListener('click', (e) => { e.stopPropagation(); if (state.user) { const isHidden = profileMenu.getAttribute('aria-hidden') === 'true'; profileMenu.setAttribute('aria-hidden', isHidden ? 'false' : 'true'); } else { openAuthModal('login'); } });
+// FECHAR MENU AO CLICAR FORA DELE
+document.addEventListener('click', (e) => {
+  if (!profileMenu) return;
+
+  const isOpen = profileMenu.getAttribute('aria-hidden') === 'false';
+
+  // Se estiver aberto e o clique NÃO foi no botão nem dentro do menu → fecha
+  if (
+    isOpen &&
+    !profileMenu.contains(e.target) &&
+    e.target !== btnProfile &&
+    !e.target.closest('#edit-profile')
+  ) {
+    profileMenu.setAttribute('aria-hidden', 'true');
+  }
+});
+
 pmLogout?.addEventListener('click', () => { setToken(''); setUser(null); window.location.reload(); });
 function initCarousel() { if (!carouselTrack || slides.length === 0) return; let currentSlide = 0; const totalSlides = slides.length; let slideInterval; const updateSlide = () => { carouselTrack.style.transform = `translateX(-${currentSlide * 100}%)`; dots.forEach((dot, index) => { dot.classList.toggle('active', index === currentSlide); }); }; const nextSlide = () => { currentSlide = (currentSlide + 1) % totalSlides; updateSlide(); }; const prevSlide = () => { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; updateSlide(); }; nextBtn?.addEventListener('click', nextSlide); prevBtn?.addEventListener('click', prevSlide); slideInterval = setInterval(nextSlide, 5000); }
 
