@@ -26,6 +26,8 @@ function waitForGoogleMaps(callback, tries = 0) {
 
 // ================= ESTADO GLOBAL =================
 const state = {
+  pixModalOpen: false,
+  pixManuallyClosed: false,
   categories: [], subcategories: [], items: [],
   cart: JSON.parse(localStorage.getItem('cart') || '[]'),
   filters: { cat: null, sub: null, q: '' },
@@ -295,7 +297,7 @@ if (btnGps) {
         selectedLatLng = { lat: latitude, lng: longitude };
         btnGps.textContent = "📍 Localização encontrada!";
         setTimeout(() => { btnGps.textContent = originalText; btnGps.disabled = false; }, 2000);
-        
+
         waitForGoogleMaps(() => {
           calcShip(latitude, longitude);
         });
@@ -526,7 +528,7 @@ function openProductModal(item) {
   pdQty.textContent = "1"; pdObs.value = ""; updateModalTotal(); pdModal.setAttribute("aria-hidden", "false");
 }
 
-function updateModalTotal() { 
+function updateModalTotal() {
   pdTotalBtn.textContent = brl(Number(state.selectedItem.price) * state.selectedQty);
 }
 
@@ -684,27 +686,27 @@ orderForm?.addEventListener('submit', async (e) => {
     reference: inputReference ? inputReference.value : '', email: inputEmail ? inputEmail.value : '',
     paymentMethod: selectedPayment, change: changeData, scheduledTo: (!state.isStoreOpen) ? orderSchedule.value : null
   };
- const order = {
-  items: state.cart.map(i => ({
-    itemId: i.id,
-    name: i.name,
-    qty: i.qty,
-    price: +i.price,
-    obs: i.obs,
-    image: i.image
-  })),
-  subtotal: cartSubtotal(),
-  deliveryFee: fulfillment === 'pickup' ? 0 : state.calculatedFee,
-  discount: 0,
-  total: cartSubtotal() + (fulfillment === 'pickup' ? 0 : state.calculatedFee),
-  neighborhood: customer.neighborhood,
-  customer: customer,
-  fulfillment: fulfillment,
-  paymentMethod: selectedPayment,
-  change: changeData,
-  user_id: state.user.id,
-  distance_km: state.distanceKm || 0   // ✅ campo novo dos KM
-};
+  const order = {
+    items: state.cart.map(i => ({
+      itemId: i.id,
+      name: i.name,
+      qty: i.qty,
+      price: +i.price,
+      obs: i.obs,
+      image: i.image
+    })),
+    subtotal: cartSubtotal(),
+    deliveryFee: fulfillment === 'pickup' ? 0 : state.calculatedFee,
+    discount: 0,
+    total: cartSubtotal() + (fulfillment === 'pickup' ? 0 : state.calculatedFee),
+    neighborhood: customer.neighborhood,
+    customer: customer,
+    fulfillment: fulfillment,
+    paymentMethod: selectedPayment,
+    change: changeData,
+    user_id: state.user.id,
+    distance_km: state.distanceKm || 0   // ✅ campo novo dos KM
+  };
 
 
 
@@ -756,9 +758,9 @@ function updateTrackUI(order) {
   else if (s === 'cancelado') { m = 'Cancelado'; i = '❌'; pw = "0%"; trackingBubble.style.background = '#EF4444'; } else { trackingBubble.style.background = '#10B981'; }
   trackingBubble.innerHTML = `<span style="font-size:20px;">${i}</span>`;
   if (trackId) trackId.textContent = order.id; if (trackMsg) trackMsg.textContent = m;
-  if (timelineProgress) timelineProgress.style.width = pw; 
+  if (timelineProgress) timelineProgress.style.width = pw;
 
-    if (trackId) trackId.textContent = order.id;
+  if (trackId) trackId.textContent = order.id;
   if (trackMsg) trackMsg.textContent = m;
   if (timelineProgress) timelineProgress.style.width = pw;
 
@@ -786,18 +788,29 @@ function updateTrackUI(order) {
 
   if (trackTotalEl) trackTotalEl.textContent = brl(order.total);
 
-  
+
   if (trackTotalEl) trackTotalEl.textContent = brl(order.total);
   if (btnTrackWa) btnTrackWa.href = `https://wa.me/5584996065229?text=${encodeURIComponent(`Olá, sobre meu pedido #${order.id}...`)}`;
   if (btnCancelOrder) { btnCancelOrder.style.display = (s === 'novo' || s === 'agendado') ? 'block' : 'none'; btnCancelOrder.onclick = () => cancelMyOrder(order.id); }
 }
 trackingBubble?.addEventListener('click', () => {
-  if (state.activeOrderData && state.activeOrderData.status === 'aguardando_pagamento') {
+  // Se ainda está aguardando pagamento, abre o Pix
+  if (
+    state.activeOrderData &&
+    state.activeOrderData.status === 'aguardando_pagamento'
+  ) {
     let pixData = state.activeOrderData.pixData;
-    if (!pixData) { const backup = localStorage.getItem('lastPixData'); if (backup) pixData = JSON.parse(backup); }
+    if (!pixData) {
+      const backup = localStorage.getItem('lastPixData');
+      if (backup) pixData = JSON.parse(backup);
+    }
     if (pixData) showPixModal(pixData);
-  } else { trackingModal.setAttribute('aria-hidden', 'false'); }
+  } else {
+    // Caso contrário, abre o rastreio normal
+    trackingModal.setAttribute('aria-hidden', 'false');
+  }
 });
+
 tmClose?.addEventListener('click', () => trackingModal.setAttribute('aria-hidden', 'true'));
 function startPixVisualTimer(deadline, orderId) {
   updatePixTick(deadline, orderId);
@@ -815,15 +828,102 @@ function updatePixTick(deadline, orderId) {
   }
 }
 function showPixModal(pixData) {
-  const existing = document.getElementById('modal-pix-dynamic'); if (existing) existing.remove();
-  const div = document.createElement('div'); div.id = 'modal-pix-dynamic'; div.className = 'modal active'; div.setAttribute('aria-hidden', 'false'); div.style.zIndex = '10000';
-  div.innerHTML = `<div class="modal-dialog" style="max-width:350px;text-align:center;padding:30px;"><button id="btn-close-pix" style="position:absolute;top:10px;right:15px;border:none;background:none;font-size:24px;cursor:pointer;">&times;</button><h3>Pagamento Pix</h3><p style="color:var(--primary);font-weight:bold;margin-bottom:15px">Aguardando...</p><div style="background:#fff;padding:10px;display:inline-block;border:1px solid #ddd;border-radius:8px;margin-bottom:15px"><img src="data:image/png;base64,${pixData.qr_base64}" style="width:180px;height:180px;"></div><textarea id="pix-copy-paste" readonly style="width:100%;height:50px;font-size:11px;padding:8px;margin-bottom:10px;">${pixData.qr_code}</textarea><button id="btn-copy-pix" class="btn primary block">Copiar Código</button></div>`;
+  const existing = document.getElementById('modal-pix-dynamic');
+  if (existing) existing.remove();
+
+  state.pixModalOpen = true;
+
+  const div = document.createElement('div');
+  div.id = 'modal-pix-dynamic';
+  div.className = 'modal active';
+  div.setAttribute('aria-hidden', 'false');
+  div.style.zIndex = '10000';
+
+  div.innerHTML = `
+    <div class="modal-dialog" style="max-width:350px; text-align:center; padding:30px; position:relative;">
+      <button id="btn-close-pix"
+        style="
+          position:absolute;
+          top:10px;
+          right:15px;
+          border:none;
+          background:none;
+          font-size:26px;
+          cursor:pointer;
+        ">
+        &times;
+      </button>
+
+      <h3>Pagamento Pix</h3>
+      <p style="color:var(--primary); font-weight:bold; margin-bottom:15px">
+        Aguardando pagamento...
+      </p>
+
+      <div style="
+        background:#fff;
+        padding:10px;
+        display:inline-block;
+        border:1px solid #ddd;
+        border-radius:8px;
+        margin-bottom:15px
+      ">
+        <img src="data:image/png;base64,${pixData.qr_base64}"
+             style="width:180px;height:180px;">
+      </div>
+
+      <textarea id="pix-copy-paste"
+        readonly
+        style="width:100%; height:55px; font-size:11px; padding:8px; margin-bottom:10px;">
+${pixData.qr_code}
+      </textarea>
+
+      <button id="btn-copy-pix" class="btn primary block">
+        Copiar Código
+      </button>
+    </div>
+  `;
+
   document.body.appendChild(div);
-  div.querySelector('#btn-close-pix').onclick = () => div.remove();
-  div.querySelector('#btn-copy-pix').onclick = () => { const txt = div.querySelector('#pix-copy-paste'); txt.select(); document.execCommand('copy'); alert("Código copiado!"); };
+
+  // ❌ FECHA APENAS O MODAL — NÃO SOME A BOLINHA
+  div.querySelector('#btn-close-pix').onclick = () => {
+    state.pixModalOpen = false;
+    state.pixManuallyClosed = true;
+    div.remove();
+  };
+
+  div.querySelector('#btn-copy-pix').onclick = () => {
+    const txt = div.querySelector('#pix-copy-paste');
+    txt.select();
+    document.execCommand('copy');
+    alert("Código Pix copiado!");
+  };
 }
+
 async function cancelMyOrder(id) { if (!confirm("Cancelar?")) return; try { await apiSend(`/orders/${id}/cancel`, 'PATCH', {}); alert("Cancelado."); stopTracking(); checkStatus(); } catch (err) { alert(err.message); } }
-function stopTracking() { clearInterval(state.trackingInterval); if (state.pixTimerInterval) clearInterval(state.pixTimerInterval); state.currentOrderId = null; localStorage.removeItem('lastOrderId'); if (trackingBubble) trackingBubble.style.display = 'none'; if (trackingModal) trackingModal.setAttribute('aria-hidden', 'true'); }
+
+function stopTracking() {
+  clearInterval(state.trackingInterval);
+
+  if (state.pixTimerInterval) {
+    clearInterval(state.pixTimerInterval);
+    state.pixTimerInterval = null;
+  }
+
+  state.currentOrderId = null;
+  localStorage.removeItem('lastOrderId');
+
+  // ❗️ SÓ some a bolinha se NÃO estiver em Pix ativo
+  if (
+    trackingBubble &&
+    !(state.activeOrderData?.status === 'aguardando_pagamento')
+  ) {
+    trackingBubble.style.display = 'none';
+  }
+
+  if (trackingModal) trackingModal.setAttribute('aria-hidden', 'true');
+}
+
 
 
 // ================= RECUPERAÇÃO DE SENHA =================
@@ -918,8 +1018,10 @@ async function loadData() {
   await tryLoadMe();
   if (localStorage.getItem('lastOrderId')) startTracking(localStorage.getItem('lastOrderId'));
   try { const s = await apiGet("/settings"); state.storeConfig = s; if (s.mode === 'force_closed') { state.isStoreOpen = false; if (fb) fb.textContent = "Fechado temporariamente."; } } catch (e) { }
-  try { const [c, s, i] = await Promise.all([apiGet('/categories'), apiGet('/subcategories'), apiGet('/items')]); state.categories = c || []; state.subcategories = s || []; state.items = i || [];
- renderFilters(); renderItems(); } catch (err) { console.error("Erro menu", err); }
+  try {
+    const [c, s, i] = await Promise.all([apiGet('/categories'), apiGet('/subcategories'), apiGet('/items')]); state.categories = c || []; state.subcategories = s || []; state.items = i || [];
+    renderFilters(); renderItems();
+  } catch (err) { console.error("Erro menu", err); }
   updateCartUI(); loadSavedUserData(); initCarousel();
 }
 function loadSavedUserData() { if (state.user) return; const savedAddress = localStorage.getItem('lastAddress'); const savedNeighborhood = localStorage.getItem('lastNeighborhood'); if (savedAddress && inputAddress) inputAddress.value = savedAddress; if (savedNeighborhood && inputNeighborhood) inputNeighborhood.value = savedNeighborhood; }
@@ -1121,41 +1223,41 @@ window.addEventListener('DOMContentLoaded', loadData);
 
 // === ATUALIZAÇÃO AUTOMÁTICA DA CATEGORIA NO SCROLL ===
 document.addEventListener('DOMContentLoaded', () => {
-    // Ajuste as classes abaixo de acordo com o seu HTML
-    // 'section-categoria' deve ser a classe das divs que contêm os itens de cada categoria
-    // '.btn-categoria' deve ser a classe dos botões lá no menu do topo
-    const sections = document.querySelectorAll('.section-categoria'); 
-    const navButtons = document.querySelectorAll('.btn-categoria');
+  // Ajuste as classes abaixo de acordo com o seu HTML
+  // 'section-categoria' deve ser a classe das divs que contêm os itens de cada categoria
+  // '.btn-categoria' deve ser a classe dos botões lá no menu do topo
+  const sections = document.querySelectorAll('.section-categoria');
+  const navButtons = document.querySelectorAll('.btn-categoria');
 
-    const observerOptions = {
-        root: null,
-        rootMargin: '-20% 0px -70% 0px', // Ativa quando a seção chega perto do topo
-        threshold: 0
-    };
+  const observerOptions = {
+    root: null,
+    rootMargin: '-20% 0px -70% 0px', // Ativa quando a seção chega perto do topo
+    threshold: 0
+  };
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                // Pega o ID da seção atual (ex: 'categoria-pastel')
-                const currentId = entry.target.getAttribute('id');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        // Pega o ID da seção atual (ex: 'categoria-pastel')
+        const currentId = entry.target.getAttribute('id');
 
-                // Remove a classe 'active' de todos os botões
-                navButtons.forEach(btn => {
-                    btn.classList.remove('active'); // Mude 'active' se a sua classe de destaque tiver outro nome
-                    
-                    // Se o botão apontar para o ID dessa seção, adiciona o destaque
-                    if (btn.getAttribute('href') === `#${currentId}` || btn.dataset.target === currentId) {
-                        btn.classList.add('active');
-                        
-                        // Faz o menu rolar horizontalmente para mostrar o botão ativo
-                        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                    }
-                });
-            }
+        // Remove a classe 'active' de todos os botões
+        navButtons.forEach(btn => {
+          btn.classList.remove('active'); // Mude 'active' se a sua classe de destaque tiver outro nome
+
+          // Se o botão apontar para o ID dessa seção, adiciona o destaque
+          if (btn.getAttribute('href') === `#${currentId}` || btn.dataset.target === currentId) {
+            btn.classList.add('active');
+
+            // Faz o menu rolar horizontalmente para mostrar o botão ativo
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
         });
-    }, observerOptions);
-
-    sections.forEach(section => {
-        observer.observe(section);
+      }
     });
+  }, observerOptions);
+
+  sections.forEach(section => {
+    observer.observe(section);
+  });
 });
