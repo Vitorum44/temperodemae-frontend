@@ -170,13 +170,22 @@ body.admin-page {
 
 }
 
-.col-sidebar { flex: 0 0 320px; display: flex; flex-direction: column; gap: 24px; }
+@media (max-width: 900px) {
+  .admin-grid {
+    flex-direction: column;
+    padding: 15px 10px;
+    gap: 16px;
+  }
 
-.col-main { flex: 1; }
+  .col-sidebar {
+    width: 100%;
+  }
 
+  .sidebar-card {
+    padding: 16px;
+  }
+}
 
-
-@media (max-width: 768px) { .admin-grid { flex-direction: column; } .col-sidebar { flex: auto; } }
 
 
 
@@ -806,4 +815,5 @@ body.admin-page {
 .btn-reactivate:hover {
   background: #059669;
 }
+
 
