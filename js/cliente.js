@@ -81,6 +81,36 @@ const fulfillDelivery = $('#fulfill-delivery');
 const fulfillPickup = $('#fulfill-pickup');
 const deliveryFields = $('#delivery-fields');
 const inputAddress = $('#cust-address');
+
+// ======= RECALCULA FRETE AO ALTERAR BAIRRO (NÍVEL SÊNIOR) =======
+inputNeighborhood?.addEventListener('input', debounce(async () => {
+  if (!inputAddress.value.trim()) return;
+
+  addressDirty = true;
+  state.calculatedFee = null;
+  updateCartUI();
+
+  try {
+    const fullAddress = `${inputAddress.value}, ${inputNeighborhood.value}, ${MY_CITY_STATE}`;
+    const query = encodeURIComponent(fullAddress);
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
+
+    const r = await fetch(url);
+    const data = await r.json();
+
+    if (data.length > 0) {
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+
+      addressDirty = false;
+      waitForGoogleMaps(() => calcShip(lat, lng));
+    }
+  } catch (e) {
+    console.warn("Falha ao recalcular frete pelo bairro:", e);
+  }
+}, 600));
+
+
 const inputNeighborhood = $('#cust-neighborhood');
 const inputReference = $('#cust-reference');
 const inputName = $('#cust-name');
@@ -394,7 +424,8 @@ inputAddress?.addEventListener('blur', async () => {
   if (!addressDirty || !inputAddress.value.trim()) return;
 
   try {
-    const query = encodeURIComponent(inputAddress.value + ', ' + MY_CITY_STATE);
+    const fullAddress = `${inputAddress.value}, ${inputNeighborhood.value || ''}, ${MY_CITY_STATE}`;
+    const query = encodeURIComponent(fullAddress);
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
 
     const r = await fetch(url);
@@ -468,13 +499,13 @@ if (fulfillPickup && fulfillDelivery) {
       if (deliveryFields) deliveryFields.style.display = 'none';
       state.calculatedFee = 0; state.distanceKm = 0;
     } else {
-  if (deliveryFields) deliveryFields.style.display = 'block';
+      if (deliveryFields) deliveryFields.style.display = 'block';
 
-  if (inputAddress.value.trim()) {
-    addressDirty = true;
-    state.calculatedFee = null;
-  }
-}
+      if (inputAddress.value.trim()) {
+        addressDirty = true;
+        state.calculatedFee = null;
+      }
+    }
 
     updateCartUI();
   }
@@ -725,41 +756,41 @@ orderForm?.addEventListener('submit', async (e) => {
   }
   // ================================================
 
-  if (!state.user || !state.token) { 
-    openAuthModal('login'); 
-    return; 
+  if (!state.user || !state.token) {
+    openAuthModal('login');
+    return;
   }
 
-  if (state.cart.length === 0) { 
-    fb.textContent = 'Carrinho vazio.'; 
-    return; 
+  if (state.cart.length === 0) {
+    fb.textContent = 'Carrinho vazio.';
+    return;
   }
 
-  if (!state.isStoreOpen && (!orderSchedule || !orderSchedule.value)) { 
-    fb.textContent = "Loja fechada! Agende um horário."; 
-    return; 
+  if (!state.isStoreOpen && (!orderSchedule || !orderSchedule.value)) {
+    fb.textContent = "Loja fechada! Agende um horário.";
+    return;
   }
 
   const paymentEl = document.querySelector('input[name="payment"]:checked');
-  if (!paymentEl) { 
-    fb.textContent = "Selecione o pagamento"; 
-    return; 
+  if (!paymentEl) {
+    fb.textContent = "Selecione o pagamento";
+    return;
   }
 
   const selectedPayment = paymentEl.value;
   let changeData = null;
 
   if (selectedPayment === 'Dinheiro' && checkNeedChange.checked) {
-    if (!inputChangeAmount.value) { 
-      fb.textContent = 'Informe o troco.'; 
-      return; 
+    if (!inputChangeAmount.value) {
+      fb.textContent = 'Informe o troco.';
+      return;
     }
     changeData = `Troco para R$ ${inputChangeAmount.value}`;
   }
 
-  if (fulfillment === 'delivery') { 
-    localStorage.setItem('lastAddress', inputAddress.value); 
-    localStorage.setItem('lastNeighborhood', inputNeighborhood.value); 
+  if (fulfillment === 'delivery') {
+    localStorage.setItem('lastAddress', inputAddress.value);
+    localStorage.setItem('lastNeighborhood', inputNeighborhood.value);
   }
 
   const customer = {
@@ -985,8 +1016,8 @@ ${pixData.qr_code}
     document.execCommand('copy');
     alert("Código Pix copiado!");
     navigator.clipboard.writeText(txt.value)
-  .then(() => alert("Código Pix copiado!"))
-  .catch(() => alert("Erro ao copiar. Tente selecionar manualmente."));
+      .then(() => alert("Código Pix copiado!"))
+      .catch(() => alert("Erro ao copiar. Tente selecionar manualmente."));
   };
 }
 
