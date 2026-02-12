@@ -433,62 +433,6 @@ if (fulfillPickup && fulfillDelivery) {
   fulfillDelivery.addEventListener('change', toggleDeliveryMode);
 }
 
-// 5. Autocomplete do Google
-function initGoogleAutocomplete() {
-  if (!window.google || !google.maps || !google.maps.places || !inputAddress) return;
-
-  const autocomplete = new google.maps.places.Autocomplete(inputAddress, {
-    types: ['address'],
-    componentRestrictions: { country: 'br' },
-    fields: ['address_components', 'geometry']
-  });
-
-  autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-    if (place?.geometry) {
-      // Preenche campos se disponível
-      let street = '', number = '', neighborhood = '';
-      place.address_components.forEach(c => {
-        if (c.types.includes('route')) street = c.long_name;
-        if (c.types.includes('street_number')) number = c.long_name;
-        if (c.types.includes('sublocality_level_1') || c.types.includes('sublocality')) neighborhood = c.long_name;
-      });
-      
-      // Tenta manter número digitado se o Google não trouxer
-      const currentVal = inputAddress.value;
-      const typedNum = currentVal.match(/,\s*(\d+)/)?.[1] || '';
-      
-      inputAddress.value = `${street}${number || typedNum ? ', ' + (number || typedNum) : ''}`;
-      if (inputNeighborhood && neighborhood) inputNeighborhood.value = neighborhood;
-
-      // Calcula direto pela geometria (mais rápido e preciso)
-      calcShip(place.geometry.location.lat(), place.geometry.location.lng());
-    } else {
-      // Fallback: calcula pelo texto
-      calcShipByAddress();
-    }
-  });
-}
-window.addEventListener('load', initGoogleAutocomplete);
-
-// 4. Toggle Entrega / Retirada
-if (fulfillPickup && fulfillDelivery) {
-  function toggleDeliveryMode() {
-    const isPickup = fulfillPickup.checked;
-    if (isPickup) {
-      if (deliveryFields) deliveryFields.style.display = 'none';
-      state.calculatedFee = 0;
-      state.distanceKm = 0;
-    } else {
-      if (deliveryFields) deliveryFields.style.display = 'block';
-      if(inputAddress.value && inputNeighborhood.value) calcShipByAddress();
-    }
-    updateCartUI();
-  }
-  fulfillPickup.addEventListener('change', toggleDeliveryMode);
-  fulfillDelivery.addEventListener('change', toggleDeliveryMode);
-}
-
 // ====================================================================
 // SUBSTITUIR A FUNÇÃO calcShip POR ESTA:
 // ====================================================================
