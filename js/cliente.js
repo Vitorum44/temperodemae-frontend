@@ -302,62 +302,6 @@ function initGoogleAutocomplete() {
 }
 window.addEventListener('load', initGoogleAutocomplete);
 
-// 3. Função: Calcula Distância e Preço (Retorna Promise)
-function calcShip(lat, lng) {
-  return new Promise((resolve) => {
-    state.distanceKm = 0;
-    state.calculatedFee = null;
-    
-    // Se for retirada, é grátis e imediato
-    if (fulfillPickup && fulfillPickup.checked) {
-      state.distanceKm = 0;
-      state.calculatedFee = 0;
-      updateCartUI();
-      resolve(0);
-      return;
-    }
-
-    if (!lat || !lng) {
-      resolve(null);
-      return;
-    }
-
-    const service = new google.maps.DirectionsService();
-    service.route({
-        origin: RESTAURANT_LOCATION,
-        destination: { lat, lng },
-        travelMode: google.maps.TravelMode.DRIVING
-      },
-      (result, status) => {
-        if (status !== "OK" || !result.routes?.length) {
-          state.calculatedFee = -1; // Erro de rota
-          updateCartUI();
-          resolve(-1);
-          return;
-        }
-
-        const meters = result.routes[0].legs[0].distance.value;
-        const km = meters / 1000;
-        state.distanceKm = km;
-
-        // --- REGRA DE PREÇO ---
-        if (km <= 2) {
-          state.calculatedFee = 0; // Grátis até 2km
-        } else if (km > 15) { // Limite máximo de entrega
-          state.calculatedFee = -1; 
-        } else {
-          // Exemplo: Arredonda pra cima
-          state.calculatedFee = Math.ceil(km); 
-        }
-        // ----------------------
-
-        updateCartUI();
-        resolve(state.calculatedFee);
-      }
-    );
-  });
-}
-
 // 4. Toggle Entrega / Retirada
 if (fulfillPickup && fulfillDelivery) {
   function toggleDeliveryMode() {
