@@ -894,9 +894,9 @@ ${pixData.qr_code}
 
   div.querySelector('#btn-copy-pix').onclick = () => {
     const txt = div.querySelector('#pix-copy-paste');
-    txt.select();
-    document.execCommand('copy');
-    alert("Código Pix copiado!");
+    navigator.clipboard.writeText(txt.value)
+  .then(() => alert("Código Pix copiado!"))
+  .catch(() => alert("Erro ao copiar. Tente selecionar manualmente."));
   };
 }
 
