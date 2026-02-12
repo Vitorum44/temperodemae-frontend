@@ -397,21 +397,27 @@ if (fulfillPickup && fulfillDelivery) {
 }
 
 
-// ================= RENDERIZAR MENU (CORRIGIDO PARA NÃO SUMIR) =================
+// ================= RENDERIZAR MENU (VERSÃO BLINDADA) =================
 function renderItems() {
-  const originalScroll = window.scrollY;
-
+  const grid = document.querySelector('#menu-grid');
   if (!grid) return;
 
   grid.innerHTML = '';
-
   const term = state.filters.q ? state.filters.q.toLowerCase() : '';
 
+  // Verifica se tem itens para mostrar
+  if (!state.items || state.items.length === 0) {
+     console.warn("Nenhum item carregado no estado.");
+     return;
+  }
+
+  let itensVisiveis = 0;
+
   state.categories.forEach(cat => {
-    // 🔥 CORREÇÃO: Converte IDs para String para evitar conflito de tipos
+    // 🔥 AQUI ESTÁ O SEGREDO: String() em ambos os lados
     let itemsInCat = state.items.filter(i => {
-        const itemIdCat = i.category_id || i.categoryId; 
-        return String(itemIdCat) === String(cat.id);
+        const idCatItem = i.category_id || i.categoryId;
+        return String(idCatItem) === String(cat.id);
     });
 
     if (term) {
@@ -419,6 +425,7 @@ function renderItems() {
     }
 
     if (itemsInCat.length > 0) {
+      itensVisiveis++;
       const section = document.createElement('div');
       section.className = 'category-section';
       section.id = `cat-${cat.id}`;
@@ -434,7 +441,6 @@ function renderItems() {
       itemsInCat.forEach(i => {
         const c = document.createElement('div');
         c.className = 'item-card';
-
         c.innerHTML = `
           <div class="card-info">
             <h4 class="card-title">${i.name}</h4>
@@ -448,7 +454,7 @@ function renderItems() {
             onerror="this.src='https://placehold.co/300x200?text=Sem+Foto'"
             class="card-img-right">
         `;
-
+        // Garante que o clique abre o modal corretamente
         c.onclick = () => openProductModal(i);
         itemsContainer.appendChild(c);
       });
@@ -458,8 +464,12 @@ function renderItems() {
     }
   });
 
+  // Se filtrou e não sobrou nada, avisa (opcional)
+  if (itensVisiveis === 0 && term) {
+    grid.innerHTML = '<div style="padding:20px; text-align:center;">Nenhum produto encontrado.</div>';
+  }
+
   setTimeout(setupScrollSpy, 500);
-  window.scrollTo(0, originalScroll);
 }
 
 
