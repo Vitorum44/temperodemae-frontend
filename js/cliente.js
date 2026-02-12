@@ -322,14 +322,13 @@ if (fulfillPickup && fulfillDelivery) {
 }
 
 // ====================================================================
-// SUBSTITUIR A FUNÇÃO calcShip POR ESTA:
+// VERSÃO ÚNICA E SEGURA DE calcShip (NÃO GERA DUPLICAÇÃO)
 // ====================================================================
-function calcShip(lat, lng) {
+const calcShip = (lat, lng) => {
   return new Promise((resolve, reject) => {
     state.distanceKm = 0;
     state.calculatedFee = null;
-    
-    // Se for retirada, resolve na hora
+
     if (fulfillPickup && fulfillPickup.checked) {
       state.distanceKm = 0;
       state.calculatedFee = 0;
@@ -344,7 +343,8 @@ function calcShip(lat, lng) {
     }
 
     const service = new google.maps.DirectionsService();
-    service.route({
+    service.route(
+      {
         origin: RESTAURANT_LOCATION,
         destination: { lat, lng },
         travelMode: google.maps.TravelMode.DRIVING
@@ -353,7 +353,7 @@ function calcShip(lat, lng) {
         if (status !== "OK" || !result.routes?.length) {
           state.calculatedFee = -1;
           updateCartUI();
-          resolve(-1); // Erro de rota
+          resolve(-1);
           return;
         }
 
@@ -361,39 +361,20 @@ function calcShip(lat, lng) {
         const km = meters / 1000;
         state.distanceKm = km;
 
-        // Lógica de Preço
         if (km <= 2) {
-          state.calculatedFee = 0; // Grátis até 2km
-        } else if (km > 15) { // Aumentei um pouco a margem de segurança
-          state.calculatedFee = -1; // Muito longe
+          state.calculatedFee = 0;
+        } else if (km > 15) {
+          state.calculatedFee = -1;
         } else {
-          // Exemplo: R$ 1,50 por KM ou valor fixo
-          state.calculatedFee = Math.ceil(km); 
+          state.calculatedFee = Math.ceil(km);
         }
 
         updateCartUI();
-        resolve(state.calculatedFee); // Sucesso!
+        resolve(state.calculatedFee);
       }
     );
   });
-}
-
-// Toggle Entrega / Retirada
-if (fulfillPickup && fulfillDelivery) {
-  function toggleDeliveryMode() {
-    const isPickup = fulfillPickup.checked;
-    if (isPickup) {
-      if (deliveryFields) deliveryFields.style.display = 'none';
-      state.calculatedFee = 0;
-      state.distanceKm = 0;
-    } else {
-      if (deliveryFields) deliveryFields.style.display = 'block';
-    }
-    updateCartUI();
-  }
-  fulfillPickup.addEventListener('change', toggleDeliveryMode);
-  fulfillDelivery.addEventListener('change', toggleDeliveryMode);
-}
+};
 
 
 // ====================================================================
