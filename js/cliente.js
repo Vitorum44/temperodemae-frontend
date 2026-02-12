@@ -93,6 +93,16 @@ const inputChangeAmount = $('#change-amount');
 const floatCartBtn = $('#float-cart-btn');
 const floatCartCount = $('#float-cart-count');
 
+// ======= FLAG DE ENDEREÇO EDITADO MANUALMENTE =======
+let addressDirty = false;
+
+inputAddress?.addEventListener('input', debounce(() => {
+  addressDirty = true;
+  state.calculatedFee = null;
+  updateCartUI();
+}, 400));
+
+
 // ================= LÓGICA DO TROCO (CORREÇÃO) =================
 const payCash = document.getElementById('pay-cash');
 const cashChangeBox = document.getElementById('cash-change-box');
@@ -379,6 +389,30 @@ function initGoogleAutocomplete() {
 
 window.addEventListener('load', initGoogleAutocomplete);
 
+// ======= AUTO-GEOCODE SE O USUÁRIO DIGITAR MANUALMENTE =======
+inputAddress?.addEventListener('blur', async () => {
+  if (!addressDirty || !inputAddress.value.trim()) return;
+
+  try {
+    const query = encodeURIComponent(inputAddress.value + ', ' + MY_CITY_STATE);
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
+
+    const r = await fetch(url);
+    const data = await r.json();
+
+    if (data.length > 0) {
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+
+      addressDirty = false;
+      waitForGoogleMaps(() => calcShip(lat, lng));
+    }
+  } catch (e) {
+    console.warn("Falha no geocode automático:", e);
+  }
+});
+
+
 function calcShip(lat, lng) {
   // 🔄 RESET ABSOLUTO
   state.distanceKm = 0;
@@ -434,8 +468,14 @@ if (fulfillPickup && fulfillDelivery) {
       if (deliveryFields) deliveryFields.style.display = 'none';
       state.calculatedFee = 0; state.distanceKm = 0;
     } else {
-      if (deliveryFields) deliveryFields.style.display = 'block';
-    }
+  if (deliveryFields) deliveryFields.style.display = 'block';
+
+  if (inputAddress.value.trim()) {
+    addressDirty = true;
+    state.calculatedFee = null;
+  }
+}
+
     updateCartUI();
   }
   fulfillPickup.addEventListener('change', toggleDeliveryMode);
@@ -664,28 +704,77 @@ document.addEventListener('click', function (e) {
 
 // ================= CHECKOUT =================
 orderForm?.addEventListener('submit', async (e) => {
-  e.preventDefault(); fb.textContent = '';
-  if (!state.user || !state.token) { openAuthModal('login'); return; }
-  if (state.cart.length === 0) { fb.textContent = 'Carrinho vazio.'; return; }
-  if (!state.isStoreOpen && (!orderSchedule || !orderSchedule.value)) { fb.textContent = "Loja fechada! Agende um horário."; return; }
+  e.preventDefault();
+  fb.textContent = '';
+
+  // 🔹 DEFINE UMA ÚNICA VEZ (CORREÇÃO)
   const fulfillment = fulfillPickup && fulfillPickup.checked ? 'pickup' : 'delivery';
 
+  // ====== CAMADA DE SEGURANÇA DO FRETE (SÊNIOR) ======
+  if (fulfillment === 'delivery') {
+    if (state.calculatedFee === null) {
+      fb.textContent = "Aguarde o cálculo do frete ou confirme seu endereço no mapa.";
+      btnFinalize.disabled = true;
+      return;
+    }
+
+    if (state.calculatedFee === -1) {
+      fb.textContent = "Endereço fora da área de entrega.";
+      return;
+    }
+  }
+  // ================================================
+
+  if (!state.user || !state.token) { 
+    openAuthModal('login'); 
+    return; 
+  }
+
+  if (state.cart.length === 0) { 
+    fb.textContent = 'Carrinho vazio.'; 
+    return; 
+  }
+
+  if (!state.isStoreOpen && (!orderSchedule || !orderSchedule.value)) { 
+    fb.textContent = "Loja fechada! Agende um horário."; 
+    return; 
+  }
+
   const paymentEl = document.querySelector('input[name="payment"]:checked');
-  if (!paymentEl) { fb.textContent = "Selecione o pagamento"; return; }
+  if (!paymentEl) { 
+    fb.textContent = "Selecione o pagamento"; 
+    return; 
+  }
+
   const selectedPayment = paymentEl.value;
   let changeData = null;
+
   if (selectedPayment === 'Dinheiro' && checkNeedChange.checked) {
-    if (!inputChangeAmount.value) { fb.textContent = 'Informe o troco.'; return; }
+    if (!inputChangeAmount.value) { 
+      fb.textContent = 'Informe o troco.'; 
+      return; 
+    }
     changeData = `Troco para R$ ${inputChangeAmount.value}`;
   }
-  if (fulfillment === 'delivery') { localStorage.setItem('lastAddress', inputAddress.value); localStorage.setItem('lastNeighborhood', inputNeighborhood.value); }
+
+  if (fulfillment === 'delivery') { 
+    localStorage.setItem('lastAddress', inputAddress.value); 
+    localStorage.setItem('lastNeighborhood', inputNeighborhood.value); 
+  }
+
   const customer = {
-    id: state.user.id, name: inputName.value || state.user.name, phone: inputPhone.value || state.user.phone,
+    id: state.user.id,
+    name: inputName.value || state.user.name,
+    phone: inputPhone.value || state.user.phone,
     address: fulfillment === 'pickup' ? 'Retirada na Loja' : inputAddress.value,
     neighborhood: fulfillment === 'pickup' ? '' : inputNeighborhood.value,
-    reference: inputReference ? inputReference.value : '', email: inputEmail ? inputEmail.value : '',
-    paymentMethod: selectedPayment, change: changeData, scheduledTo: (!state.isStoreOpen) ? orderSchedule.value : null
+    reference: inputReference ? inputReference.value : '',
+    email: inputEmail ? inputEmail.value : '',
+    paymentMethod: selectedPayment,
+    change: changeData,
+    scheduledTo: (!state.isStoreOpen) ? orderSchedule.value : null
   };
+
   const order = {
     items: state.cart.map(i => ({
       itemId: i.id,
@@ -707,8 +796,6 @@ orderForm?.addEventListener('submit', async (e) => {
     user_id: state.user.id,
     distance_km: state.distanceKm || 0   // ✅ campo novo dos KM
   };
-
-
 
   try {
     const createdOrder = await apiSend('/orders', 'POST', order);
