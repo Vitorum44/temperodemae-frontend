@@ -483,14 +483,12 @@ function renderItems() {
 
   state.categories.forEach(cat => {
     
-    // 👇 AQUI ESTÁ A MÁGICA DA CORREÇÃO 👇
-    // Converte tudo para Texto (String) antes de comparar.
-    // Assim "1" fica igual a 1 e o lanche aparece.
+    // 👇 AQUI ESTÁ A CORREÇÃO QUE FAZ OS ITENS PARAREM DE SUMIR 👇
+    // Usamos String() para garantir que Texto seja igual a Número
     let itemsInCat = state.items.filter(i => {
-        const idDoItem = i.category_id || i.categoryId; // Pega o ID mesmo se mudar o nome
-        return String(idDoItem) === String(cat.id);
+        const idCategoriaItem = i.category_id || i.categoryId;
+        return String(idCategoriaItem) === String(cat.id);
     });
-    // 👆 FIM DA CORREÇÃO 👆
 
     if (term) {
       itemsInCat = itemsInCat.filter(i =>
