@@ -475,14 +475,14 @@ if (fulfillPickup && fulfillDelivery) {
 function renderItems() {
   const originalScroll = window.scrollY;
 
-  // 🔥 NOVA LÓGICA (corrige sumiço dos produtos após login/logout)
   const grid = document.getElementById('menu-grid');
   if (!grid) return;
 
-  // SEMPRE limpa antes de renderizar para evitar tela em branco
+  // 🔥 MUITO IMPORTANTE: sempre redesenha o menu
   grid.innerHTML = '';
 
   const term = state.filters.q ? state.filters.q.toLowerCase() : '';
+
 
 
   state.categories.forEach(cat => {
@@ -924,8 +924,8 @@ ${pixData.qr_code}
   div.querySelector('#btn-copy-pix').onclick = () => {
     const txt = div.querySelector('#pix-copy-paste');
     navigator.clipboard.writeText(txt.value)
-  .then(() => alert("Código Pix copiado!"))
-  .catch(() => alert("Erro ao copiar. Tente selecionar manualmente."));
+      .then(() => alert("Código Pix copiado!"))
+      .catch(() => alert("Erro ao copiar. Tente selecionar manualmente."));
   };
 }
 
@@ -1053,6 +1053,9 @@ formLogin?.addEventListener('submit', async (e) => {
     setToken(r.token);
     setUser(r.user);
     authModal.setAttribute('aria-hidden', 'true');
+    await loadData();
+    renderItems(); // 🔥 CORREÇÃO FINAL
+
 
     // 🔥 FORÇA RECARGA COMPLETA DO MENU APÓS LOGIN
     state.categories = [];
