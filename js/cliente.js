@@ -302,7 +302,10 @@ function initGoogleAutocomplete() {
     }
   });
 }
-window.addEventListener('load', initGoogleAutocomplete);
+window.addEventListener('DOMContentLoaded', () => {
+  loadMenu();
+});
+
 
 // 4. Toggle Entrega / Retirada
 if (fulfillPickup && fulfillDelivery) {
