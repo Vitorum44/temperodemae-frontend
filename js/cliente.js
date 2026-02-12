@@ -40,6 +40,10 @@ const state = {
   selectedItem: null, selectedQty: 1, activeOrderData: null
 };
 
+// 👉 COLOQUE AQUI (LOGO ABAIXO DO state)
+let addressDirty = false; // 🔹 ESTADO GLOBAL DO ENDEREÇO
+
+
 // ================= HELPERS =================
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -64,6 +68,29 @@ function getDist(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
+async function tryCalculateByText() {
+  if (!inputAddress.value.trim()) return;
+
+  const fullAddress = `${inputAddress.value}, ${inputNeighborhood.value || ''}, ${MY_CITY_STATE}`;
+  const query = encodeURIComponent(fullAddress);
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
+
+  try {
+    const r = await fetch(url);
+    const data = await r.json();
+
+    if (data.length > 0) {
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+      addressDirty = false;
+      waitForGoogleMaps(() => calcShip(lat, lng));
+    }
+  } catch (e) {
+    console.warn("Erro no geocode:", e);
+  }
+}
+
+
 // ================= ELEMENTOS DOM =================
 const chipsCat = $('#category-chips');
 const grid = $('#menu-grid');
@@ -81,37 +108,33 @@ const fulfillDelivery = $('#fulfill-delivery');
 const fulfillPickup = $('#fulfill-pickup');
 const deliveryFields = $('#delivery-fields');
 const inputAddress = $('#cust-address');
+const inputNeighborhood = $('#cust-neighborhood');
 
-// ======= RECALCULA FRETE AO ALTERAR BAIRRO (NÍVEL SÊNIOR) =======
+// ====== CONTROLE SÊNIOR DE ALTERAÇÃO DE ENDEREÇO ======
+
+// Quando digitar rua/número
+inputAddress?.addEventListener('input', debounce(() => {
+  addressDirty = true;
+  state.calculatedFee = null;
+  updateCartUI();
+}, 400));
+
+// Quando digitar bairro → recalcula automaticamente
 inputNeighborhood?.addEventListener('input', debounce(async () => {
-  if (!inputAddress.value.trim()) return;
+  const street = inputAddress.value.trim();
+  const neighborhood = inputNeighborhood.value.trim();
+
+  if (!street || neighborhood.length < 3) return; // 🔒 evita chamadas inúteis
 
   addressDirty = true;
   state.calculatedFee = null;
   updateCartUI();
 
-  try {
-    const fullAddress = `${inputAddress.value}, ${inputNeighborhood.value}, ${MY_CITY_STATE}`;
-    const query = encodeURIComponent(fullAddress);
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`;
-
-    const r = await fetch(url);
-    const data = await r.json();
-
-    if (data.length > 0) {
-      const lat = parseFloat(data[0].lat);
-      const lng = parseFloat(data[0].lon);
-
-      addressDirty = false;
-      waitForGoogleMaps(() => calcShip(lat, lng));
-    }
-  } catch (e) {
-    console.warn("Falha ao recalcular frete pelo bairro:", e);
-  }
+  await tryCalculateByText(); // 🔁 recalcula com rua + bairro
 }, 600));
 
 
-const inputNeighborhood = $('#cust-neighborhood');
+
 const inputReference = $('#cust-reference');
 const inputName = $('#cust-name');
 const inputPhone = $('#cust-phone');
@@ -123,14 +146,7 @@ const inputChangeAmount = $('#change-amount');
 const floatCartBtn = $('#float-cart-btn');
 const floatCartCount = $('#float-cart-count');
 
-// ======= FLAG DE ENDEREÇO EDITADO MANUALMENTE =======
-let addressDirty = false;
 
-inputAddress?.addEventListener('input', debounce(() => {
-  addressDirty = true;
-  state.calculatedFee = null;
-  updateCartUI();
-}, 400));
 
 
 // ================= LÓGICA DO TROCO (CORREÇÃO) =================
