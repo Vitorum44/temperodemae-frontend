@@ -1038,7 +1038,33 @@ function setAuthMode(mode) {
 }
 function openAuthModal(t = 'login') { authModal.setAttribute('aria-hidden', 'false'); setAuthMode(t); }
 $('#tab-login')?.addEventListener('click', () => setAuthMode('login')); $('#tab-signup')?.addEventListener('click', () => setAuthMode('signup')); btnForgot?.addEventListener('click', () => setAuthMode('recovery')); btnBackAuth?.addEventListener('click', () => setAuthMode('login')); amClose?.addEventListener('click', () => authModal.setAttribute('aria-hidden', 'true'));
-formLogin?.addEventListener('submit', async (e) => { e.preventDefault(); loginFb.textContent = 'Entrando...'; try { const cleanPhone = loginPhone.value.replace(/\D/g, ''); const r = await apiSend('/auth/login', 'POST', { phone: cleanPhone, password: loginPass.value }); setToken(r.token); setUser(r.user); authModal.setAttribute('aria-hidden', 'true'); loadData(); } catch (err) { loginFb.textContent = err.message; } });
+formLogin?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  loginFb.textContent = 'Entrando...';
+
+  try {
+    const cleanPhone = loginPhone.value.replace(/\D/g, '');
+    const r = await apiSend('/auth/login', 'POST', {
+      phone: cleanPhone,
+      password: loginPass.value
+    });
+
+    setToken(r.token);
+    setUser(r.user);
+    authModal.setAttribute('aria-hidden', 'true');
+
+    // 🔥 FORÇA RECARGA COMPLETA DO MENU APÓS LOGIN
+    state.categories = [];
+    state.items = [];
+    document.getElementById('menu-grid').innerHTML = '';
+
+    await loadData(); // 🔄 recarrega TUDO corretamente
+
+  } catch (err) {
+    loginFb.textContent = err.message;
+  }
+});
+
 formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.textContent = 'Cadastrando...'; try { const cleanPhone = suPhone.value.replace(/\D/g, ''); const r = await apiSend('/auth/register', 'POST', { name: suName.value, phone: cleanPhone, email: suEmail.value, password: suPass.value }); setToken(r.token); setUser(r.user); authModal.setAttribute('aria-hidden', 'true'); loadData(); } catch (err) { suFb.textContent = err.message; } });
 
 // ================= LOADER =================
@@ -1264,7 +1290,15 @@ searchInput?.addEventListener('input', debounce(() => {
 
 
 
-window.addEventListener('DOMContentLoaded', loadData);
+window.addEventListener('DOMContentLoaded', async () => {
+  // Limpa estado antigo para evitar tela em branco
+  state.categories = [];
+  state.items = [];
+  document.getElementById('menu-grid').innerHTML = '';
+
+  await loadData();
+});
+
 
 // === ATUALIZAÇÃO AUTOMÁTICA DA CATEGORIA NO SCROLL ===
 document.addEventListener('DOMContentLoaded', () => {
