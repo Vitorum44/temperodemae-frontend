@@ -107,12 +107,11 @@ formLogin?.addEventListener('submit', async (e) => {
       password
     });
 
-    // 🔥 ESSENCIAL — é isso que “destrava” seu sistema
     state.user = res.user;
     state.token = res.token;
     localStorage.setItem('token', res.token);
 
-    // Fecha modal de login
+    // 🔥 FECHA O MODAL E ATUALIZA TUDO
     authModal.setAttribute('aria-hidden', 'true');
 
     alert("Login realizado com sucesso!");
@@ -121,6 +120,7 @@ formLogin?.addEventListener('submit', async (e) => {
     alert("Erro no login: " + err.message);
   }
 });
+
 
 const formSignup = $('#form-signup');
 const settingsModal = $('#settings-modal');
@@ -1186,9 +1186,27 @@ async function loadMenu() {
   }
 }
 
+async function loadUserFromToken() {
+  const savedToken = localStorage.getItem('token');
+  if (!savedToken) return;
+
+  try {
+    const me = await apiGet('/auth/me'); // busca usuário logado
+    state.user = me;
+    state.token = savedToken;
+  } catch (e) {
+    console.warn("Token inválido. Fazendo logout.");
+    localStorage.removeItem('token');
+    state.user = null;
+    state.token = '';
+  }
+}
+
+
 window.addEventListener('load', async () => {
   await loadUserFromToken();
   loadMenu();
 });
+
 
 
