@@ -95,6 +95,33 @@ const btnGps = document.getElementById('btn-gps');
 // Auth (Login/Cadastro)
 const authModal = $('#auth-modal');
 const formLogin = $('#form-login');
+formLogin?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const phone = document.getElementById('login-phone')?.value;
+  const password = document.getElementById('login-password')?.value;
+
+  try {
+    const res = await apiSend('/auth/login', 'POST', {
+      phone,
+      password
+    });
+
+    // 🔥 ESSENCIAL — é isso que “destrava” seu sistema
+    state.user = res.user;
+    state.token = res.token;
+    localStorage.setItem('token', res.token);
+
+    // Fecha modal de login
+    authModal.setAttribute('aria-hidden', 'true');
+
+    alert("Login realizado com sucesso!");
+
+  } catch (err) {
+    alert("Erro no login: " + err.message);
+  }
+});
+
 const formSignup = $('#form-signup');
 const settingsModal = $('#settings-modal');
 
