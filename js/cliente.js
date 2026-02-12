@@ -344,40 +344,68 @@ function initGoogleAutocomplete() {
 
   autocomplete.addListener('place_changed', () => {
     const place = autocomplete.getPlace();
-    if (!place.geometry) return;
 
-    let street = '';
-    let number = '';
-    let neighborhood = '';
+    // =======================
+    // 👉 CASO 1: VEIO DA SUGESTÃO DO GOOGLE (NORMAL)
+    // =======================
+    if (place?.geometry) {
+      let street = '';
+      let number = '';
+      let neighborhood = '';
 
-    place.address_components.forEach(c => {
-      if (c.types.includes('route')) street = c.long_name;
-      if (c.types.includes('street_number')) number = c.long_name;
-      if (
-        c.types.includes('sublocality') ||
-        c.types.includes('sublocality_level_1') ||
-        c.types.includes('neighborhood')
-      ) neighborhood = c.long_name;
-    });
+      place.address_components.forEach(c => {
+        if (c.types.includes('route')) street = c.long_name;
+        if (c.types.includes('street_number')) number = c.long_name;
+        if (
+          c.types.includes('sublocality') ||
+          c.types.includes('sublocality_level_1') ||
+          c.types.includes('neighborhood')
+        ) neighborhood = c.long_name;
+      });
 
-    const typedValue = inputAddress.value;
-    const typedNumberMatch = typedValue.match(/,\s*(\d+)/);
-    const typedNumber = typedNumberMatch ? typedNumberMatch[1] : '';
-    const finalNumber = number || typedNumber;
+      const typedValue = inputAddress.value;
+      const typedNumberMatch = typedValue.match(/,\s*(\d+)/);
+      const typedNumber = typedNumberMatch ? typedNumberMatch[1] : '';
+      const finalNumber = number || typedNumber;
 
-    inputAddress.value = `${street}${finalNumber ? ', ' + finalNumber : ''}`;
-    if (inputNeighborhood) inputNeighborhood.value = neighborhood;
+      inputAddress.value = `${street}${finalNumber ? ', ' + finalNumber : ''}`;
+      if (inputNeighborhood) inputNeighborhood.value = neighborhood;
 
-    waitForGoogleMaps(() => {
-      calcShip(
-        place.geometry.location.lat(),
-        place.geometry.location.lng()
-      );
+      waitForGoogleMaps(() => {
+        calcShip(
+          place.geometry.location.lat(),
+          place.geometry.location.lng()
+        );
+      });
+
+      return; // 🔹 IMPORTANTE: encerra aqui se veio da sugestão
+    }
+
+    // =======================
+    // 👉 CASO 2: CLIENTE DIGITOU MANUALMENTE
+    // =======================
+    const fullAddress =
+      `${inputAddress.value}, ${inputNeighborhood.value || ''}, Natal, RN`;
+
+    const geocoder = new google.maps.Geocoder();
+
+    geocoder.geocode({ address: fullAddress }, (results, status) => {
+      if (status !== "OK" || !results[0]) {
+        console.warn("Não consegui converter o endereço manual:", status);
+        return;
+      }
+
+      const location = results[0].geometry.location;
+
+      waitForGoogleMaps(() => {
+        calcShip(location.lat(), location.lng());
+      });
     });
   });
 }
 
 window.addEventListener('load', initGoogleAutocomplete);
+
 
 function calcShip(lat, lng) {
   // 🔄 RESET ABSOLUTO
