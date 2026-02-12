@@ -585,6 +585,12 @@ function renderItems() {
   window.scrollTo(0, originalScroll); // 🔥 evita “pulo” de tela
 }
 
+const existingSections = document.querySelectorAll('.category-section');
+if (existingSections.length > 0) {
+  return;
+}
+
+
 
 function setupScrollSpy() {
   const sections = document.querySelectorAll('.category-section'); const navChips = document.querySelectorAll('#category-chips .chip');
