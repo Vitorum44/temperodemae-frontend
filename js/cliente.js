@@ -475,19 +475,19 @@ if (fulfillPickup && fulfillDelivery) {
 function renderItems() {
   const originalScroll = window.scrollY;
 
-  const grid = document.getElementById('menu-grid');
   if (!grid) return;
 
-  // 🔥 MUITO IMPORTANTE: sempre redesenha o menu
   grid.innerHTML = '';
 
   const term = state.filters.q ? state.filters.q.toLowerCase() : '';
 
-
-
   state.categories.forEach(cat => {
     let itemsInCat = state.items.filter(i => i.category_id === cat.id);
-    if (term) itemsInCat = itemsInCat.filter(i => i.name.toLowerCase().includes(term));
+    if (term) {
+      itemsInCat = itemsInCat.filter(i =>
+        i.name.toLowerCase().includes(term)
+      );
+    }
 
     if (itemsInCat.length > 0) {
       const section = document.createElement('div');
@@ -530,8 +530,9 @@ function renderItems() {
   });
 
   setTimeout(setupScrollSpy, 500);
-  window.scrollTo(0, originalScroll); // 🔥 evita “pulo” de tela
+  window.scrollTo(0, originalScroll);
 }
+
 
 
 function setupScrollSpy() {
@@ -1056,14 +1057,6 @@ formLogin?.addEventListener('submit', async (e) => {
     await loadData();
     renderItems(); // 🔥 CORREÇÃO FINAL
 
-
-    // 🔥 FORÇA RECARGA COMPLETA DO MENU APÓS LOGIN
-    state.categories = [];
-    state.items = [];
-    document.getElementById('menu-grid').innerHTML = '';
-
-    await loadData(); // 🔄 recarrega TUDO corretamente
-
   } catch (err) {
     loginFb.textContent = err.message;
   }
@@ -1295,13 +1288,9 @@ searchInput?.addEventListener('input', debounce(() => {
 
 
 window.addEventListener('DOMContentLoaded', async () => {
-  // Limpa estado antigo para evitar tela em branco
-  state.categories = [];
-  state.items = [];
-  document.getElementById('menu-grid').innerHTML = '';
-
   await loadData();
 });
+
 
 
 // === ATUALIZAÇÃO AUTOMÁTICA DA CATEGORIA NO SCROLL ===
