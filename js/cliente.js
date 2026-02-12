@@ -534,12 +534,6 @@ if (fulfillPickup && fulfillDelivery) {
 function renderItems() {
   const originalScroll = window.scrollY; // 🔥 salva posição da tela
 
-  // 🔥 SE O MENU JÁ FOI RENDERIZADO, NÃO APAGA TUDO DE NOVO
-  const existingSections = document.querySelectorAll('.category-section');
-  if (existingSections.length > 0) {
-    return;
-  }
-
   grid.innerHTML = '';
   const term = state.filters.q ? state.filters.q.toLowerCase() : '';
 
@@ -1156,8 +1150,44 @@ async function loadData() {
   if (localStorage.getItem('lastOrderId')) startTracking(localStorage.getItem('lastOrderId'));
   try { const s = await apiGet("/settings"); state.storeConfig = s; if (s.mode === 'force_closed') { state.isStoreOpen = false; if (fb) fb.textContent = "Fechado temporariamente."; } } catch (e) { }
   try {
-    const [c, s, i] = await Promise.all([apiGet('/categories'), apiGet('/subcategories'), apiGet('/items')]); state.categories = c || []; state.subcategories = s || []; state.items = i || [];
-    renderFilters(); renderItems();
+    // 🔹 1. Tenta carregar do cache primeiro (instantâneo)
+const cachedMenu = localStorage.getItem('menuCache');
+
+if (cachedMenu) {
+  const parsed = JSON.parse(cachedMenu);
+  state.categories = parsed.categories || [];
+  state.subcategories = parsed.subcategories || [];
+  state.items = parsed.items || [];
+  renderFilters();
+  renderItems();
+}
+
+// 🔹 2. Atualiza em background
+try {
+  const [c, s, i] = await Promise.all([
+    apiGet('/categories'),
+    apiGet('/subcategories'),
+    apiGet('/items')
+  ]);
+
+  state.categories = c || [];
+  state.subcategories = s || [];
+  state.items = i || [];
+
+  // salva no cache
+  localStorage.setItem('menuCache', JSON.stringify({
+    categories: state.categories,
+    subcategories: state.subcategories,
+    items: state.items
+  }));
+
+  renderFilters();
+  renderItems();
+
+} catch (err) {
+  console.error("Erro menu", err);
+}
+
   } catch (err) { console.error("Erro menu", err); }
   updateCartUI(); loadSavedUserData(); initCarousel();
 }
