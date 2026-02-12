@@ -455,8 +455,11 @@ function renderItems() {
   const grid = document.getElementById('menu-grid');
   if (!grid) return;
 
-  // 🔥 SEMPRE LIMPA E REDESENHA
+ // 🔥 NÃO APAGA TUDO SE NÃO FOR BUSCA REAL
+if (state.filters.q) {
   grid.innerHTML = '';
+}
+
 
   const term = state.filters.q ? state.filters.q.toLowerCase() : '';
 
@@ -920,8 +923,14 @@ const searchInput = document.getElementById('search');
 searchInput?.addEventListener('input', debounce(() => {
   const value = searchInput.value.trim();
 
-  // 🔥 EVITA FILTRAR QUANDO NÃO É BUSCA REAL
-  if (!value || value.match(/^\d+$/)) {
+  // 🔥 NOVA REGRA (ANTIBUG)
+  // Só filtra se o usuário REALMENTE estiver digitando no campo de busca
+  if (document.activeElement !== searchInput) {
+    return;
+  }
+
+  // 🔥 Só filtra se tiver 2+ caracteres de TEXTO
+  if (value.length < 2 || value.match(/^\d+$/)) {
     state.filters.q = '';
   } else {
     state.filters.q = value.toLowerCase();
@@ -929,6 +938,7 @@ searchInput?.addEventListener('input', debounce(() => {
 
   renderItems();
 }, 300));
+
 
 window.addEventListener('DOMContentLoaded', async () => { await loadData(); });
 document.addEventListener('DOMContentLoaded', () => {
