@@ -399,11 +399,16 @@ if (fulfillPickup && fulfillDelivery) {
 
 // ================= RENDERIZAR MENU (VERSÃO BLINDADA) =================
 function renderItems() {
-  const grid = document.querySelector('#menu-grid');
+  const originalScroll = window.scrollY;
+
+  const grid = document.getElementById('menu-grid');
   if (!grid) return;
 
+  // 🔥 SEMPRE LIMPA E REDESENHA
   grid.innerHTML = '';
+
   const term = state.filters.q ? state.filters.q.toLowerCase() : '';
+
 
   // Verifica se tem itens para mostrar
   if (!state.items || state.items.length === 0) {
@@ -826,7 +831,20 @@ formSettings?.addEventListener('submit', async (e) => {
 });
 smClose?.addEventListener('click', () => { settingsModal.setAttribute('aria-hidden', 'true'); });
 const searchInput = document.getElementById('search');
-searchInput?.addEventListener('input', debounce(() => { state.filters.q = searchInput.value; renderItems(); }, 300));
+
+searchInput?.addEventListener('input', debounce(() => {
+  const value = searchInput.value.trim();
+
+  // 🔥 EVITA FILTRAR QUANDO NÃO É BUSCA REAL
+  if (!value || value.match(/^\d+$/)) {
+    state.filters.q = '';
+  } else {
+    state.filters.q = value.toLowerCase();
+  }
+
+  renderItems();
+}, 300));
+
 window.addEventListener('DOMContentLoaded', async () => { await loadData(); });
 document.addEventListener('DOMContentLoaded', () => {
   const sections = document.querySelectorAll('.section-categoria'); const navButtons = document.querySelectorAll('.btn-categoria');
