@@ -74,6 +74,30 @@ const inputReference = $('#cust-reference');
 const inputName = $('#cust-name');
 const inputPhone = $('#cust-phone');
 const inputEmail = $('#cust-email');
+
+// ================= 🔥 EVENTOS PARA CALCULAR FRETE AUTOMATICAMENTE =================
+
+// 1️⃣ Quando o usuário TERMINAR de digitar o endereço (perde o foco)
+inputAddress?.addEventListener('blur', () => {
+  calcShipByAddress();
+});
+
+// 2️⃣ Quando o usuário TERMINAR de digitar o bairro (perde o foco)
+inputNeighborhood?.addEventListener('blur', () => {
+  calcShipByAddress();
+});
+
+// 3️⃣ Enquanto o usuário digita (debounce para evitar chamadas excessivas)
+inputAddress?.addEventListener('input', debounce(() => {
+  calcShipByAddress();
+}, 800));
+
+inputNeighborhood?.addEventListener('input', debounce(() => {
+  calcShipByAddress();
+}, 800));
+
+
+
 const orderSchedule = $('#order-schedule');
 const checkNeedChange = $('#need-change');
 const inputChangeAmount = $('#change-amount');
@@ -397,6 +421,33 @@ if (fulfillPickup && fulfillDelivery) {
 }
 
 
+// ================= NOVA FUNÇÃO: CALCULAR FRETE POR ENDEREÇO ESCRITO =================
+function calcShipByAddress() {
+  const address = inputAddress?.value?.trim();
+  const neighborhood = inputNeighborhood?.value?.trim();
+
+  if (!address || !neighborhood) return; // só calcula quando ambos estiverem preenchidos
+
+  const fullAddress = `${address}, ${neighborhood}, Natal, RN`;
+
+  const geocoder = new google.maps.Geocoder();
+
+  geocoder.geocode({ address: fullAddress }, (results, status) => {
+    if (status !== "OK" || !results[0]) {
+      console.warn("Não consegui converter o endereço manual:", status);
+      return;
+    }
+
+    const location = results[0].geometry.location;
+
+    waitForGoogleMaps(() => {
+      calcShip(location.lat(), location.lng());
+    });
+  });
+}
+
+
+
 // ================= RENDERIZAR MENU (VERSÃO BLINDADA) =================
 function renderItems() {
   const originalScroll = window.scrollY;
@@ -602,7 +653,22 @@ document.addEventListener('click', function (e) {
 
 // ================= CHECKOUT =================
 orderForm?.addEventListener('submit', async (e) => {
-  e.preventDefault(); fb.textContent = '';
+  e.preventDefault();
+
+ await new Promise(resolve => {
+  calcShipByAddress();
+  setTimeout(resolve, 800);
+});
+
+fb.textContent = '';
+
+if (!state.user || !state.token) {
+  openAuthModal('login');
+  return;
+}
+
+
+
   if (!state.user || !state.token) { openAuthModal('login'); return; }
   if (state.cart.length === 0) { fb.textContent = 'Carrinho vazio.'; return; }
   if (!state.isStoreOpen && (!orderSchedule || !orderSchedule.value)) { fb.textContent = "Loja fechada! Agende um horário."; return; }
@@ -628,7 +694,8 @@ orderForm?.addEventListener('submit', async (e) => {
     subtotal: cartSubtotal(),
     deliveryFee: fulfillment === 'pickup' ? 0 : state.calculatedFee,
     discount: 0,
-    total: cartSubtotal() + (fulfillment === 'pickup' ? 0 : state.calculatedFee),
+   total: cartSubtotal() + (fulfillment === 'pickup' ? 0 : (state.calculatedFee || 0)),
+
     neighborhood: customer.neighborhood, customer: customer, fulfillment: fulfillment, paymentMethod: selectedPayment,
     change: changeData, user_id: state.user.id, distance_km: state.distanceKm || 0
   };
@@ -788,7 +855,25 @@ async function loadData() {
   } catch (err) { console.error("Erro menu", err); }
   updateCartUI(); loadSavedUserData(); initCarousel();
 }
-function loadSavedUserData() { if (state.user) return; const savedAddress = localStorage.getItem('lastAddress'); const savedNeighborhood = localStorage.getItem('lastNeighborhood'); if (savedAddress && inputAddress) inputAddress.value = savedAddress; if (savedNeighborhood && inputNeighborhood) inputNeighborhood.value = savedNeighborhood; }
+function loadSavedUserData() {
+  if (state.user) return;
+
+  const savedAddress = localStorage.getItem('lastAddress');
+  const savedNeighborhood = localStorage.getItem('lastNeighborhood');
+
+  if (savedAddress && inputAddress) inputAddress.value = savedAddress;
+  if (savedNeighborhood && inputNeighborhood) inputNeighborhood.value = savedNeighborhood;
+
+  // ✅ AQUI SIM — DEPOIS que os campos foram preenchidos
+  setTimeout(() => {
+  if (inputAddress?.value && inputNeighborhood?.value) {
+    calcShipByAddress();
+  }
+}, 600);
+
+}
+
+
 async function tryLoadMe() { if (!state.token) return; try { const me = await apiGet('/auth/me'); setUser(me); } catch { setToken(''); setUser(null); } }
 function setUser(u) { state.user = u || null; if (u) { if (btnProfile) btnProfile.textContent = `Olá, ${u.name.split(' ')[0]}`; if (inputName) inputName.value = u.name || ''; if (inputPhone) inputPhone.value = u.phone || ''; if (inputEmail) inputEmail.value = u.email || ''; } else { if (btnProfile) btnProfile.textContent = '👤 Perfil'; } }
 function setToken(t) { state.token = t || ''; if (t) localStorage.setItem('token', t); else localStorage.removeItem('token'); }
