@@ -4,13 +4,6 @@
 
 import { API_URL } from "./app-api.js";
 
-function openAuthModal(type = 'login') {
-  const modal = document.getElementById('auth-modal');
-  if (modal) {
-    modal.setAttribute('aria-hidden', 'false');
-  }
-}
-
 // ====================================================================
 // 1. CONFIGURAÇÃO & ESTADO GLOBAL
 // ====================================================================
@@ -95,33 +88,6 @@ const btnGps = document.getElementById('btn-gps');
 // Auth (Login/Cadastro)
 const authModal = $('#auth-modal');
 const formLogin = $('#form-login');
-formLogin?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const phone = document.getElementById('login-phone')?.value;
-  const password = document.getElementById('login-password')?.value;
-
-  try {
-    const res = await apiSend('/auth/login', 'POST', {
-      phone,
-      password
-    });
-
-    state.user = res.user;
-    state.token = res.token;
-    localStorage.setItem('token', res.token);
-
-    // 🔥 FECHA O MODAL E ATUALIZA TUDO
-    authModal.setAttribute('aria-hidden', 'true');
-
-    alert("Login realizado com sucesso!");
-
-  } catch (err) {
-    alert("Erro no login: " + err.message);
-  }
-});
-
-
 const formSignup = $('#form-signup');
 const settingsModal = $('#settings-modal');
 
@@ -134,8 +100,6 @@ const timelineProgress = $('#timeline-progress');
 const trackTotalEl = $('#track-total-display');
 const btnTrackWa = $('#btn-track-wa');
 const btnCancelOrder = $('#btn-cancel-order');
-const tmClose = document.getElementById('tm-close');
-
 const pdModal = $('#product-details-modal');
 const pdClose = $('#pd-close');
 const pdAddBtn = $('#pd-add-btn');
@@ -205,72 +169,80 @@ async function apiSend(path, method, body) {
 }
 
 // ====================================================================
-// 4. LÓGICA DE FRETE & ENDEREÇO (CODE LIMPO E ÚNICO)
+// 4. LÓGICA DE FRETE & ENDEREÇO
 // ====================================================================
 
-// 1. Eventos para calcular frete automaticamente
-// Garante que só adiciona os eventos se os elementos existirem
-if (inputAddress) {
-  // Remove ouvintes antigos para evitar duplicidade (opcional, mas boa prática)
-  const newAddress = inputAddress.cloneNode(true);
-  inputAddress.parentNode.replaceChild(newAddress, inputAddress);
-  // Re-seleciona para usar a referência nova
-}
-const inputAddressClean = document.getElementById('cust-address');
-const inputNeighborhoodClean = document.getElementById('cust-neighborhood');
+// Eventos para calcular frete automaticamente
+inputAddress?.addEventListener('blur', () => calcShipByAddress());
+inputNeighborhood?.addEventListener('blur', () => calcShipByAddress());
 
-if (inputAddressClean) {
-  inputAddressClean.addEventListener('blur', () => calcShipByAddress());
-  inputAddressClean.addEventListener('input', debounce(() => calcShipByAddress(), 1000));
-}
+inputAddress?.addEventListener('input', debounce(() => calcShipByAddress(), 800));
+inputNeighborhood?.addEventListener('input', debounce(() => calcShipByAddress(), 800));
 
-if (inputNeighborhoodClean) {
-  inputNeighborhoodClean.addEventListener('blur', () => calcShipByAddress());
-  inputNeighborhoodClean.addEventListener('input', debounce(() => calcShipByAddress(), 1000));
-}
-
-// 2. Função: Converte Texto em Coordenada (Retorna Promise)
+// Nova função: Calcular frete por texto
 function calcShipByAddress() {
-  return new Promise((resolve) => {
-    const address = document.getElementById('cust-address')?.value?.trim();
-    const neighborhood = document.getElementById('cust-neighborhood')?.value?.trim();
+  const address = inputAddress?.value?.trim();
+  const neighborhood = inputNeighborhood?.value?.trim();
 
-    // Se faltar dados, retorna null imediatamente
-    if (!address || !neighborhood) {
-      if(state) state.calculatedFee = null;
-      updateCartUI();
-      resolve(null);
+  if (!address || !neighborhood) return;
+
+  const fullAddress = `${address}, ${neighborhood}, Natal, RN`;
+  const geocoder = new google.maps.Geocoder();
+
+  geocoder.geocode({ address: fullAddress }, (results, status) => {
+    if (status !== "OK" || !results[0]) {
+      console.warn("Não consegui converter o endereço manual:", status);
       return;
     }
-
-    // Feedback visual
-    if (viewFee) viewFee.innerHTML = "<span style='color:orange'>Calculando...</span>";
-    if (btnFinalize) btnFinalize.disabled = true;
-
-    const fullAddress = `${address}, ${neighborhood}, Natal, RN`;
-    const geocoder = new google.maps.Geocoder();
-
-    geocoder.geocode({ address: fullAddress }, (results, status) => {
-      if (status !== "OK" || !results[0]) {
-        console.warn("Endereço não encontrado:", status);
-        if(state) state.calculatedFee = -1;
-        updateCartUI();
-        resolve(null);
-        return;
-      }
-      
-      const location = results[0].geometry.location;
-      
-      // Chama a função de rota (que agora também é uma Promise)
-      calcShip(location.lat(), location.lng())
-        .then(val => resolve(val))
-        .catch(() => resolve(null));
+    const location = results[0].geometry.location;
+    waitForGoogleMaps(() => {
+      calcShip(location.lat(), location.lng());
     });
   });
 }
 
+function calcShip(lat, lng) {
+  state.distanceKm = 0;
+  state.calculatedFee = null;
+  updateCartUI();
 
-// 4. Toggle Entrega / Retirada
+  if (!lat || !lng) return;
+  if (fulfillPickup && fulfillPickup.checked) {
+    state.distanceKm = 0;
+    state.calculatedFee = 0;
+    updateCartUI();
+    return;
+  }
+
+  const service = new google.maps.DirectionsService();
+  service.route({
+      origin: RESTAURANT_LOCATION,
+      destination: { lat, lng },
+      travelMode: google.maps.TravelMode.DRIVING
+    },
+    (result, status) => {
+      if (status !== "OK" || !result.routes?.length) {
+        state.calculatedFee = -1;
+        updateCartUI();
+        return;
+      }
+      const meters = result.routes[0].legs[0].distance.value;
+      const km = meters / 1000;
+      state.distanceKm = km;
+
+      if (km <= 2) {
+        state.calculatedFee = 0;
+      } else if (km > 8) {
+        state.calculatedFee = -1;
+      } else {
+        state.calculatedFee = Math.ceil(km);
+      }
+      updateCartUI();
+    }
+  );
+}
+
+// Toggle Entrega / Retirada
 if (fulfillPickup && fulfillDelivery) {
   function toggleDeliveryMode() {
     const isPickup = fulfillPickup.checked;
@@ -280,9 +252,6 @@ if (fulfillPickup && fulfillDelivery) {
       state.distanceKm = 0;
     } else {
       if (deliveryFields) deliveryFields.style.display = 'block';
-      const addr = document.getElementById('cust-address');
-      const neigh = document.getElementById('cust-neighborhood');
-      if(addr && neigh && addr.value && neigh.value) calcShipByAddress();
     }
     updateCartUI();
   }
@@ -290,22 +259,11 @@ if (fulfillPickup && fulfillDelivery) {
   fulfillDelivery.addEventListener('change', toggleDeliveryMode);
 }
 
-// 5. Autocomplete do Google
-// AQUI ESTAVA O ERRO: Esta função só pode aparecer UMA vez no arquivo
+// Autocomplete Google Places
 function initGoogleAutocomplete() {
-  const addrInput = document.getElementById('cust-address');
-  if (!window.google || !google.maps || !google.maps.places || !addrInput) return;
+  if (!window.google || !google.maps || !google.maps.places || !inputAddress) return;
 
-  // Remove ouvintes anteriores do Google para evitar bugs de duplicação
-  const newEl = addrInput.cloneNode(true);
-  addrInput.parentNode.replaceChild(newEl, addrInput);
-  const finalInput = document.getElementById('cust-address');
-
-  // Re-aplica os eventos de blur/input porque o cloneNode removeu
-  finalInput.addEventListener('blur', () => calcShipByAddress());
-  finalInput.addEventListener('input', debounce(() => calcShipByAddress(), 1000));
-
-  const autocomplete = new google.maps.places.Autocomplete(finalInput, {
+  const autocomplete = new google.maps.places.Autocomplete(inputAddress, {
     types: ['address'],
     componentRestrictions: { country: 'br' },
     fields: ['address_components', 'geometry']
@@ -313,108 +271,43 @@ function initGoogleAutocomplete() {
 
   autocomplete.addListener('place_changed', () => {
     const place = autocomplete.getPlace();
+
     if (place?.geometry) {
-      // Preenche campos se disponível
-      let street = '', number = '', neighborhood = '';
+      let street = '';
+      let number = '';
+      let neighborhood = '';
       place.address_components.forEach(c => {
         if (c.types.includes('route')) street = c.long_name;
         if (c.types.includes('street_number')) number = c.long_name;
-        if (c.types.includes('sublocality_level_1')) neighborhood = c.long_name;
+        if (c.types.includes('sublocality') || c.types.includes('sublocality_level_1') || c.types.includes('neighborhood')) neighborhood = c.long_name;
       });
-      
-      const currentVal = finalInput.value;
-      const typedNum = currentVal.match(/,\s*(\d+)/)?.[1] || '';
-      
-      finalInput.value = `${street}${number || typedNum ? ', ' + (number || typedNum) : ''}`;
-      
-      const neighInput = document.getElementById('cust-neighborhood');
-      if (neighInput && neighborhood) neighInput.value = neighborhood;
+      const typedValue = inputAddress.value;
+      const typedNumberMatch = typedValue.match(/,\s*(\d+)/);
+      const typedNumber = typedNumberMatch ? typedNumberMatch[1] : '';
+      const finalNumber = number || typedNumber;
 
-      calcShip(place.geometry.location.lat(), place.geometry.location.lng());
-    } else {
-      calcShipByAddress();
-    }
-  });
-}
-window.addEventListener('DOMContentLoaded', () => {
-  loadMenu();
-});
+      inputAddress.value = `${street}${finalNumber ? ', ' + finalNumber : ''}`;
+      if (inputNeighborhood) inputNeighborhood.value = neighborhood;
 
-
-// 4. Toggle Entrega / Retirada
-if (fulfillPickup && fulfillDelivery) {
-  function toggleDeliveryMode() {
-    const isPickup = fulfillPickup.checked;
-    if (isPickup) {
-      if (deliveryFields) deliveryFields.style.display = 'none';
-      state.calculatedFee = 0;
-      state.distanceKm = 0;
-    } else {
-      if (deliveryFields) deliveryFields.style.display = 'block';
-      // Tenta recalcular se já tiver endereço preenchido
-      if(inputAddress.value && inputNeighborhood.value) calcShipByAddress();
-    }
-    updateCartUI();
-  }
-  fulfillPickup.addEventListener('change', toggleDeliveryMode);
-  fulfillDelivery.addEventListener('change', toggleDeliveryMode);
-}
-
-// ====================================================================
-// VERSÃO ÚNICA E SEGURA DE calcShip (NÃO GERA DUPLICAÇÃO)
-// ====================================================================
-const calcShip = (lat, lng) => {
-  return new Promise((resolve, reject) => {
-    state.distanceKm = 0;
-    state.calculatedFee = null;
-
-    if (fulfillPickup && fulfillPickup.checked) {
-      state.distanceKm = 0;
-      state.calculatedFee = 0;
-      updateCartUI();
-      resolve(0);
+      waitForGoogleMaps(() => {
+        calcShip(place.geometry.location.lat(), place.geometry.location.lng());
+      });
       return;
     }
 
-    if (!lat || !lng) {
-      resolve(null);
-      return;
-    }
-
-    const service = new google.maps.DirectionsService();
-    service.route(
-      {
-        origin: RESTAURANT_LOCATION,
-        destination: { lat, lng },
-        travelMode: google.maps.TravelMode.DRIVING
-      },
-      (result, status) => {
-        if (status !== "OK" || !result.routes?.length) {
-          state.calculatedFee = -1;
-          updateCartUI();
-          resolve(-1);
-          return;
-        }
-
-        const meters = result.routes[0].legs[0].distance.value;
-        const km = meters / 1000;
-        state.distanceKm = km;
-
-        if (km <= 2) {
-          state.calculatedFee = 0;
-        } else if (km > 15) {
-          state.calculatedFee = -1;
-        } else {
-          state.calculatedFee = Math.ceil(km);
-        }
-
-        updateCartUI();
-        resolve(state.calculatedFee);
-      }
-    );
+    // Fallback se não tiver geometria
+    const fullAddress = `${inputAddress.value}, ${inputNeighborhood ? inputNeighborhood.value : ''}, Natal, RN`;
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ address: fullAddress }, (results, status) => {
+      if (status !== "OK" || !results[0]) return;
+      const location = results[0].geometry.location;
+      waitForGoogleMaps(() => {
+        calcShip(location.lat(), location.lng());
+      });
+    });
   });
-};
-
+}
+window.addEventListener('load', initGoogleAutocomplete);
 
 // ====================================================================
 // 5. MAPA VISUAL (LEAFLET / VISUALIZAÇÃO)
@@ -701,12 +594,10 @@ function saveCart() {
 
 function addToCart(item, qty = 1, obs = "") {
   if (!state.token || !state.user) {
-  pdModal.setAttribute("aria-hidden", "true");
-  openAuthModal('login'); 
-  return;
-}
-
-
+    pdModal.setAttribute("aria-hidden", "true");
+    openAuthModal('login'); // Certifique-se que essa função existe ou está global
+    return;
+  }
   const existingItem = state.cart.find(x => x.id === item.id && x.obs === obs);
   if (existingItem) {
     existingItem.qty += qty;
@@ -827,17 +718,8 @@ function updateCartUI() {
 }
 
 if (floatCartBtn) floatCartBtn.addEventListener('click', () => {
-  // 1. Abre o carrinho
   drawer.setAttribute('aria-hidden', 'false');
-  
-  // 2. 🔥 NOVO: Verifica se tem endereço salvo e calcula o frete sozinho
-  setTimeout(() => {
-      // Verifica se os campos existem e têm valor
-      if (inputAddress && inputAddress.value && inputNeighborhood && inputNeighborhood.value) {
-          // Chama a função de cálculo (sem await aqui pois é apenas visual)
-          calcShipByAddress();
-      }
-  }, 300); // Espera 300ms para o modal terminar de abrir
+  // loadSavedUserData(); // Se tiver essa função definida
 });
 document.addEventListener('click', function(e) {
   if (e.target.id === 'close-cart' || e.target.closest('#close-cart')) {
@@ -881,20 +763,22 @@ if (checkNeedChange) {
   });
 }
 
-
 // ====================================================================
-// 8. FINALIZAÇÃO DE PEDIDO (CHECKOUT - UNIFICADO)
+// 8. FINALIZAÇÃO DE PEDIDO (CHECKOUT)
 // ====================================================================
 
 orderForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  // 🔥 Garante que o frete foi calculado antes de prosseguir
+  await new Promise(resolve => {
+    calcShipByAddress();
+    setTimeout(resolve, 800);
+  });
+
   fb.textContent = '';
-
-  // 1. Definição do modo de entrega
-  const fulfillment = fulfillPickup && fulfillPickup.checked ? 'pickup' : 'delivery';
-
-  // 2. Validações Iniciais
   if (!state.user || !state.token) {
+    // openAuthModal('login'); // Descomentar se existir
     alert("Faça login para continuar.");
     return;
   }
@@ -903,55 +787,17 @@ orderForm?.addEventListener('submit', async (e) => {
     fb.textContent = 'Carrinho vazio.';
     return;
   }
-
   if (!state.isStoreOpen && (!orderSchedule || !orderSchedule.value)) {
     fb.textContent = "Loja fechada! Agende um horário.";
     return;
   }
-
-  // 3. 🔥 LÓGICA DE SEGURANÇA DO FRETE 🔥
-  // Aqui está a mágica: ele espera o cálculo terminar antes de prosseguir
-  if (fulfillment === 'delivery') {
-    // 3.1 Verifica campos
-    if (!inputAddress.value || !inputNeighborhood.value) {
-      alert("Por favor, preencha o endereço completo e o bairro.");
-      return;
-    }
-
-    // 3.2 Força o cálculo e aguarda (await)
-    try {
-      if(btnFinalize) {
-        btnFinalize.disabled = true;
-        btnFinalize.textContent = "Calculando frete...";
-      }
-      
-      await calcShipByAddress();
-      
-    } catch (error) {
-      console.error("Erro cálculo:", error);
-    } finally {
-      if(btnFinalize) {
-        btnFinalize.disabled = false;
-        btnFinalize.textContent = "Finalizar Pedido";
-      }
-    }
-
-    // 3.3 Verifica se o frete é válido após o cálculo
-    if (state.calculatedFee === null || state.calculatedFee === -1) {
-      fb.textContent = "Endereço não atendido ou inválido.";
-      alert("Não conseguimos calcular a entrega para este endereço. Verifique o número e bairro, ou marque no mapa.");
-      return; 
-    }
-  }
-
-  // 4. Pagamento e Troco
+  const fulfillment = fulfillPickup && fulfillPickup.checked ? 'pickup' : 'delivery';
   const paymentEl = document.querySelector('input[name="payment"]:checked');
   if (!paymentEl) {
     fb.textContent = "Selecione o pagamento";
     return;
   }
   const selectedPayment = paymentEl.value;
-  
   let changeData = null;
   if (selectedPayment === 'Dinheiro' && checkNeedChange.checked) {
     if (!inputChangeAmount.value) {
@@ -960,13 +806,11 @@ orderForm?.addEventListener('submit', async (e) => {
     }
     changeData = `Troco para R$ ${inputChangeAmount.value}`;
   }
-
   if (fulfillment === 'delivery') {
     localStorage.setItem('lastAddress', inputAddress.value);
     localStorage.setItem('lastNeighborhood', inputNeighborhood.value);
   }
 
-  // 5. Monta Objetos
   const customer = {
     id: state.user.id,
     name: inputName.value || state.user.name,
@@ -1002,41 +846,19 @@ orderForm?.addEventListener('submit', async (e) => {
     distance_km: state.distanceKm || 0
   };
 
-  // 6. Envia para API
   try {
-    if(btnFinalize) {
-        btnFinalize.textContent = "Processando...";
-        btnFinalize.disabled = true;
-    }
-
     const createdOrder = await apiSend('/orders', 'POST', order);
-    
     state.cart = [];
     saveCart();
     orderForm.reset();
     drawer.setAttribute('aria-hidden', 'true');
     updateCartUI();
-    
     if (createdOrder.pixData) localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
-    
     startTracking(createdOrder.id);
-    
-    if (createdOrder.pixData && typeof showPixModal === 'function') {
-        showPixModal(createdOrder.pixData); 
-    }
-
-    if(btnFinalize) {
-        btnFinalize.textContent = "Finalizar Pedido";
-        btnFinalize.disabled = false;
-    }
-
+    if (createdOrder.pixData) showPixModal(createdOrder.pixData); // Verificar se existe essa função
   } catch (err) {
     console.error(err);
     fb.textContent = 'Erro: ' + err.message;
-    if(btnFinalize) {
-        btnFinalize.textContent = "Tentar Novamente";
-        btnFinalize.disabled = false;
-    }
   }
 });
 
@@ -1164,49 +986,3 @@ trackingBubble?.addEventListener('click', () => {
   }
 });
 tmClose?.addEventListener('click', () => trackingModal.setAttribute('aria-hidden', 'true'));
-
-async function loadMenu() {
-  try {
-    console.log("🔄 Buscando categorias e produtos...");
-
-    const cats = await apiGet('/categories');
-    const items = await apiGet('/items');
-
-    state.categories = cats;
-    state.items = items;
-
-    console.log("Categorias:", state.categories);
-    console.log("Produtos:", state.items);
-
-    renderFilters();
-    renderItems();
-
-  } catch (err) {
-    console.error("Erro ao carregar menu:", err);
-  }
-}
-
-async function loadUserFromToken() {
-  const savedToken = localStorage.getItem('token');
-  if (!savedToken) return;
-
-  try {
-    const me = await apiGet('/auth/me'); // busca usuário logado
-    state.user = me;
-    state.token = savedToken;
-  } catch (e) {
-    console.warn("Token inválido. Fazendo logout.");
-    localStorage.removeItem('token');
-    state.user = null;
-    state.token = '';
-  }
-}
-
-
-window.addEventListener('load', async () => {
-  await loadUserFromToken();
-  loadMenu();
-});
-
-
-
