@@ -1186,7 +1186,8 @@ async function loadMenu() {
   }
 }
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
+  await loadUserFromToken();
   loadMenu();
 });
 
