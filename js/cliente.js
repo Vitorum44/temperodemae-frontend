@@ -169,37 +169,46 @@ async function apiSend(path, method, body) {
 }
 
 // ====================================================================
-// 4. LÓGICA DE FRETE & ENDEREÇO (VERSÃO FINAL UNIFICADA)
+// 4. LÓGICA DE FRETE & ENDEREÇO (CODE LIMPO E ÚNICO)
 // ====================================================================
 
-// 1. Eventos para calcular frete automaticamente (Blur e Input)
-// O cálculo ocorre quando o usuário termina de digitar e sai do campo
+// 1. Eventos para calcular frete automaticamente
+// Garante que só adiciona os eventos se os elementos existirem
 if (inputAddress) {
-  inputAddress.addEventListener('blur', () => calcShipByAddress());
-  // Adiciona um debounce para não calcular a cada letra, mas sim quando parar de digitar
-  inputAddress.addEventListener('input', debounce(() => calcShipByAddress(), 1000));
+  // Remove ouvintes antigos para evitar duplicidade (opcional, mas boa prática)
+  const newAddress = inputAddress.cloneNode(true);
+  inputAddress.parentNode.replaceChild(newAddress, inputAddress);
+  // Re-seleciona para usar a referência nova
 }
-if (inputNeighborhood) {
-  inputNeighborhood.addEventListener('blur', () => calcShipByAddress());
-  inputNeighborhood.addEventListener('input', debounce(() => calcShipByAddress(), 1000));
+const inputAddressClean = document.getElementById('cust-address');
+const inputNeighborhoodClean = document.getElementById('cust-neighborhood');
+
+if (inputAddressClean) {
+  inputAddressClean.addEventListener('blur', () => calcShipByAddress());
+  inputAddressClean.addEventListener('input', debounce(() => calcShipByAddress(), 1000));
 }
 
-// 2. Função: Converte Texto em Coordenada (Retorna Promise para o Checkout esperar)
+if (inputNeighborhoodClean) {
+  inputNeighborhoodClean.addEventListener('blur', () => calcShipByAddress());
+  inputNeighborhoodClean.addEventListener('input', debounce(() => calcShipByAddress(), 1000));
+}
+
+// 2. Função: Converte Texto em Coordenada (Retorna Promise)
 function calcShipByAddress() {
   return new Promise((resolve) => {
-    const address = inputAddress?.value?.trim();
-    const neighborhood = inputNeighborhood?.value?.trim();
+    const address = document.getElementById('cust-address')?.value?.trim();
+    const neighborhood = document.getElementById('cust-neighborhood')?.value?.trim();
 
-    // Se faltar dados essenciais, não calcula, mas resolve a promessa para não travar
+    // Se faltar dados, retorna null imediatamente
     if (!address || !neighborhood) {
-      if (state) state.calculatedFee = null;
+      if(state) state.calculatedFee = null;
       updateCartUI();
       resolve(null);
       return;
     }
 
-    // Feedback visual que está calculando
-    if (viewFee) viewFee.innerHTML = "<span style='color:orange; font-size:12px'>Calculando...</span>";
+    // Feedback visual
+    if (viewFee) viewFee.innerHTML = "<span style='color:orange'>Calculando...</span>";
     if (btnFinalize) btnFinalize.disabled = true;
 
     const fullAddress = `${address}, ${neighborhood}, Natal, RN`;
@@ -207,8 +216,8 @@ function calcShipByAddress() {
 
     geocoder.geocode({ address: fullAddress }, (results, status) => {
       if (status !== "OK" || !results[0]) {
-        console.warn("Endereço não geocodificado:", status);
-        if (state) state.calculatedFee = -1; // -1 indica erro/não encontrado
+        console.warn("Endereço não encontrado:", status);
+        if(state) state.calculatedFee = -1;
         updateCartUI();
         resolve(null);
         return;
@@ -216,13 +225,138 @@ function calcShipByAddress() {
       
       const location = results[0].geometry.location;
       
-      // Chama a função de rota (que também retorna Promise) e repassa a resolução
+      // Chama a função de rota (que agora também é uma Promise)
       calcShip(location.lat(), location.lng())
         .then(val => resolve(val))
         .catch(() => resolve(null));
     });
   });
 }
+
+// 3. Função: Calcula Distância e Preço (Retorna Promise)
+function calcShip(lat, lng) {
+  return new Promise((resolve) => {
+    state.distanceKm = 0;
+    state.calculatedFee = null;
+    updateCartUI();
+
+    // Se for retirada, é grátis
+    if (fulfillPickup && fulfillPickup.checked) {
+      state.distanceKm = 0;
+      state.calculatedFee = 0;
+      updateCartUI();
+      resolve(0);
+      return;
+    }
+
+    if (!lat || !lng) {
+      resolve(null);
+      return;
+    }
+
+    const service = new google.maps.DirectionsService();
+    service.route({
+        origin: RESTAURANT_LOCATION,
+        destination: { lat, lng },
+        travelMode: google.maps.TravelMode.DRIVING
+      },
+      (result, status) => {
+        if (status !== "OK" || !result.routes?.length) {
+          state.calculatedFee = -1; // Erro
+          updateCartUI();
+          resolve(-1);
+          return;
+        }
+
+        const meters = result.routes[0].legs[0].distance.value;
+        const km = meters / 1000;
+        state.distanceKm = km;
+
+        // --- REGRA DE PREÇO ---
+        if (km <= 2) {
+          state.calculatedFee = 0; // Grátis até 2km
+        } else if (km > 15) { // Limite máximo
+          state.calculatedFee = -1;
+        } else {
+          // Exemplo: Arredonda pra cima
+          state.calculatedFee = Math.ceil(km); 
+        }
+        // ----------------------
+
+        updateCartUI();
+        resolve(state.calculatedFee);
+      }
+    );
+  });
+}
+
+// 4. Toggle Entrega / Retirada
+if (fulfillPickup && fulfillDelivery) {
+  function toggleDeliveryMode() {
+    const isPickup = fulfillPickup.checked;
+    if (isPickup) {
+      if (deliveryFields) deliveryFields.style.display = 'none';
+      state.calculatedFee = 0;
+      state.distanceKm = 0;
+    } else {
+      if (deliveryFields) deliveryFields.style.display = 'block';
+      const addr = document.getElementById('cust-address');
+      const neigh = document.getElementById('cust-neighborhood');
+      if(addr && neigh && addr.value && neigh.value) calcShipByAddress();
+    }
+    updateCartUI();
+  }
+  fulfillPickup.addEventListener('change', toggleDeliveryMode);
+  fulfillDelivery.addEventListener('change', toggleDeliveryMode);
+}
+
+// 5. Autocomplete do Google
+// AQUI ESTAVA O ERRO: Esta função só pode aparecer UMA vez no arquivo
+function initGoogleAutocomplete() {
+  const addrInput = document.getElementById('cust-address');
+  if (!window.google || !google.maps || !google.maps.places || !addrInput) return;
+
+  // Remove ouvintes anteriores do Google para evitar bugs de duplicação
+  const newEl = addrInput.cloneNode(true);
+  addrInput.parentNode.replaceChild(newEl, addrInput);
+  const finalInput = document.getElementById('cust-address');
+
+  // Re-aplica os eventos de blur/input porque o cloneNode removeu
+  finalInput.addEventListener('blur', () => calcShipByAddress());
+  finalInput.addEventListener('input', debounce(() => calcShipByAddress(), 1000));
+
+  const autocomplete = new google.maps.places.Autocomplete(finalInput, {
+    types: ['address'],
+    componentRestrictions: { country: 'br' },
+    fields: ['address_components', 'geometry']
+  });
+
+  autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace();
+    if (place?.geometry) {
+      // Preenche campos se disponível
+      let street = '', number = '', neighborhood = '';
+      place.address_components.forEach(c => {
+        if (c.types.includes('route')) street = c.long_name;
+        if (c.types.includes('street_number')) number = c.long_name;
+        if (c.types.includes('sublocality_level_1')) neighborhood = c.long_name;
+      });
+      
+      const currentVal = finalInput.value;
+      const typedNum = currentVal.match(/,\s*(\d+)/)?.[1] || '';
+      
+      finalInput.value = `${street}${number || typedNum ? ', ' + (number || typedNum) : ''}`;
+      
+      const neighInput = document.getElementById('cust-neighborhood');
+      if (neighInput && neighborhood) neighInput.value = neighborhood;
+
+      calcShip(place.geometry.location.lat(), place.geometry.location.lng());
+    } else {
+      calcShipByAddress();
+    }
+  });
+}
+window.addEventListener('load', initGoogleAutocomplete);
 
 // 3. Função: Calcula Distância e Preço (Retorna Promise)
 function calcShip(lat, lng) {
@@ -355,41 +489,6 @@ if (fulfillPickup && fulfillDelivery) {
   fulfillDelivery.addEventListener('change', toggleDeliveryMode);
 }
 
-// 5. Autocomplete do Google (Mantido para garantir funcionamento)
-function initGoogleAutocomplete() {
-  if (!window.google || !google.maps || !google.maps.places || !inputAddress) return;
-
-  const autocomplete = new google.maps.places.Autocomplete(inputAddress, {
-    types: ['address'],
-    componentRestrictions: { country: 'br' },
-    fields: ['address_components', 'geometry']
-  });
-
-  autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-    if (place?.geometry) {
-      // Preenche campos se disponível
-      let street = '', number = '', neighborhood = '';
-      place.address_components.forEach(c => {
-        if (c.types.includes('route')) street = c.long_name;
-        if (c.types.includes('street_number')) number = c.long_name;
-        if (c.types.includes('sublocality_level_1')) neighborhood = c.long_name;
-      });
-      
-      const currentVal = inputAddress.value;
-      const typedNum = currentVal.match(/,\s*(\d+)/)?.[1] || '';
-      
-      inputAddress.value = `${street}${number || typedNum ? ', ' + (number || typedNum) : ''}`;
-      if (inputNeighborhood && neighborhood) inputNeighborhood.value = neighborhood;
-
-      calcShip(place.geometry.location.lat(), place.geometry.location.lng());
-    } else {
-      calcShipByAddress();
-    }
-  });
-}
-window.addEventListener('load', initGoogleAutocomplete);
-
 // ====================================================================
 // SUBSTITUIR A FUNÇÃO calcShip POR ESTA:
 // ====================================================================
@@ -464,55 +563,6 @@ if (fulfillPickup && fulfillDelivery) {
   fulfillDelivery.addEventListener('change', toggleDeliveryMode);
 }
 
-// Autocomplete Google Places
-function initGoogleAutocomplete() {
-  if (!window.google || !google.maps || !google.maps.places || !inputAddress) return;
-
-  const autocomplete = new google.maps.places.Autocomplete(inputAddress, {
-    types: ['address'],
-    componentRestrictions: { country: 'br' },
-    fields: ['address_components', 'geometry']
-  });
-
-  autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-
-    if (place?.geometry) {
-      let street = '';
-      let number = '';
-      let neighborhood = '';
-      place.address_components.forEach(c => {
-        if (c.types.includes('route')) street = c.long_name;
-        if (c.types.includes('street_number')) number = c.long_name;
-        if (c.types.includes('sublocality') || c.types.includes('sublocality_level_1') || c.types.includes('neighborhood')) neighborhood = c.long_name;
-      });
-      const typedValue = inputAddress.value;
-      const typedNumberMatch = typedValue.match(/,\s*(\d+)/);
-      const typedNumber = typedNumberMatch ? typedNumberMatch[1] : '';
-      const finalNumber = number || typedNumber;
-
-      inputAddress.value = `${street}${finalNumber ? ', ' + finalNumber : ''}`;
-      if (inputNeighborhood) inputNeighborhood.value = neighborhood;
-
-      waitForGoogleMaps(() => {
-        calcShip(place.geometry.location.lat(), place.geometry.location.lng());
-      });
-      return;
-    }
-
-    // Fallback se não tiver geometria
-    const fullAddress = `${inputAddress.value}, ${inputNeighborhood ? inputNeighborhood.value : ''}, Natal, RN`;
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ address: fullAddress }, (results, status) => {
-      if (status !== "OK" || !results[0]) return;
-      const location = results[0].geometry.location;
-      waitForGoogleMaps(() => {
-        calcShip(location.lat(), location.lng());
-      });
-    });
-  });
-}
-window.addEventListener('load', initGoogleAutocomplete);
 
 // ====================================================================
 // 5. MAPA VISUAL (LEAFLET / VISUALIZAÇÃO)
