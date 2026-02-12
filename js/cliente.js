@@ -4,6 +4,13 @@
 
 import { API_URL } from "./app-api.js";
 
+function openAuthModal(type = 'login') {
+  const modal = document.getElementById('auth-modal');
+  if (modal) {
+    modal.setAttribute('aria-hidden', 'false');
+  }
+}
+
 // ====================================================================
 // 1. CONFIGURAÇÃO & ESTADO GLOBAL
 // ====================================================================
@@ -668,9 +675,10 @@ function saveCart() {
 function addToCart(item, qty = 1, obs = "") {
   if (!state.token || !state.user) {
   pdModal.setAttribute("aria-hidden", "true");
-  alert("Faça login para adicionar itens ao carrinho.");
+  openAuthModal('login'); 
   return;
 }
+
 
   const existingItem = state.cart.find(x => x.id === item.id && x.obs === obs);
   if (existingItem) {
@@ -1155,9 +1163,4 @@ window.addEventListener('load', () => {
   loadMenu();
 });
 
-function openAuthModal(type = 'login') {
-  const modal = document.getElementById('auth-modal');
-  if (modal) {
-    modal.setAttribute('aria-hidden', 'false');
-  }
-}
+
