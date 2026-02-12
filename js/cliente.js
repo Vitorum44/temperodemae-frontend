@@ -100,6 +100,7 @@ const timelineProgress = $('#timeline-progress');
 const trackTotalEl = $('#track-total-display');
 const btnTrackWa = $('#btn-track-wa');
 const btnCancelOrder = $('#btn-cancel-order');
+const tmClose = document.getElementById('tm-close');
 const pdModal = $('#product-details-modal');
 const pdClose = $('#pd-close');
 const pdAddBtn = $('#pd-add-btn');
