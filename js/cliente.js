@@ -473,16 +473,17 @@ if (fulfillPickup && fulfillDelivery) {
 
 // ================= RENDERIZAR MENU =================
 function renderItems() {
-  const originalScroll = window.scrollY; // 🔥 salva posição da tela
+  const originalScroll = window.scrollY;
 
-  // 🔥 SE O MENU JÁ FOI RENDERIZADO, NÃO APAGA TUDO DE NOVO
-  const existingSections = document.querySelectorAll('.category-section');
-  if (existingSections.length > 0) {
-    return;
-  }
+  // 🔥 NOVA LÓGICA (corrige sumiço dos produtos após login/logout)
+  const grid = document.getElementById('menu-grid');
+  if (!grid) return;
 
+  // SEMPRE limpa antes de renderizar para evitar tela em branco
   grid.innerHTML = '';
+
   const term = state.filters.q ? state.filters.q.toLowerCase() : '';
+
 
   state.categories.forEach(cat => {
     let itemsInCat = state.items.filter(i => i.category_id === cat.id);
