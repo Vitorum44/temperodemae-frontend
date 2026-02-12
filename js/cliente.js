@@ -1125,3 +1125,28 @@ trackingBubble?.addEventListener('click', () => {
   }
 });
 tmClose?.addEventListener('click', () => trackingModal.setAttribute('aria-hidden', 'true'));
+
+async function loadMenu() {
+  try {
+    console.log("🔄 Buscando categorias e produtos...");
+
+    const cats = await apiGet('/categories');
+    const items = await apiGet('/items');
+
+    state.categories = cats;
+    state.items = items;
+
+    console.log("Categorias:", state.categories);
+    console.log("Produtos:", state.items);
+
+    renderFilters();
+    renderItems();
+
+  } catch (err) {
+    console.error("Erro ao carregar menu:", err);
+  }
+}
+
+window.addEventListener('load', () => {
+  loadMenu();
+});
