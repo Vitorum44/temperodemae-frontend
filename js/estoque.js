@@ -1,7 +1,8 @@
 /* ================= DEBUG ================= */
 console.log("SCRIPT ESTOQUE.JS: VERSÃO FINAL - MODAL DE EXCLUSÃO ROBUSTO");
 
-const API = "http://localhost:3000";
+// Use o link do seu servidor no Render
+const API = "https://api-temperodemae.onrender.com";
 const PRODUCTS_ENDPOINT = "/items";
 
 let isFirstLoad = true;
@@ -486,5 +487,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
 
 
