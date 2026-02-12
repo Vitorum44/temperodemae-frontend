@@ -667,10 +667,11 @@ function saveCart() {
 
 function addToCart(item, qty = 1, obs = "") {
   if (!state.token || !state.user) {
-    pdModal.setAttribute("aria-hidden", "true");
-    openAuthModal('login'); // Certifique-se que essa função existe ou está global
-    return;
-  }
+  pdModal.setAttribute("aria-hidden", "true");
+  alert("Faça login para adicionar itens ao carrinho.");
+  return;
+}
+
   const existingItem = state.cart.find(x => x.id === item.id && x.obs === obs);
   if (existingItem) {
     existingItem.qty += qty;
@@ -1153,3 +1154,10 @@ async function loadMenu() {
 window.addEventListener('load', () => {
   loadMenu();
 });
+
+function openAuthModal(type = 'login') {
+  const modal = document.getElementById('auth-modal');
+  if (modal) {
+    modal.setAttribute('aria-hidden', 'false');
+  }
+}
