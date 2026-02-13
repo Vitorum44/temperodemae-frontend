@@ -314,9 +314,27 @@
 .inventory-table td:nth-child(5) { font-weight: 700; color: #16a34a; }
 .inventory-table thead th:nth-child(5) { color: #6b7280; }
 
-/* Botões Tabela */
-.btn-text { background: #f3f4f6; border: none; padding: 6px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; margin-left: 6px; }
-.btn-text.danger { background: #fee2e2; color: #991b1b; }
+/* ===== BOTÕES PRODUTO DESKTOP ===== */
+.product-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.product-buttons button {
+  background: #f3f4f6;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.product-buttons .danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 
 /* Switch */
 .switch { position: relative; width: 46px; height: 24px; display: inline-block; }
