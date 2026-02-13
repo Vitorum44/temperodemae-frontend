@@ -121,15 +121,30 @@ inputAddress?.addEventListener('input', debounce(() => {
   updateCartUI();
 }, 400));
 
-inputNeighborhood?.addEventListener('input', debounce(async () => {
+// Função unificada para calcular quando o bairro muda
+const handleNeighborhoodChange = async () => {
   const street = inputAddress.value.trim();
   const neighborhood = inputNeighborhood.value.trim();
+  
+  // Só calcula se tiver rua e pelo menos 3 letras no bairro
   if (!street || neighborhood.length < 3) return;
+
+  console.log("🔄 Recalculando frete (Bairro alterado)...");
   addressDirty = true;
-  state.calculatedFee = null;
-  updateCartUI();
+  state.calculatedFee = null; // Reseta para evitar valores antigos
+  updateCartUI(); // Atualiza visualmente para "Calculando..."
+  
   await tryCalculateByText();
-}, 600));
+};
+
+// 1. Calcula enquanto digita (com pausa de 800ms para não travar)
+inputNeighborhood?.addEventListener('input', debounce(handleNeighborhoodChange, 800));
+
+// 2. CORREÇÃO CRÍTICA: Calcula imediatamente quando o cliente SAI do campo (clica fora ou aperta TAB)
+inputNeighborhood?.addEventListener('blur', () => {
+  // Pequeno delay para garantir que o valor do input atualizou
+  setTimeout(handleNeighborhoodChange, 100);
+});
 
 const inputReference = $('#cust-reference');
 const inputName = $('#cust-name');
@@ -719,74 +734,143 @@ document.addEventListener('click', function (e) {
   if (e.target.id === 'open-cart' || e.target.closest('#open-cart')) { drawer.setAttribute('aria-hidden', 'false'); loadSavedUserData(); }
 });
 
-// ================= CHECKOUT =================
+// ================= CHECKOUT BLINDADO (SUBSTITUA TUDO ISSO) =================
 orderForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  fb.textContent = '';
-  const fulfillment = fulfillPickup && fulfillPickup.checked ? 'pickup' : 'delivery';
-
-  if (fulfillment === 'delivery') {
-    if (state.calculatedFee === null) {
-      fb.textContent = "Aguarde o cálculo do frete ou confirme seu endereço no mapa.";
-      btnFinalize.disabled = true;
-      return;
-    }
-    if (state.calculatedFee === -1) {
-      fb.textContent = "Endereço fora da área de entrega.";
-      return;
-    }
+  
+  // Limpa mensagens de erro anteriores
+  if (typeof fb !== 'undefined') fb.textContent = '';
+  
+  // Verifica se o carrinho tem itens
+  if (state.cart.length === 0) { 
+      if (typeof fb !== 'undefined') fb.textContent = 'Carrinho vazio.'; 
+      return; 
   }
 
-  if (!state.user || !state.token) { openAuthModal('login'); return; }
-  if (state.cart.length === 0) { fb.textContent = 'Carrinho vazio.'; return; }
-  if (!state.isStoreOpen && (!orderSchedule || !orderSchedule.value)) {
-    fb.textContent = "Loja fechada! Agende um horário.";
+  // Verifica Autenticação
+  const token = localStorage.getItem('token');
+  if (!state.user || !token) { 
+      // Salva o carrinho/estado se necessário
+      openAuthModal('login'); 
+      return; 
+  }
+
+  const fulfillment = (fulfillPickup && fulfillPickup.checked) ? 'pickup' : 'delivery';
+
+  // --- TRAVA DE SEGURANÇA DE FRETE (LÓGICA SENIOR) ---
+  if (fulfillment === 'delivery') {
+    // Validação básica de campos
+    if (!inputAddress.value.trim() || !inputNeighborhood.value.trim()) {
+       if (typeof fb !== 'undefined') fb.textContent = "Preencha o endereço completo.";
+       inputAddress.focus();
+       return;
+    }
+
+    // Se o frete NÃO foi calculado ou deu erro (-1), FORÇAMOS O CÁLCULO AGORA
+    if (state.calculatedFee === null || state.calculatedFee === -1) {
+      const btnSubmit = orderForm.querySelector('button[type="submit"]');
+      const originalText = btnSubmit ? btnSubmit.innerText : 'Finalizar';
+      
+      if (btnSubmit) {
+          btnSubmit.innerText = "Calculando entrega...";
+          btnSubmit.disabled = true;
+      }
+
+      try {
+        console.log("🛡️ Checkout: Forçando cálculo de frete de última hora...");
+        await tryCalculateByText(); // Tenta calcular
+        
+        // Se após tentar, ainda estiver inválido
+        if (state.calculatedFee === null || state.calculatedFee === -1) {
+           throw new Error("Falha no cálculo da rota.");
+        }
+      } catch (err) {
+        console.error("Erro fatal no checkout:", err);
+        if (typeof fb !== 'undefined') fb.textContent = "Não conseguimos calcular a entrega. Verifique o endereço.";
+        if (btnSubmit) {
+            btnSubmit.innerText = originalText;
+            btnSubmit.disabled = false;
+        }
+        return; // PARA O PROCESSO AQUI
+      }
+
+      // Restaura o botão se deu tudo certo
+      if (btnSubmit) {
+          btnSubmit.innerText = originalText;
+          btnSubmit.disabled = false;
+      }
+    }
+  }
+  // -----------------------------------------------------------
+
+  // Verifica Loja Aberta / Agendamento (Sua lógica original)
+  // Nota: Ajustei para checar a variável corretamente
+  const isStoreOpen = state.isStoreOpen; // Certifique-se que essa variável existe no escopo
+  const scheduleInput = document.getElementById('order-schedule'); // Ajuste o ID se necessário
+  
+  if (!isStoreOpen && (!scheduleInput || !scheduleInput.value)) {
+    if (typeof fb !== 'undefined') fb.textContent = "Loja fechada! Agende um horário.";
     return;
   }
 
+  // Verifica Pagamento
   const paymentEl = document.querySelector('input[name="payment"]:checked');
-  if (!paymentEl) { fb.textContent = "Selecione o pagamento"; return; }
+  if (!paymentEl) { 
+      if (typeof fb !== 'undefined') fb.textContent = "Selecione a forma de pagamento"; 
+      return; 
+  }
 
   const selectedPayment = paymentEl.value;
   let changeData = null;
 
-  if (selectedPayment === 'Dinheiro' && checkNeedChange.checked) {
-    if (!inputChangeAmount.value) { fb.textContent = 'Informe o troco.'; return; }
-    changeData = `Troco para R$ ${inputChangeAmount.value}`;
+  // Lógica de Troco
+  if (selectedPayment === 'Dinheiro') {
+      const needChangeCheckbox = document.getElementById('check-need-change');
+      const changeInput = document.getElementById('input-change-amount');
+      
+      if (needChangeCheckbox && needChangeCheckbox.checked) {
+        if (!changeInput || !changeInput.value) { 
+            if (typeof fb !== 'undefined') fb.textContent = 'Informe para quanto é o troco.'; 
+            return; 
+        }
+        changeData = `Troco para R$ ${changeInput.value}`;
+      }
   }
 
-  if (fulfillment === 'delivery') {
-    localStorage.setItem('lastAddress', inputAddress.value);
-    localStorage.setItem('lastNeighborhood', inputNeighborhood.value);
-  }
-
+  // Montagem do Objeto do Cliente
   const customer = {
     id: state.user.id,
-    name: inputName.value || state.user.name,
-    phone: inputPhone.value || state.user.phone,
+    name: (inputName && inputName.value) ? inputName.value : state.user.name,
+    phone: (inputPhone && inputPhone.value) ? inputPhone.value : state.user.phone,
     address: fulfillment === 'pickup' ? 'Retirada na Loja' : inputAddress.value,
     neighborhood: fulfillment === 'pickup' ? '' : inputNeighborhood.value,
-    reference: inputReference ? inputReference.value : '',
-    email: inputEmail ? inputEmail.value : '',
+    reference: (typeof inputReference !== 'undefined') ? inputReference.value : '',
+    email: state.user.email || '', // Garante string vazia se não tiver
     paymentMethod: selectedPayment,
     change: changeData,
-    scheduledTo: (!state.isStoreOpen) ? orderSchedule.value : null
+    scheduledTo: (!isStoreOpen && scheduleInput) ? scheduleInput.value : null
   };
 
-  const order = {
+  // Cálculo dos totais
+  const subtotal = cartSubtotal(); // Certifique-se que essa função existe
+  const fee = (fulfillment === 'pickup') ? 0 : (state.calculatedFee || 0);
+  const total = subtotal + fee;
+
+  // Montagem do Pedido
+  const orderData = {
     items: state.cart.map(i => ({
       itemId: i.id,
       name: i.name,
       qty: i.qty,
-      price: +i.price,
-      obs: i.obs,
+      price: parseFloat(i.price),
+      obs: i.obs || '',
       image: i.image
     })),
-    subtotal: cartSubtotal(),
-    deliveryFee: fulfillment === 'pickup' ? 0 : state.calculatedFee,
+    subtotal: subtotal,
+    deliveryFee: fee,
     discount: 0,
-    total: cartSubtotal() + (fulfillment === 'pickup' ? 0 : state.calculatedFee),
-    neighborhood: customer.neighborhood,
+    total: total,
+    neighborhood: customer.neighborhood, // Para estatísticas
     customer: customer,
     fulfillment: fulfillment,
     paymentMethod: selectedPayment,
@@ -795,13 +879,49 @@ orderForm?.addEventListener('submit', async (e) => {
     distance_km: state.distanceKm || 0
   };
 
+  // Envio para API
   try {
-    const createdOrder = await apiSend('/orders', 'POST', order);
-    state.cart = []; saveCart(); orderForm.reset(); drawer.setAttribute('aria-hidden', 'true'); updateCartUI();
-    if (createdOrder.pixData) localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
-    startTracking(createdOrder.id);
-    if (createdOrder.pixData) showPixModal(createdOrder.pixData);
-  } catch (err) { console.error(err); fb.textContent = 'Erro: ' + err.message; }
+    const btnSubmit = orderForm.querySelector('button[type="submit"]');
+    if(btnSubmit) {
+        btnSubmit.disabled = true;
+        btnSubmit.innerText = "Processando...";
+    }
+
+    const createdOrder = await apiSend('/orders', 'POST', orderData);
+    
+    // Sucesso!
+    state.cart = []; 
+    saveCart(); 
+    orderForm.reset(); 
+    
+    const drawer = document.getElementById('cart-drawer');
+    if(drawer) drawer.setAttribute('aria-hidden', 'true'); 
+    
+    updateCartUI();
+
+    // Lógica do Pix / Rastreamento
+    if (createdOrder.pixData) {
+        localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
+        showPixModal(createdOrder.pixData); // Mostra o Pix
+    }
+    
+    // Se tiver função de tracking, inicia
+    if (typeof startTracking === 'function') {
+        startTracking(createdOrder.id);
+    } else {
+        alert("Pedido realizado com sucesso!");
+    }
+
+  } catch (err) { 
+    console.error(err); 
+    if (typeof fb !== 'undefined') fb.textContent = 'Erro ao enviar pedido: ' + err.message; 
+    
+    const btnSubmit = orderForm.querySelector('button[type="submit"]');
+    if(btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = "Finalizar Pedido";
+    }
+  }
 });
 
 // ================= RASTREAMENTO =================
@@ -991,16 +1111,45 @@ formLogin?.addEventListener('submit', async (e) => { e.preventDefault(); loginFb
 formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.textContent = 'Cadastrando...'; try { const cleanPhone = suPhone.value.replace(/\D/g, ''); const r = await apiSend('/auth/register', 'POST', { name: suName.value, phone: cleanPhone, email: suEmail.value, password: suPass.value }); setToken(r.token); setUser(r.user); authModal.setAttribute('aria-hidden', 'true'); loadData(); } catch (err) { suFb.textContent = err.message; } });
 
 // ================= LOADER =================
+/* SUBSTITUA A SUA FUNÇÃO loadData POR ESTA VERSÃO CORRIGIDA */
 async function loadData() {
-  await tryLoadMe();
-  if (localStorage.getItem('lastOrderId')) startTracking(localStorage.getItem('lastOrderId'));
-  try { const s = await apiGet("/settings"); state.storeConfig = s; if (s.mode === 'force_closed') { state.isStoreOpen = false; if (fb) fb.textContent = "Fechado temporariamente."; } } catch (e) { }
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
   try {
-    const [c, s, i] = await Promise.all([apiGet('/categories'), apiGet('/subcategories'), apiGet('/items')]); 
-    state.categories = c || []; state.subcategories = s || []; state.items = i || [];
-    renderFilters(); renderItems();
-  } catch (err) { console.error("Erro menu", err); }
-  updateCartUI(); loadSavedUserData(); initCarousel();
+    const res = await apiGet('/auth/me');
+    state.user = res.user;
+    
+    // Atualiza UI do usuário logado
+    if (authTitle) authTitle.textContent = `Olá, ${res.user.name.split(' ')[0]}`;
+    if (formLogin) formLogin.style.display = 'none';
+    if (profileMenu) profileMenu.style.display = 'block';
+
+    // Preenche campos do Perfil
+    if (setName) setName.value = res.user.name;
+    if (setPhone) setPhone.value = res.user.phone;
+    if (setEmail) setEmail.value = res.user.email;
+
+    // --- AQUI ESTÁ A CORREÇÃO (PREENCHIMENTO INTELIGENTE) ---
+    if (res.user.address) {
+      if (inputAddress) inputAddress.value = res.user.address;
+      if (inputNeighborhood && res.user.neighborhood) inputNeighborhood.value = res.user.neighborhood;
+      
+      // Força o sistema a "sujar" o endereço para permitir recálculo
+      addressDirty = true;
+      
+      console.log("📍 Endereço carregado do perfil. Calculando frete automático...");
+      
+      // Chama o cálculo imediatamente se tivermos endereço
+      waitForGoogleMaps(() => tryCalculateByText());
+    }
+    // ---------------------------------------------------------
+
+  } catch (err) {
+    console.error("Erro ao carregar usuário:", err);
+    localStorage.removeItem('token');
+    state.token = '';
+  }
 }
 
 function loadSavedUserData() { if (state.user) return; const savedAddress = localStorage.getItem('lastAddress'); const savedNeighborhood = localStorage.getItem('lastNeighborhood'); if (savedAddress && inputAddress) inputAddress.value = savedAddress; if (savedNeighborhood && inputNeighborhood) inputNeighborhood.value = savedNeighborhood; }
