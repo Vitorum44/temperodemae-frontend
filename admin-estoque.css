@@ -789,6 +789,25 @@ html {
   display: none;
 }
 
+/* ===== ESCONDER BOTÕES NO MOBILE ===== */
+@media (max-width: 600px) {
+
+  .product-buttons {
+    display: none !important;
+  }
+
+  .product-dots {
+    display: flex !important;
+  }
+
+}
+
+.product-dots {
+  display: none;
+}
+
+
+
 
 
 
