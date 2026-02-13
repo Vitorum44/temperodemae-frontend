@@ -32,16 +32,24 @@ async function api(url, method = "GET", body) {
     });
 
     if (!res.ok) {
-      if (res.status === 204) return true;
       console.error("Erro na requisição:", res.status);
+      const errorText = await res.text();
+      console.error("Resposta servidor:", errorText);
       return null;
     }
-    return res.json();
+
+    // 🔥 TRATAMENTO SE NÃO TIVER JSON
+    const text = await res.text();
+    if (!text) return true;
+
+    return JSON.parse(text);
+
   } catch (error) {
     console.error("Erro API:", error);
-    return [];
+    return null;
   }
 }
+
 
 /* ================= LOAD ================= */
 async function loadData() {
@@ -411,8 +419,11 @@ window.saveProduct = async () => {
     const result = await api(id ? `/items/${id}` : "/items", id ? "PATCH" : "POST", data);
 
     // 3. Só fecha se deu certo (se result não for null)
-    if (result) {
-      alert("Produto salvo com sucesso!"); // Feedback visual
+    if (result !== null && result !== undefined) {
+
+
+      showNotify("Sucesso 🎉", "Produto salvo com sucesso!");
+ // Feedback visual
       closeProductModal();
       await loadData(); // <--- ISSO AQUI ATUALIZA A LISTA SOZINHO
     } else {
@@ -549,5 +560,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
+function showNotify(title, message) {
+    $("notify-title").innerText = title;
+    $("notify-message").innerText = message;
+    $("notify-modal").classList.remove("hidden");
+}
+
+function closeNotify() {
+    $("notify-modal").classList.add("hidden");
+}
+
 
 
