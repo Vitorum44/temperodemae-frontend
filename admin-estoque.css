@@ -802,25 +802,20 @@ html {
 
 }
 
-/* ESCONDE MENU MOBILE NO DESKTOP */
-.bottom-nav {
+/* ===== AÇÕES PRODUTO (BASE) ===== */
+
+/* Desktop padrão */
+.product-dots {
   display: none;
 }
 
-/* ===== ESCONDER BOTÕES NO MOBILE ===== */
-@media (max-width: 600px) {
-
-  .product-buttons {
-    display: none !important;
-  }
-
-  .product-dots {
-    display: flex !important;
-  }
-
+.product-buttons {
+  display: flex;
 }
 
-.product-dots {
+
+/* ESCONDE MENU MOBILE NO DESKTOP */
+.bottom-nav {
   display: none;
 }
 
