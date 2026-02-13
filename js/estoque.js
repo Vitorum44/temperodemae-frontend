@@ -531,17 +531,16 @@ function renderProducts() {
       </td>
       <td style="position: relative;">
   <div class="product-actions">
-    
-    <!-- Botões normais (desktop) -->
+
+    <!-- DESKTOP -->
     <div class="product-buttons">
-      <button class="btn-text" onclick="editProduct('${p.id}')">Editar</button>
-      <button class="btn-text danger" onclick="deleteProduct('${p.id}')">Excluir</button>
+      <button onclick="editProduct('${p.id}')">Editar</button>
+      <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
     </div>
 
-    <!-- 3 pontinhos (mobile) -->
+    <!-- MOBILE -->
     <div class="product-dots">⋮</div>
 
-    <!-- Menu escondido (mobile) -->
     <div class="product-menu">
       <button onclick="editProduct('${p.id}')">Editar</button>
       <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
@@ -549,6 +548,9 @@ function renderProducts() {
 
   </div>
 </td>
+
+
+
 
     `;
     tbody.appendChild(tr);
