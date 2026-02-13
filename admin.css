@@ -35,6 +35,12 @@ body.admin-page {
   -webkit-font-smoothing: antialiased;
 }
 
+.login-box {
+  backdrop-filter: blur(8px);
+  background: rgba(255,255,255,0.95);
+}
+
+
 
 
 
