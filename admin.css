@@ -25,18 +25,16 @@
 
 
 body.admin-page {
-
-  background-color: var(--bg-page);
+  background:
+    linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+    url('./assets/banner2.png') center/cover no-repeat fixed;
 
   font-family: 'Inter', sans-serif;
-
   margin: 0;
-
   color: var(--text-main);
-
   -webkit-font-smoothing: antialiased;
-
 }
+
 
 
 
@@ -829,6 +827,12 @@ body.admin-page {
   background: #059669;
 }
 
+.order-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 768px) {
   .order-actions {
     flex-direction: column;
@@ -911,8 +915,4 @@ body.admin-page {
     padding: 10px;
   }
 }
-
-
-
-
 
