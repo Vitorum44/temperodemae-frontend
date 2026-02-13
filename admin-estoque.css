@@ -659,17 +659,8 @@ html {
 }
 
 
-/* ================= MOBILE PRODUTOS (TUDO EM UMA LINHA LIMPA) ================= */
+/* ================= MOBILE PRODUTOS - LINHA PERFEITA ================= */
 @media (max-width: 600px) {
-
-  /* REMOVE LARGURAS FIXAS NO MOBILE */
-.inventory-table,
-.inventory-table td,
-.inventory-table th {
-  width: auto !important;
-  table-layout: auto !important;
-}
-
 
   .inventory-table thead {
     display: none;
@@ -678,47 +669,48 @@ html {
   .inventory-table tbody tr {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: #ffffff;
+    background: #fff;
     padding: 10px 12px;
     border-radius: 16px;
     box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    gap: 8px;
   }
 
   .inventory-table td {
     border: none;
     padding: 0;
+    white-space: normal; /* 🔥 permite quebra */
     font-size: 11px;
-    white-space: nowrap;
   }
 
   /* FOTO */
   .inventory-table td:nth-child(1) {
-    flex: 0 0 50px;
+    flex: 0 0 48px;
   }
 
   .product-thumb {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
   }
 
-  /* NOME */
+  /* BLOCO NOME */
   .inventory-table td:nth-child(2) {
     flex: 1;
-    min-width: 90px;
+    min-width: 0;
   }
 
   .product-name-text {
     font-size: 12px;
     font-weight: 600;
+    line-height: 1.2;
   }
 
   .product-description {
     display: none;
   }
 
-  /* ESCONDE categoria/subcategoria */
+  /* ESCONDE CATEGORIA */
   .inventory-table td:nth-child(3),
   .inventory-table td:nth-child(4) {
     display: none;
@@ -726,39 +718,38 @@ html {
 
   /* PREÇO */
   .inventory-table td:nth-child(5) {
+    flex: 0 0 60px;
     font-weight: 700;
     color: #16a34a;
-    min-width: 60px;
-    text-align: center;
+    text-align: right;
   }
 
   /* ESTOQUE */
   .inventory-table td:nth-child(6) {
-    min-width: 28px;
+    flex: 0 0 30px;
     text-align: center;
     color: #6b7280;
   }
 
   /* SWITCH */
   .inventory-table td:nth-child(7) {
-    transform: scale(0.75);
+    flex: 0 0 50px;
+    transform: scale(0.8);
   }
 
   /* BOTÕES */
   .inventory-table td:nth-child(8) {
     display: flex;
     gap: 4px;
+    flex: 0 0 auto;
   }
 
   .btn-text {
-    padding: 3px 6px;
     font-size: 9px;
+    padding: 3px 6px;
     border-radius: 6px;
   }
-
 }
-
-
 
 
 
