@@ -407,10 +407,11 @@ window.saveProduct = async () => {
       description: $("prod-description").value,
       price: Number($("prod-price").value.replace(',', '.')),
       stock: Number($("prod-stock").value),
-      categoryId: $("prod-category").value,
-      subcategoryId: $("prod-subcategory").value,
+      category_id: $("prod-category").value,
+      subcategory_id: $("prod-subcategory").value || null,
       active: true
     };
+
 
     if (!data.name || !data.price || !data.stock || !data.categoryId) {
       alert("Preencha todos os campos obrigatórios.");
