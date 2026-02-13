@@ -1013,78 +1013,91 @@ function updatePixTick(deadline, orderId) {
   }
 }
 
+/* ========================================================= */
+/* NOVA FUNÇÃO DE MODAL PIX (LAYOUT PROFISSIONAL)            */
+/* ========================================================= */
 function showPixModal(pixData) {
-  const existing = document.getElementById('modal-pix-dynamic');
+  // 1. Remove se já existir algum aberto para não duplicar
+  const existing = document.getElementById('modal-pix-modern');
   if (existing) existing.remove();
 
   state.pixModalOpen = true;
 
-  const div = document.createElement('div');
-  div.id = 'modal-pix-dynamic';
-  div.className = 'modal active';
-  div.setAttribute('aria-hidden', 'false');
-  div.style.zIndex = '10000';
+  // 2. Cria o elemento container (Fundo escuro)
+  const overlay = document.createElement('div');
+  overlay.id = 'modal-pix-modern';
+  overlay.className = 'pix-overlay'; // Usa a classe do CSS novo
 
-  div.innerHTML = `
-    <div class="modal-dialog" style="max-width:350px; text-align:center; padding:30px; position:relative;">
-      <button id="btn-close-pix"
-        style="
-          position:absolute;
-          top:10px;
-          right:15px;
-          border:none;
-          background:none;
-          font-size:26px;
-          cursor:pointer;
-        ">
-        &times;
-      </button>
-
-      <h3>Pagamento Pix</h3>
-      <p style="color:var(--primary); font-weight:bold; margin-bottom:15px">
-        Aguardando pagamento...
-      </p>
-
-      <div style="
-        background:#fff;
-        padding:10px;
-        display:inline-block;
-        border:1px solid #ddd;
-        border-radius:8px;
-        margin-bottom:15px
-      ">
-        <img src="data:image/png;base64,${pixData.qr_base64}"
-             style="width:180px;height:180px;">
+  // 3. Monta o HTML Moderno
+  overlay.innerHTML = `
+    <div class="pix-card">
+      <button id="btn-close-pix" class="pix-close-btn">&times;</button>
+      
+      <div style="margin-top: 10px;">
+        <img src="https://logospng.org/download/pix/logo-pix-icone-512.png" width="40" style="margin-bottom:10px;">
+        <h3 class="pix-title">Pagamento via Pix</h3>
+        <p class="pix-subtitle">Escaneie o QR Code ou copie o código abaixo</p>
       </div>
 
-      <textarea id="pix-copy-paste"
-        readonly
-        style="width:100%; height:55px; font-size:11px; padding:8px; margin-bottom:10px;">
-${pixData.qr_code}
-      </textarea>
+      <div class="pix-qr-container">
+        <img src="data:image/png;base64,${pixData.qr_base64}" class="pix-qr-img" alt="QR Code Pix">
+      </div>
 
-      <button id="btn-copy-pix" class="btn primary block">
-        Copiar Código
+      <div class="pix-copy-area">
+        <span class="pix-code-text">${pixData.qr_code}</span>
+        <span style="font-size:18px;">📋</span>
+      </div>
+
+      <textarea id="pix-hidden-input" style="position:absolute; left:-9999px;">${pixData.qr_code}</textarea>
+
+      <button id="btn-copy-pix" class="pix-btn-copy">
+        COPIAR CÓDIGO PIX
       </button>
+
+      <p style="font-size:12px; color:#9ca3af; margin-top:15px;">
+        Após pagar, o pedido atualiza automaticamente.
+      </p>
     </div>
   `;
 
-  document.body.appendChild(div);
+  document.body.appendChild(overlay);
 
-  // ❌ FECHA APENAS O MODAL — NÃO SOME A BOLINHA
-  div.querySelector('#btn-close-pix').onclick = () => {
+  // --- EVENTOS DOS BOTÕES ---
+
+  // A. Fechar Modal
+  const closeBtn = overlay.querySelector('#btn-close-pix');
+  closeBtn.onclick = () => {
     state.pixModalOpen = false;
     state.pixManuallyClosed = true;
-    div.remove();
+    overlay.style.opacity = '0'; // Efeito visual de sumir
+    setTimeout(() => overlay.remove(), 300); 
   };
 
-  div.querySelector('#btn-copy-pix').onclick = () => {
-    const txt = div.querySelector('#pix-copy-paste');
-    txt.select();
-    document.execCommand('copy');
-    navigator.clipboard.writeText(txt.value)
-      .then(() => alert("Código Pix copiado!"))
-      .catch(() => alert("Erro ao copiar. Tente selecionar manualmente."));
+  // B. Copiar Código
+  const copyBtn = overlay.querySelector('#btn-copy-pix');
+  copyBtn.onclick = () => {
+    const hiddenInput = overlay.querySelector('#pix-hidden-input');
+    hiddenInput.select();
+    
+    // Tenta copiar de forma moderna, se falhar usa o método antigo
+    navigator.clipboard.writeText(pixData.qr_code)
+      .then(() => feedbackCopy())
+      .catch(() => {
+        document.execCommand('copy'); 
+        feedbackCopy();
+      });
+
+    // Função para mudar a cor do botão avisando que copiou
+    function feedbackCopy() {
+      const originalText = copyBtn.innerText;
+      copyBtn.innerText = "CÓDIGO COPIADO! ✅";
+      copyBtn.style.backgroundColor = "#059669"; // Verde mais escuro
+      
+      setTimeout(() => {
+        copyBtn.innerText = originalText;
+        copyBtn.style.backgroundColor = "#10b981"; // Volta ao normal
+      }, 2000);
+    }
   };
 }
 
