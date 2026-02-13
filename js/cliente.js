@@ -1,6 +1,5 @@
 /* ==================================================================== */
-/* ARQUIVO: cliente.js (VERSÃO FINAL CONSOLIDADA - CORRIGIDA)           */
-/* LÓGICA: 2KM GRÁTIS / R$ 1,00 POR KM ATÉ 8KM                          */
+/* ARQUIVO: cliente.js (VERSÃO FINAL "SÊNIOR" - UX + SEGURANÇA)         */
 /* ==================================================================== */
 
 import { API_URL } from "./app-api.js";
@@ -47,9 +46,8 @@ const state = {
   activeOrderData: null
 };
 
-// 🔹 ESTADO GLOBAL DO ENDEREÇO
+// Estado para controle de alteração de endereço
 let addressDirty = false; 
-
 
 // ================= HELPERS =================
 const $ = (s) => document.querySelector(s);
@@ -65,6 +63,7 @@ function debounce(fn, delay = 300) {
 }
 
 async function tryCalculateByText() {
+  // CORREÇÃO: Validação mínima antes de gastar recursos
   if (!inputAddress.value.trim()) return;
 
   const fullAddress = `${inputAddress.value}, ${inputNeighborhood.value || ''}, ${MY_CITY_STATE}`;
@@ -86,7 +85,6 @@ async function tryCalculateByText() {
   }
 }
 
-
 // ================= ELEMENTOS DOM =================
 const chipsCat = $('#category-chips');
 const grid = $('#menu-grid');
@@ -107,7 +105,6 @@ const inputAddress = $('#cust-address');
 const inputNeighborhood = $('#cust-neighborhood');
 
 // ====== CONTROLE SÊNIOR DE ALTERAÇÃO DE ENDEREÇO ======
-
 // Quando digitar rua/número
 inputAddress?.addEventListener('input', debounce(() => {
   addressDirty = true;
@@ -129,6 +126,13 @@ inputNeighborhood?.addEventListener('input', debounce(async () => {
   await tryCalculateByText(); // 🔁 recalcula com rua + bairro
 }, 600));
 
+// Quando SAIR do campo bairro (blur) -> Garante o cálculo se o debounce falhar
+inputNeighborhood?.addEventListener('blur', async () => {
+  const street = inputAddress.value.trim();
+  if (street && state.calculatedFee === null) {
+      await tryCalculateByText();
+  }
+});
 
 
 const inputReference = $('#cust-reference');
@@ -141,7 +145,6 @@ const checkNeedChange = $('#need-change');
 const inputChangeAmount = $('#change-amount');
 const floatCartBtn = $('#float-cart-btn');
 const floatCartCount = $('#float-cart-count');
-
 
 // ================= LÓGICA DO TROCO =================
 const payCash = document.getElementById('pay-cash');
@@ -170,7 +173,6 @@ checkNeedChange?.addEventListener('change', () => {
     inputChangeAmount.value = '';
   }
 });
-
 
 // MAPA & GPS
 const mapModal = document.getElementById('map-modal');
@@ -761,28 +763,59 @@ document.addEventListener('click', function (e) {
   if (e.target.id === 'open-cart' || e.target.closest('#open-cart')) { drawer.setAttribute('aria-hidden', 'false'); loadSavedUserData(); }
 });
 
-// ================= CHECKOUT =================
+// ================= CHECKOUT (COM SEGURANÇA SÊNIOR) =================
 orderForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
   fb.textContent = '';
 
-  // 🔹 DEFINE UMA ÚNICA VEZ
   const fulfillment = fulfillPickup && fulfillPickup.checked ? 'pickup' : 'delivery';
 
-  // ====== CAMADA DE SEGURANÇA DO FRETE (SÊNIOR) ======
+  // ====== 🛡️ CAMADA DE SEGURANÇA DO FRETE (SÊNIOR) ======
   if (fulfillment === 'delivery') {
-    if (state.calculatedFee === null) {
-      fb.textContent = "Aguarde o cálculo do frete ou confirme seu endereço no mapa.";
-      btnFinalize.disabled = true;
-      return;
+    // 1. Validação básica de input
+    if (!inputAddress.value.trim()) {
+        fb.textContent = "Preencha o endereço.";
+        inputAddress.focus();
+        return;
     }
 
-    if (state.calculatedFee === -1) {
-      fb.textContent = "Endereço fora da área de entrega.";
-      return;
+    // 2. Trava de Segurança: Se não calculou (null) ou deu erro (-1), forçamos agora!
+    if (state.calculatedFee === null || state.calculatedFee === -1) {
+      const btnSubmit = orderForm.querySelector('button[type="submit"]');
+      const originalText = btnSubmit ? btnSubmit.innerText : 'Finalizar';
+      
+      if (btnSubmit) {
+          btnSubmit.innerText = "Calculando frete...";
+          btnSubmit.disabled = true;
+      }
+
+      try {
+        console.log("🛡️ Checkout: Forçando cálculo de frete...");
+        // AWAIT IMPORTANTE: Espera o cálculo terminar antes de seguir
+        await tryCalculateByText(); 
+        
+        // Verifica se o cálculo funcionou (state deve ter mudado)
+        if (state.calculatedFee === null || state.calculatedFee === -1) {
+           throw new Error("Não foi possível calcular a rota para este endereço.");
+        }
+      } catch (err) {
+        console.error("Erro fatal no checkout:", err);
+        fb.textContent = "Não conseguimos calcular a entrega. Verifique o número e o bairro.";
+        if (btnSubmit) {
+            btnSubmit.innerText = originalText;
+            btnSubmit.disabled = false;
+        }
+        return; // ⛔ PARA TUDO: Não deixa enviar o pedido
+      }
+
+      // Restaura o botão
+      if (btnSubmit) {
+          btnSubmit.innerText = originalText;
+          btnSubmit.disabled = false;
+      }
     }
   }
-  // ================================================
+  // ========================================================
 
   if (!state.user || !state.token) {
     openAuthModal('login');
@@ -912,9 +945,8 @@ function updateTrackUI(order) {
   if (trackMsg) trackMsg.textContent = m;
   if (timelineProgress) timelineProgress.style.width = pw;
 
-  // 🔽🔽🔽 AQUI ENTRA O RESUMO DOS ITENS 🔽🔽🔽
+  // 🔽 RESUMO ITENS
   const itemsList = document.getElementById("track-items-list");
-
   if (itemsList && order.items) {
     itemsList.innerHTML = order.items.map(i => {
       const obs = i.obs
@@ -932,7 +964,7 @@ function updateTrackUI(order) {
       `;
     }).join("");
   }
-  // 🔼🔼🔼 FIM DO RESUMO 🔼🔼🔼
+  // 🔼 FIM RESUMO
 
   if (trackTotalEl) trackTotalEl.textContent = brl(order.total);
   if (btnTrackWa) btnTrackWa.href = `https://wa.me/5584996065229?text=${encodeURIComponent(`Olá, sobre meu pedido #${order.id}...`)}`;
@@ -1177,7 +1209,7 @@ amClose?.addEventListener('click', () => authModal.setAttribute('aria-hidden', '
 formLogin?.addEventListener('submit', async (e) => { e.preventDefault(); loginFb.textContent = 'Entrando...'; try { const cleanPhone = loginPhone.value.replace(/\D/g, ''); const r = await apiSend('/auth/login', 'POST', { phone: cleanPhone, password: loginPass.value }); setToken(r.token); setUser(r.user); authModal.setAttribute('aria-hidden', 'true'); loadData(); } catch (err) { loginFb.textContent = err.message; } });
 formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.textContent = 'Cadastrando...'; try { const cleanPhone = suPhone.value.replace(/\D/g, ''); const r = await apiSend('/auth/register', 'POST', { name: suName.value, phone: cleanPhone, email: suEmail.value, password: suPass.value }); setToken(r.token); setUser(r.user); authModal.setAttribute('aria-hidden', 'true'); loadData(); } catch (err) { suFb.textContent = err.message; } });
 
-// ================= LOADER (CONSOLIDADO) =================
+// ================= LOADER (CORREÇÃO DE UX: CÁLCULO AUTOMÁTICO) =================
 async function loadData() {
   await tryLoadMe();
   if (localStorage.getItem('lastOrderId')) startTracking(localStorage.getItem('lastOrderId'));
@@ -1236,7 +1268,27 @@ async function loadData() {
 
 function loadSavedUserData() { if (state.user) return; const savedAddress = localStorage.getItem('lastAddress'); const savedNeighborhood = localStorage.getItem('lastNeighborhood'); if (savedAddress && inputAddress) inputAddress.value = savedAddress; if (savedNeighborhood && inputNeighborhood) inputNeighborhood.value = savedNeighborhood; }
 async function tryLoadMe() { if (!state.token) return; try { const me = await apiGet('/auth/me'); setUser(me); } catch { setToken(''); setUser(null); } }
-function setUser(u) { state.user = u || null; if (u) { if (btnProfile) btnProfile.textContent = `Olá, ${u.name.split(' ')[0]}`; if (inputName) inputName.value = u.name || ''; if (inputPhone) inputPhone.value = u.phone || ''; if (inputEmail) inputEmail.value = u.email || ''; } else { if (btnProfile) btnProfile.textContent = '👤 Perfil'; } }
+
+// 📍 CORREÇÃO UX: SE O USUÁRIO JÁ TEM ENDEREÇO, CALCULA LOGO
+function setUser(u) { 
+  state.user = u || null; 
+  if (u) { 
+    if (btnProfile) btnProfile.textContent = `Olá, ${u.name.split(' ')[0]}`; 
+    if (inputName) inputName.value = u.name || ''; 
+    if (inputPhone) inputPhone.value = u.phone || ''; 
+    if (inputEmail) inputEmail.value = u.email || ''; 
+
+    // 👉 AQUI A MÁGICA: Se veio endereço do banco ou cache, calcula AGORA.
+    if (inputAddress.value) {
+       console.log("📍 Usuário logado: Forçando cálculo inicial de frete...");
+       waitForGoogleMaps(() => tryCalculateByText());
+    }
+
+  } else { 
+    if (btnProfile) btnProfile.textContent = '👤 Perfil'; 
+  } 
+}
+
 function setToken(t) { state.token = t || ''; if (t) localStorage.setItem('token', t); else localStorage.removeItem('token'); }
 
 btnProfile?.addEventListener('click', (e) => { e.stopPropagation(); if (state.user) { const isHidden = profileMenu.getAttribute('aria-hidden') === 'true'; profileMenu.setAttribute('aria-hidden', isHidden ? 'false' : 'true'); } else { openAuthModal('login'); } });
