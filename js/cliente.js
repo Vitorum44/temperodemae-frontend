@@ -28,6 +28,7 @@ function waitForGoogleMaps(callback, tries = 0) {
 const state = {
   pixModalOpen: false,
   pixManuallyClosed: false,
+  categories: [], subcategories: [], items: [],
   categories: [], 
   subcategories: [], 
   items: [],
@@ -35,9 +36,13 @@ const state = {
   filters: { cat: null, sub: null, q: '' },
   token: localStorage.getItem('token') || '',
   user: null,
+  calculatedFee: 0, distanceKm: 0,
   calculatedFee: 0, 
   distanceKm: 0,
   currentOrderId: localStorage.getItem('lastOrderId') || null,
+  isStoreOpen: true, storeConfig: null,
+  trackingInterval: null, pixTimerInterval: null,
+  selectedItem: null, selectedQty: 1, activeOrderData: null
   isStoreOpen: true, 
   storeConfig: null,
   trackingInterval: null, 
@@ -47,7 +52,9 @@ const state = {
   activeOrderData: null
 };
 
+// 👉 COLOQUE AQUI (LOGO ABAIXO DO state)
 let addressDirty = false; // 🔹 ESTADO GLOBAL DO ENDEREÇO
+
 
 // ================= HELPERS =================
 const $ = (s) => document.querySelector(s);
@@ -95,6 +102,7 @@ async function tryCalculateByText() {
   }
 }
 
+
 // ================= ELEMENTOS DOM =================
 const chipsCat = $('#category-chips');
 const grid = $('#menu-grid');
@@ -115,36 +123,31 @@ const inputAddress = $('#cust-address');
 const inputNeighborhood = $('#cust-neighborhood');
 
 // ====== CONTROLE SÊNIOR DE ALTERAÇÃO DE ENDEREÇO ======
+
+// Quando digitar rua/número
 inputAddress?.addEventListener('input', debounce(() => {
   addressDirty = true;
   state.calculatedFee = null;
   updateCartUI();
 }, 400));
 
-// Função unificada para calcular quando o bairro muda
-const handleNeighborhoodChange = async () => {
+// Quando digitar bairro → recalcula automaticamente
+inputNeighborhood?.addEventListener('input', debounce(async () => {
   const street = inputAddress.value.trim();
   const neighborhood = inputNeighborhood.value.trim();
-  
-  // Só calcula se tiver rua e pelo menos 3 letras no bairro
+
+  if (!street || neighborhood.length < 3) return; // 🔒 evita chamadas inúteis
+
   if (!street || neighborhood.length < 3) return;
-
-  console.log("🔄 Recalculando frete (Bairro alterado)...");
   addressDirty = true;
-  state.calculatedFee = null; // Reseta para evitar valores antigos
-  updateCartUI(); // Atualiza visualmente para "Calculando..."
-  
+  state.calculatedFee = null;
+  updateCartUI();
+
+  await tryCalculateByText(); // 🔁 recalcula com rua + bairro
   await tryCalculateByText();
-};
+}, 600));
 
-// 1. Calcula enquanto digita (com pausa de 800ms para não travar)
-inputNeighborhood?.addEventListener('input', debounce(handleNeighborhoodChange, 800));
 
-// 2. CORREÇÃO CRÍTICA: Calcula imediatamente quando o cliente SAI do campo (clica fora ou aperta TAB)
-inputNeighborhood?.addEventListener('blur', () => {
-  // Pequeno delay para garantir que o valor do input atualizou
-  setTimeout(handleNeighborhoodChange, 100);
-});
 
 const inputReference = $('#cust-reference');
 const inputName = $('#cust-name');
@@ -157,10 +160,15 @@ const inputChangeAmount = $('#change-amount');
 const floatCartBtn = $('#float-cart-btn');
 const floatCartCount = $('#float-cart-count');
 
+
+
+
+// ================= LÓGICA DO TROCO (CORREÇÃO) =================
 // ================= LÓGICA DO TROCO =================
 const payCash = document.getElementById('pay-cash');
 const cashChangeBox = document.getElementById('cash-change-box');
 
+// Mostra / esconde a caixinha quando escolher "Dinheiro"
 document.querySelectorAll('input[name="payment"]').forEach(radio => {
   radio.addEventListener('change', () => {
     if (payCash.checked) {
@@ -174,6 +182,8 @@ document.querySelectorAll('input[name="payment"]').forEach(radio => {
   });
 });
 
+// Mostra / esconde o campo do valor do troco
+checkNeedChange.addEventListener('change', () => {
 checkNeedChange?.addEventListener('change', () => {
   if (checkNeedChange.checked) {
     inputChangeAmount.style.display = 'block';
@@ -182,6 +192,7 @@ checkNeedChange?.addEventListener('change', () => {
     inputChangeAmount.value = '';
   }
 });
+
 
 // MAPA & GPS
 const mapModal = document.getElementById('map-modal');
@@ -464,7 +475,9 @@ inputAddress?.addEventListener('blur', async () => {
   }
 });
 
+
 function calcShip(lat, lng) {
+  // 🔄 RESET ABSOLUTO
   state.distanceKm = 0;
   state.calculatedFee = null;
   updateCartUI();
@@ -479,6 +492,7 @@ function calcShip(lat, lng) {
   }
 
   const service = new google.maps.DirectionsService();
+
   service.route(
     {
       origin: RESTAURANT_LOCATION,
@@ -488,6 +502,7 @@ function calcShip(lat, lng) {
     (result, status) => {
       if (status !== "OK" || !result.routes?.length) {
         console.error("Erro rota:", status);
+        state.calculatedFee = -1; // força "Muito longe"
         state.calculatedFee = -1;
         updateCartUI();
         return;
@@ -497,6 +512,7 @@ function calcShip(lat, lng) {
       const km = meters / 1000;
       state.distanceKm = km;
 
+      // 🚚 REGRA FINAL DE FRETE
       if (km <= 2) {
         state.calculatedFee = 0;
       } else if (km > 8) {
@@ -517,19 +533,23 @@ if (fulfillPickup && fulfillDelivery) {
       state.calculatedFee = 0; state.distanceKm = 0;
     } else {
       if (deliveryFields) deliveryFields.style.display = 'block';
+
       if (inputAddress.value.trim()) {
         addressDirty = true;
         state.calculatedFee = null;
       }
     }
+
     updateCartUI();
   }
   fulfillPickup.addEventListener('change', toggleDeliveryMode);
   fulfillDelivery.addEventListener('change', toggleDeliveryMode);
 }
 
+
 // ================= RENDERIZAR MENU =================
 function renderItems() {
+  const originalScroll = window.scrollY; // 🔥 salva posição da tela
   const originalScroll = window.scrollY;
   const existingSections = document.querySelectorAll('.category-section');
   if (existingSections.length > 0) return;
@@ -557,6 +577,7 @@ function renderItems() {
       itemsInCat.forEach(i => {
         const c = document.createElement('div');
         c.className = 'item-card';
+
         c.innerHTML = `
           <div class="card-info">
             <h4 class="card-title">${i.name}</h4>
@@ -570,6 +591,7 @@ function renderItems() {
             onerror="this.src='https://placehold.co/300x200?text=Sem+Foto'"
             class="card-img-right">
         `;
+
         c.onclick = () => openProductModal(i);
         itemsContainer.appendChild(c);
       });
@@ -580,13 +602,16 @@ function renderItems() {
   });
 
   setTimeout(setupScrollSpy, 500);
+  window.scrollTo(0, originalScroll); // 🔥 evita “pulo” de tela
   window.scrollTo(0, originalScroll);
 }
 
 function setupScrollSpy() {
+  const sections = document.querySelectorAll('.category-section'); const navChips = document.querySelectorAll('#category-chips .chip');
   const sections = document.querySelectorAll('.category-section'); 
   const navChips = document.querySelectorAll('#category-chips .chip');
   const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => { if (entry.isIntersecting) { navChips.forEach(chip => { chip.classList.toggle('active', chip.dataset.target === entry.target.id); }); } });
     entries.forEach(entry => { 
       if (entry.isIntersecting) { 
         navChips.forEach(chip => { 
@@ -599,9 +624,12 @@ function setupScrollSpy() {
 }
 
 function renderFilters() {
+  chipsCat.innerHTML = ''; const activeCats = state.categories.filter(c => state.items.some(i => i.category_id === c.id));
   chipsCat.innerHTML = ''; 
   const activeCats = state.categories.filter(c => state.items.some(i => i.category_id === c.id));
   activeCats.forEach((c, idx) => {
+    const btn = document.createElement('button'); btn.className = idx === 0 ? 'chip active' : 'chip'; btn.textContent = c.name; btn.dataset.target = `cat-${c.id}`;
+    btn.onclick = () => { const section = document.getElementById(`cat-${c.id}`); if (section) { const y = section.getBoundingClientRect().top + window.scrollY - 80; window.scrollTo({ top: y, behavior: 'smooth' }); } };
     const btn = document.createElement('button'); 
     btn.className = idx === 0 ? 'chip active' : 'chip'; 
     btn.textContent = c.name; 
@@ -618,6 +646,9 @@ function renderFilters() {
 }
 
 function openProductModal(item) {
+  state.selectedItem = item; state.selectedQty = 1; pdImage.src = item.image_url || 'https://placehold.co/300x200?text=Sem+Foto';
+  pdName.textContent = item.name; pdDesc.textContent = item.description || ""; pdPrice.textContent = brl(Number(item.price));
+  pdQty.textContent = "1"; pdObs.value = ""; updateModalTotal(); pdModal.setAttribute("aria-hidden", "false");
   state.selectedItem = item; 
   state.selectedQty = 1; 
   pdImage.src = item.image_url || 'https://placehold.co/300x200?text=Sem+Foto';
@@ -633,6 +664,8 @@ function openProductModal(item) {
 function updateModalTotal() {
   pdTotalBtn.textContent = brl(Number(state.selectedItem.price) * state.selectedQty);
 }
+
+
 
 if (pdClose && pdModal) {
   pdClose.addEventListener('click', () => {
@@ -658,44 +691,65 @@ function changeQty(index, delta) { const item = state.cart[index]; if (!item) re
 function cartSubtotal() { return state.cart.reduce((s, i) => s + Number(i.price) * i.qty, 0); }
 
 function updateCartUI() {
+
   if (!viewFee || !btnFinalize || !cartList) return;
+
   try {
     if (state.calculatedFee === null) {
       viewFee.innerHTML = "<span style='color:orange'>Calculando…</span>";
       btnFinalize.disabled = true;
     }
+
     const totalQty = state.cart.reduce((s, i) => s + i.qty, 0);
+
     if (floatCartBtn && floatCartCount) {
+      if (totalQty > 0) {
+        floatCartBtn.hidden = false;
+        floatCartCount.textContent = totalQty;
+      } else {
+        floatCartBtn.hidden = true;
+      }
       if (totalQty > 0) { floatCartBtn.hidden = false; floatCartCount.textContent = totalQty; } 
       else { floatCartBtn.hidden = true; }
     }
+
     if (cartCount) cartCount.textContent = totalQty;
+
     cartList.innerHTML = '';
+
     if (state.cart.length === 0) {
+      cartList.innerHTML =
+        '<div style="text-align:center;color:var(--muted);padding:20px;">Vazio</div>';
       cartList.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px;">Vazio</div>';
     } else {
       state.cart.forEach((i, index) => {
         const r = document.createElement('div');
         r.className = 'cart-item-row';
+
         r.innerHTML = `
           <div class="cart-thumb">
             <img src="${i.image}" onerror="this.src='https://placehold.co/100?text=Foto'">
           </div>
+
           <div class="cart-info">
             <div class="cart-name">${i.name}</div>
             <div class="cart-price-unit">${brl(i.price)}</div>
             ${i.obs ? `<div style="font-size:11px; color:#fbbf24;">📝 ${i.obs}</div>` : ''}
           </div>
+
           <div class="cart-controls">
             <button class="qty-btn" data-action="dec" data-idx="${index}">-</button>
             <span class="qty-val">${i.qty}</span>
             <button class="qty-btn" data-action="inc" data-idx="${index}">+</button>
           </div>
+
           <button class="cart-remove-btn" data-action="rm" data-idx="${index}">&times;</button>
         `;
+
         r.querySelector('[data-action="inc"]').onclick = () => changeQty(index, 1);
         r.querySelector('[data-action="dec"]').onclick = () => changeQty(index, -1);
         r.querySelector('[data-action="rm"]').onclick = () => removeFromCart(index);
+
         cartList.appendChild(r);
       });
     }
@@ -711,12 +765,19 @@ function updateCartUI() {
       feeDisplay = "Grátis (Retirada)";
       finalFee = 0;
       btnFinalize.disabled = false;
+
     } else if (state.calculatedFee === -1) {
       feeDisplay = `<span style="color:red">Muito longe ${distText}</span>`;
       finalFee = 0;
       btnFinalize.disabled = true;
+
     } else {
       finalFee = state.calculatedFee || 0;
+      feeDisplay =
+        finalFee === 0
+          ? `Grátis ${distText}`
+          : `${brl(finalFee)} ${distText}`;
+
       feeDisplay = finalFee === 0 ? `Grátis ${distText}` : `${brl(finalFee)} ${distText}`;
       btnFinalize.disabled = false;
     }
@@ -724,8 +785,13 @@ function updateCartUI() {
     if (viewSubtotal) viewSubtotal.textContent = brl(sub);
     if (viewFee) viewFee.innerHTML = feeDisplay;
     if (viewGrandTotal) viewGrandTotal.textContent = brl(sub + finalFee);
+
+  } catch (err) {
+    console.error("Erro no updateCartUI:", err);
+  }
   } catch (err) { console.error("Erro no updateCartUI:", err); }
 }
+
 
 if (floatCartBtn) floatCartBtn.addEventListener('click', () => { drawer.setAttribute('aria-hidden', 'false'); loadSavedUserData(); });
 document.addEventListener('click', function (e) {
@@ -734,194 +800,113 @@ document.addEventListener('click', function (e) {
   if (e.target.id === 'open-cart' || e.target.closest('#open-cart')) { drawer.setAttribute('aria-hidden', 'false'); loadSavedUserData(); }
 });
 
-// ================= CHECKOUT BLINDADO (SUBSTITUA TUDO ISSO) =================
+// ================= CHECKOUT =================
 orderForm?.addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  // Limpa mensagens de erro anteriores
-  if (typeof fb !== 'undefined') fb.textContent = '';
-  
-  // Verifica se o carrinho tem itens
-  if (state.cart.length === 0) { 
-      if (typeof fb !== 'undefined') fb.textContent = 'Carrinho vazio.'; 
-      return; 
-  }
+  fb.textContent = '';
 
-  // Verifica Autenticação
-  const token = localStorage.getItem('token');
-  if (!state.user || !token) { 
-      // Salva o carrinho/estado se necessário
-      openAuthModal('login'); 
-      return; 
-  }
+  // 🔹 DEFINE UMA ÚNICA VEZ (CORREÇÃO)
+  const fulfillment = fulfillPickup && fulfillPickup.checked ? 'pickup' : 'delivery';
 
-  const fulfillment = (fulfillPickup && fulfillPickup.checked) ? 'pickup' : 'delivery';
-
-  // --- TRAVA DE SEGURANÇA DE FRETE (LÓGICA SENIOR) ---
+  // ====== CAMADA DE SEGURANÇA DO FRETE (SÊNIOR) ======
   if (fulfillment === 'delivery') {
-    // Validação básica de campos
-    if (!inputAddress.value.trim() || !inputNeighborhood.value.trim()) {
-       if (typeof fb !== 'undefined') fb.textContent = "Preencha o endereço completo.";
-       inputAddress.focus();
-       return;
+    if (state.calculatedFee === null) {
+      fb.textContent = "Aguarde o cálculo do frete ou confirme seu endereço no mapa.";
+      btnFinalize.disabled = true;
+      return;
     }
 
-    // Se o frete NÃO foi calculado ou deu erro (-1), FORÇAMOS O CÁLCULO AGORA
-    if (state.calculatedFee === null || state.calculatedFee === -1) {
-      const btnSubmit = orderForm.querySelector('button[type="submit"]');
-      const originalText = btnSubmit ? btnSubmit.innerText : 'Finalizar';
-      
-      if (btnSubmit) {
-          btnSubmit.innerText = "Calculando entrega...";
-          btnSubmit.disabled = true;
-      }
-
-      try {
-        console.log("🛡️ Checkout: Forçando cálculo de frete de última hora...");
-        await tryCalculateByText(); // Tenta calcular
-        
-        // Se após tentar, ainda estiver inválido
-        if (state.calculatedFee === null || state.calculatedFee === -1) {
-           throw new Error("Falha no cálculo da rota.");
-        }
-      } catch (err) {
-        console.error("Erro fatal no checkout:", err);
-        if (typeof fb !== 'undefined') fb.textContent = "Não conseguimos calcular a entrega. Verifique o endereço.";
-        if (btnSubmit) {
-            btnSubmit.innerText = originalText;
-            btnSubmit.disabled = false;
-        }
-        return; // PARA O PROCESSO AQUI
-      }
-
-      // Restaura o botão se deu tudo certo
-      if (btnSubmit) {
-          btnSubmit.innerText = originalText;
-          btnSubmit.disabled = false;
-      }
+    if (state.calculatedFee === -1) {
+      fb.textContent = "Endereço fora da área de entrega.";
+      return;
     }
   }
-  // -----------------------------------------------------------
+  // ================================================
 
-  // Verifica Loja Aberta / Agendamento (Sua lógica original)
-  // Nota: Ajustei para checar a variável corretamente
-  const isStoreOpen = state.isStoreOpen; // Certifique-se que essa variável existe no escopo
-  const scheduleInput = document.getElementById('order-schedule'); // Ajuste o ID se necessário
-  
-  if (!isStoreOpen && (!scheduleInput || !scheduleInput.value)) {
-    if (typeof fb !== 'undefined') fb.textContent = "Loja fechada! Agende um horário.";
+  if (!state.user || !state.token) {
+    openAuthModal('login');
     return;
   }
 
-  // Verifica Pagamento
-  const paymentEl = document.querySelector('input[name="payment"]:checked');
-  if (!paymentEl) { 
-      if (typeof fb !== 'undefined') fb.textContent = "Selecione a forma de pagamento"; 
-      return; 
+  if (state.cart.length === 0) {
+    fb.textContent = 'Carrinho vazio.';
+    return;
   }
+
+  if (!state.user || !state.token) { openAuthModal('login'); return; }
+  if (state.cart.length === 0) { fb.textContent = 'Carrinho vazio.'; return; }
+  if (!state.isStoreOpen && (!orderSchedule || !orderSchedule.value)) {
+    fb.textContent = "Loja fechada! Agende um horário.";
+    return;
+  }
+
+  const paymentEl = document.querySelector('input[name="payment"]:checked');
+  if (!paymentEl) {
+    fb.textContent = "Selecione o pagamento";
+    return;
+  }
+  if (!paymentEl) { fb.textContent = "Selecione o pagamento"; return; }
 
   const selectedPayment = paymentEl.value;
   let changeData = null;
 
-  // Lógica de Troco
-  if (selectedPayment === 'Dinheiro') {
-      const needChangeCheckbox = document.getElementById('check-need-change');
-      const changeInput = document.getElementById('input-change-amount');
-      
-      if (needChangeCheckbox && needChangeCheckbox.checked) {
-        if (!changeInput || !changeInput.value) { 
-            if (typeof fb !== 'undefined') fb.textContent = 'Informe para quanto é o troco.'; 
-            return; 
-        }
-        changeData = `Troco para R$ ${changeInput.value}`;
-      }
+  if (selectedPayment === 'Dinheiro' && checkNeedChange.checked) {
+    if (!inputChangeAmount.value) {
+      fb.textContent = 'Informe o troco.';
+      return;
+    }
+    if (!inputChangeAmount.value) { fb.textContent = 'Informe o troco.'; return; }
+    changeData = `Troco para R$ ${inputChangeAmount.value}`;
   }
 
-  // Montagem do Objeto do Cliente
+  if (fulfillment === 'delivery') {
+    localStorage.setItem('lastAddress', inputAddress.value);
+    localStorage.setItem('lastNeighborhood', inputNeighborhood.value);
+  }
+
   const customer = {
     id: state.user.id,
-    name: (inputName && inputName.value) ? inputName.value : state.user.name,
-    phone: (inputPhone && inputPhone.value) ? inputPhone.value : state.user.phone,
+    name: inputName.value || state.user.name,
+    phone: inputPhone.value || state.user.phone,
     address: fulfillment === 'pickup' ? 'Retirada na Loja' : inputAddress.value,
     neighborhood: fulfillment === 'pickup' ? '' : inputNeighborhood.value,
-    reference: (typeof inputReference !== 'undefined') ? inputReference.value : '',
-    email: state.user.email || '', // Garante string vazia se não tiver
+    reference: inputReference ? inputReference.value : '',
+    email: inputEmail ? inputEmail.value : '',
     paymentMethod: selectedPayment,
     change: changeData,
-    scheduledTo: (!isStoreOpen && scheduleInput) ? scheduleInput.value : null
+    scheduledTo: (!state.isStoreOpen) ? orderSchedule.value : null
   };
 
-  // Cálculo dos totais
-  const subtotal = cartSubtotal(); // Certifique-se que essa função existe
-  const fee = (fulfillment === 'pickup') ? 0 : (state.calculatedFee || 0);
-  const total = subtotal + fee;
-
-  // Montagem do Pedido
-  const orderData = {
+  const order = {
     items: state.cart.map(i => ({
       itemId: i.id,
       name: i.name,
       qty: i.qty,
-      price: parseFloat(i.price),
-      obs: i.obs || '',
+      price: +i.price,
+      obs: i.obs,
       image: i.image
     })),
-    subtotal: subtotal,
-    deliveryFee: fee,
+    subtotal: cartSubtotal(),
+    deliveryFee: fulfillment === 'pickup' ? 0 : state.calculatedFee,
     discount: 0,
-    total: total,
-    neighborhood: customer.neighborhood, // Para estatísticas
+    total: cartSubtotal() + (fulfillment === 'pickup' ? 0 : state.calculatedFee),
+    neighborhood: customer.neighborhood,
     customer: customer,
     fulfillment: fulfillment,
     paymentMethod: selectedPayment,
     change: changeData,
     user_id: state.user.id,
+    distance_km: state.distanceKm || 0   // ✅ campo novo dos KM
     distance_km: state.distanceKm || 0
   };
 
-  // Envio para API
   try {
-    const btnSubmit = orderForm.querySelector('button[type="submit"]');
-    if(btnSubmit) {
-        btnSubmit.disabled = true;
-        btnSubmit.innerText = "Processando...";
-    }
-
-    const createdOrder = await apiSend('/orders', 'POST', orderData);
-    
-    // Sucesso!
-    state.cart = []; 
-    saveCart(); 
-    orderForm.reset(); 
-    
-    const drawer = document.getElementById('cart-drawer');
-    if(drawer) drawer.setAttribute('aria-hidden', 'true'); 
-    
-    updateCartUI();
-
-    // Lógica do Pix / Rastreamento
-    if (createdOrder.pixData) {
-        localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
-        showPixModal(createdOrder.pixData); // Mostra o Pix
-    }
-    
-    // Se tiver função de tracking, inicia
-    if (typeof startTracking === 'function') {
-        startTracking(createdOrder.id);
-    } else {
-        alert("Pedido realizado com sucesso!");
-    }
-
-  } catch (err) { 
-    console.error(err); 
-    if (typeof fb !== 'undefined') fb.textContent = 'Erro ao enviar pedido: ' + err.message; 
-    
-    const btnSubmit = orderForm.querySelector('button[type="submit"]');
-    if(btnSubmit) {
-        btnSubmit.disabled = false;
-        btnSubmit.innerText = "Finalizar Pedido";
-    }
-  }
+    const createdOrder = await apiSend('/orders', 'POST', order);
+    state.cart = []; saveCart(); orderForm.reset(); drawer.setAttribute('aria-hidden', 'true'); updateCartUI();
+    if (createdOrder.pixData) localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
+    startTracking(createdOrder.id);
+    if (createdOrder.pixData) showPixModal(createdOrder.pixData);
+  } catch (err) { console.error(err); fb.textContent = 'Erro: ' + err.message; }
 });
 
 // ================= RASTREAMENTO =================
@@ -962,29 +947,49 @@ function updateTrackUI(order) {
   else if (s === 'em_preparo') { if (stepNovo) stepNovo.classList.add('active'); if (stepPreparo) stepPreparo.classList.add('active'); m = 'Preparando'; i = '🔥'; pw = "40%"; }
   else if (s === 'saiu_entrega') { if (stepNovo) stepNovo.classList.add('active'); if (stepPreparo) stepPreparo.classList.add('active'); if (stepSaiu) stepSaiu.classList.add('active'); m = 'Saiu!'; i = '🛵'; pw = "70%"; }
   else if (s === 'entregue') { if (stepNovo) $$('.step').forEach(e => e.classList.add('active')); m = 'Entregue'; i = '🏠'; pw = "100%"; }
+  else if (s === 'cancelado') { m = 'Cancelado'; i = '❌'; pw = "0%"; trackingBubble.style.background = '#EF4444'; } else { trackingBubble.style.background = '#10B981'; }
   else if (s === 'cancelado') { m = 'Cancelado'; i = '❌'; pw = "0%"; trackingBubble.style.background = '#EF4444'; } 
   else { trackingBubble.style.background = '#10B981'; }
   
   trackingBubble.innerHTML = `<span style="font-size:20px;">${i}</span>`;
+  if (trackId) trackId.textContent = order.id; if (trackMsg) trackMsg.textContent = m;
+  if (timelineProgress) timelineProgress.style.width = pw;
+
+  if (trackId) trackId.textContent = order.id;
   if (trackId) trackId.textContent = order.id; 
   if (trackMsg) trackMsg.textContent = m;
   if (timelineProgress) timelineProgress.style.width = pw;
 
+  // 🔽🔽🔽 AQUI ENTRA O RESUMO DOS ITENS 🔽🔽🔽
   const itemsList = document.getElementById("track-items-list");
+
   if (itemsList && order.items) {
     itemsList.innerHTML = order.items.map(i => {
+      const obs = i.obs
+        ? `<div style="font-size:12px; color:#d62300;">⚠️ ${i.obs}</div>`
+        : "";
+
       const obs = i.obs ? `<div style="font-size:12px; color:#d62300;">⚠️ ${i.obs}</div>` : "";
       return `
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <strong>${i.qty}x</strong> ${i.name}
+            ${obs}
+          </div>
           <div><strong>${i.qty}x</strong> ${i.name}${obs}</div>
           <div style="white-space:nowrap;">${brl(i.price * i.qty)}</div>
         </div>
       `;
     }).join("");
   }
+  // 🔼🔼🔼 FIM DO RESUMO 🔼🔼🔼
+
+  if (trackTotalEl) trackTotalEl.textContent = brl(order.total);
+
 
   if (trackTotalEl) trackTotalEl.textContent = brl(order.total);
   if (btnTrackWa) btnTrackWa.href = `https://wa.me/5584996065229?text=${encodeURIComponent(`Olá, sobre meu pedido #${order.id}...`)}`;
+  if (btnCancelOrder) { btnCancelOrder.style.display = (s === 'novo' || s === 'agendado') ? 'block' : 'none'; btnCancelOrder.onclick = () => cancelMyOrder(order.id); }
   if (btnCancelOrder) { 
     btnCancelOrder.style.display = (s === 'novo' || s === 'agendado') ? 'block' : 'none'; 
     btnCancelOrder.onclick = () => cancelMyOrder(order.id); 
@@ -992,6 +997,11 @@ function updateTrackUI(order) {
 }
 
 trackingBubble?.addEventListener('click', () => {
+  // Se ainda está aguardando pagamento, abre o Pix
+  if (
+    state.activeOrderData &&
+    state.activeOrderData.status === 'aguardando_pagamento'
+  ) {
   if (state.activeOrderData && state.activeOrderData.status === 'aguardando_pagamento') {
     let pixData = state.activeOrderData.pixData;
     if (!pixData) {
@@ -1000,6 +1010,7 @@ trackingBubble?.addEventListener('click', () => {
     }
     if (pixData) showPixModal(pixData);
   } else {
+    // Caso contrário, abre o rastreio normal
     trackingModal.setAttribute('aria-hidden', 'false');
   }
 });
@@ -1016,6 +1027,8 @@ function updatePixTick(deadline, orderId) {
   if (remaining <= 0) { clearInterval(state.pixTimerInterval); state.pixTimerInterval = null; stopTracking(); alert("Pix expirou."); }
   else {
     if (trackingBubble) {
+      trackingBubble.style.setProperty('display', 'flex', 'important'); trackingBubble.style.background = '#EF4444';
+      const min = Math.floor(remaining / 60000); const sec = Math.floor((remaining % 60000) / 1000);
       trackingBubble.style.setProperty('display', 'flex', 'important'); 
       trackingBubble.style.background = '#EF4444';
       const min = Math.floor(remaining / 60000); 
@@ -1028,29 +1041,83 @@ function updatePixTick(deadline, orderId) {
 function showPixModal(pixData) {
   const existing = document.getElementById('modal-pix-dynamic');
   if (existing) existing.remove();
+
   state.pixModalOpen = true;
+
   const div = document.createElement('div');
   div.id = 'modal-pix-dynamic';
   div.className = 'modal active';
   div.setAttribute('aria-hidden', 'false');
   div.style.zIndex = '10000';
+
   div.innerHTML = `
     <div class="modal-dialog" style="max-width:350px; text-align:center; padding:30px; position:relative;">
+      <button id="btn-close-pix"
+        style="
+          position:absolute;
+          top:10px;
+          right:15px;
+          border:none;
+          background:none;
+          font-size:26px;
+          cursor:pointer;
+        ">
+        &times;
+      </button>
+
       <button id="btn-close-pix" style="position:absolute; top:10px; right:15px; border:none; background:none; font-size:26px; cursor:pointer;">&times;</button>
       <h3>Pagamento Pix</h3>
+      <p style="color:var(--primary); font-weight:bold; margin-bottom:15px">
+        Aguardando pagamento...
+      </p>
+
+      <div style="
+        background:#fff;
+        padding:10px;
+        display:inline-block;
+        border:1px solid #ddd;
+        border-radius:8px;
+        margin-bottom:15px
+      ">
+        <img src="data:image/png;base64,${pixData.qr_base64}"
+             style="width:180px;height:180px;">
       <p style="color:var(--primary); font-weight:bold; margin-bottom:15px">Aguardando pagamento...</p>
       <div style="background:#fff; padding:10px; display:inline-block; border:1px solid #ddd; border-radius:8px; margin-bottom:15px">
         <img src="data:image/png;base64,${pixData.qr_base64}" style="width:180px;height:180px;">
       </div>
+
+      <textarea id="pix-copy-paste"
+        readonly
+        style="width:100%; height:55px; font-size:11px; padding:8px; margin-bottom:10px;">
+${pixData.qr_code}
+      </textarea>
+
+      <button id="btn-copy-pix" class="btn primary block">
+        Copiar Código
+      </button>
       <textarea id="pix-copy-paste" readonly style="width:100%; height:55px; font-size:11px; padding:8px; margin-bottom:10px;">${pixData.qr_code}</textarea>
       <button id="btn-copy-pix" class="btn primary block">Copiar Código</button>
     </div>
   `;
+
   document.body.appendChild(div);
+
+  // ❌ FECHA APENAS O MODAL — NÃO SOME A BOLINHA
+  div.querySelector('#btn-close-pix').onclick = () => {
+    state.pixModalOpen = false;
+    state.pixManuallyClosed = true;
+    div.remove();
+  };
+
   div.querySelector('#btn-close-pix').onclick = () => { state.pixModalOpen = false; state.pixManuallyClosed = true; div.remove(); };
   div.querySelector('#btn-copy-pix').onclick = () => {
     const txt = div.querySelector('#pix-copy-paste');
     txt.select();
+    document.execCommand('copy');
+    alert("Código Pix copiado!");
+    navigator.clipboard.writeText(txt.value)
+      .then(() => alert("Código Pix copiado!"))
+      .catch(() => alert("Erro ao copiar. Tente selecionar manualmente."));
     navigator.clipboard.writeText(txt.value).then(() => alert("Código Pix copiado!"));
   };
 }
@@ -1059,39 +1126,115 @@ async function cancelMyOrder(id) { if (!confirm("Cancelar?")) return; try { awai
 
 function stopTracking() {
   clearInterval(state.trackingInterval);
+
+  if (state.pixTimerInterval) {
+    clearInterval(state.pixTimerInterval);
+    state.pixTimerInterval = null;
+  }
+
   if (state.pixTimerInterval) { clearInterval(state.pixTimerInterval); state.pixTimerInterval = null; }
   state.currentOrderId = null;
   localStorage.removeItem('lastOrderId');
+
+  // ❗️ SÓ some a bolinha se NÃO estiver em Pix ativo
+  if (
+    trackingBubble &&
+    !(state.activeOrderData?.status === 'aguardando_pagamento')
+  ) {
   if (trackingBubble && !(state.activeOrderData?.status === 'aguardando_pagamento')) {
     trackingBubble.style.display = 'none';
   }
+
   if (trackingModal) trackingModal.setAttribute('aria-hidden', 'true');
 }
 
+
+
 // ================= RECUPERAÇÃO DE SENHA =================
+
+// 1️⃣ ENVIAR CÓDIGO (rota correta do seu server)
 btnSendCode?.addEventListener('click', async () => {
   const phone = recPhoneInput.value.replace(/\D/g, '');
+
+  if (!phone) {
+    recFb.style.color = 'red';
+    recFb.textContent = "Informe um WhatsApp válido.";
+    return;
+  }
+
+  recFb.style.color = '#666';
+  recFb.textContent = "Enviando código...";
+
   if (!phone) { recFb.style.color = 'red'; recFb.textContent = "Informe um WhatsApp válido."; return; }
   recFb.style.color = '#666'; recFb.textContent = "Enviando código...";
   try {
     await apiSend('/auth/request-reset', 'POST', { phone });
+
+    recFb.style.color = 'green';
+    recFb.textContent = "Código enviado! Verifique seu e-mail (ou console).";
+
+    // Vai para etapa 2
+    recStep1.style.display = 'none';
+    recStep2.style.display = 'block';
+
+  } catch (err) {
+    recFb.style.color = 'red';
+    recFb.textContent = err.message || "Erro ao enviar código.";
+  }
     recFb.style.color = 'green'; recFb.textContent = "Código enviado!";
     recStep1.style.display = 'none'; recStep2.style.display = 'block';
   } catch (err) { recFb.style.color = 'red'; recFb.textContent = err.message || "Erro ao enviar código."; }
 });
 
+// 2️⃣ CONFIRMAR CÓDIGO + NOVA SENHA (rota correta do seu server)
 btnVerifyCode?.addEventListener('click', async () => {
   const phone = recPhoneInput.value.replace(/\D/g, '');
   const token = recTokenInput.value.trim();
   const newPass = recNewPassInput.value.trim();
+
+  if (token.length !== 6) {
+    recFb.style.color = 'red';
+    recFb.textContent = "Digite o código de 6 dígitos.";
+    return;
+  }
+
+  if (!newPass || newPass.length < 6) {
+    recFb.style.color = 'red';
+    recFb.textContent = "A nova senha precisa ter pelo menos 6 caracteres.";
+    return;
+  }
+
+  recFb.style.color = '#666';
+  recFb.textContent = "Validando código...";
+
   if (token.length !== 6) { recFb.style.color = 'red'; recFb.textContent = "Digite o código de 6 dígitos."; return; }
   if (!newPass || newPass.length < 6) { recFb.style.color = 'red'; recFb.textContent = "Senha curta."; return; }
   try {
+    await apiSend('/auth/confirm-reset', 'POST', {
+      phone,
+      token,
+      newPassword: newPass
+    });
+
+    recFb.style.color = 'green';
+    recFb.textContent = "Senha alterada com sucesso! Faça login.";
+
+    // Volta para login após 2s
+    setTimeout(() => {
+      setAuthMode('login');
+    }, 2000);
+
+  } catch (err) {
+    recFb.style.color = 'red';
+    recFb.textContent = err.message || "Código inválido ou expirado.";
+  }
     await apiSend('/auth/confirm-reset', 'POST', { phone, token, newPassword: newPass });
     recFb.style.color = 'green'; recFb.textContent = "Sucesso!";
     setTimeout(() => { setAuthMode('login'); }, 2000);
   } catch (err) { recFb.style.color = 'red'; recFb.textContent = err.message; }
 });
+
+
 
 // ================= AUTH =================
 function setAuthMode(mode) {
@@ -1101,6 +1244,7 @@ function setAuthMode(mode) {
   else if (mode === 'recovery') { authTabs.style.display = 'none'; authTitle.textContent = "Recuperar Senha"; recFlow.style.display = 'block'; recStep1.style.display = 'block'; recStep2.style.display = 'none'; recFb.textContent = ''; }
 }
 function openAuthModal(t = 'login') { authModal.setAttribute('aria-hidden', 'false'); setAuthMode(t); }
+$('#tab-login')?.addEventListener('click', () => setAuthMode('login')); $('#tab-signup')?.addEventListener('click', () => setAuthMode('signup')); btnForgot?.addEventListener('click', () => setAuthMode('recovery')); btnBackAuth?.addEventListener('click', () => setAuthMode('login')); amClose?.addEventListener('click', () => authModal.setAttribute('aria-hidden', 'true'));
 $('#tab-login')?.addEventListener('click', () => setAuthMode('login')); 
 $('#tab-signup')?.addEventListener('click', () => setAuthMode('signup')); 
 btnForgot?.addEventListener('click', () => setAuthMode('recovery')); 
@@ -1111,45 +1255,54 @@ formLogin?.addEventListener('submit', async (e) => { e.preventDefault(); loginFb
 formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.textContent = 'Cadastrando...'; try { const cleanPhone = suPhone.value.replace(/\D/g, ''); const r = await apiSend('/auth/register', 'POST', { name: suName.value, phone: cleanPhone, email: suEmail.value, password: suPass.value }); setToken(r.token); setUser(r.user); authModal.setAttribute('aria-hidden', 'true'); loadData(); } catch (err) { suFb.textContent = err.message; } });
 
 // ================= LOADER =================
-/* SUBSTITUA A SUA FUNÇÃO loadData POR ESTA VERSÃO CORRIGIDA */
 async function loadData() {
-  const token = localStorage.getItem('token');
-  if (!token) return;
-
+  await tryLoadMe();
+  if (localStorage.getItem('lastOrderId')) startTracking(localStorage.getItem('lastOrderId'));
+  try { const s = await apiGet("/settings"); state.storeConfig = s; if (s.mode === 'force_closed') { state.isStoreOpen = false; if (fb) fb.textContent = "Fechado temporariamente."; } } catch (e) { }
   try {
-    const res = await apiGet('/auth/me');
-    state.user = res.user;
-    
-    // Atualiza UI do usuário logado
-    if (authTitle) authTitle.textContent = `Olá, ${res.user.name.split(' ')[0]}`;
-    if (formLogin) formLogin.style.display = 'none';
-    if (profileMenu) profileMenu.style.display = 'block';
+    // 🔹 1. Tenta carregar do cache primeiro (instantâneo)
+const cachedMenu = localStorage.getItem('menuCache');
 
-    // Preenche campos do Perfil
-    if (setName) setName.value = res.user.name;
-    if (setPhone) setPhone.value = res.user.phone;
-    if (setEmail) setEmail.value = res.user.email;
+if (cachedMenu) {
+  const parsed = JSON.parse(cachedMenu);
+  state.categories = parsed.categories || [];
+  state.subcategories = parsed.subcategories || [];
+  state.items = parsed.items || [];
+  renderFilters();
+  renderItems();
+}
 
-    // --- AQUI ESTÁ A CORREÇÃO (PREENCHIMENTO INTELIGENTE) ---
-    if (res.user.address) {
-      if (inputAddress) inputAddress.value = res.user.address;
-      if (inputNeighborhood && res.user.neighborhood) inputNeighborhood.value = res.user.neighborhood;
-      
-      // Força o sistema a "sujar" o endereço para permitir recálculo
-      addressDirty = true;
-      
-      console.log("📍 Endereço carregado do perfil. Calculando frete automático...");
-      
-      // Chama o cálculo imediatamente se tivermos endereço
-      waitForGoogleMaps(() => tryCalculateByText());
-    }
-    // ---------------------------------------------------------
+// 🔹 2. Atualiza em background
+try {
+  const [c, s, i] = await Promise.all([
+    apiGet('/categories'),
+    apiGet('/subcategories'),
+    apiGet('/items')
+  ]);
 
-  } catch (err) {
-    console.error("Erro ao carregar usuário:", err);
-    localStorage.removeItem('token');
-    state.token = '';
-  }
+  state.categories = c || [];
+  state.subcategories = s || [];
+  state.items = i || [];
+
+  // salva no cache
+  localStorage.setItem('menuCache', JSON.stringify({
+    categories: state.categories,
+    subcategories: state.subcategories,
+    items: state.items
+  }));
+
+  renderFilters();
+  renderItems();
+
+} catch (err) {
+  console.error("Erro menu", err);
+}
+
+    const [c, s, i] = await Promise.all([apiGet('/categories'), apiGet('/subcategories'), apiGet('/items')]); 
+    state.categories = c || []; state.subcategories = s || []; state.items = i || [];
+    renderFilters(); renderItems();
+  } catch (err) { console.error("Erro menu", err); }
+  updateCartUI(); loadSavedUserData(); initCarousel();
 }
 
 function loadSavedUserData() { if (state.user) return; const savedAddress = localStorage.getItem('lastAddress'); const savedNeighborhood = localStorage.getItem('lastNeighborhood'); if (savedAddress && inputAddress) inputAddress.value = savedAddress; if (savedNeighborhood && inputNeighborhood) inputNeighborhood.value = savedNeighborhood; }
@@ -1158,16 +1311,27 @@ function setUser(u) { state.user = u || null; if (u) { if (btnProfile) btnProfil
 function setToken(t) { state.token = t || ''; if (t) localStorage.setItem('token', t); else localStorage.removeItem('token'); }
 
 btnProfile?.addEventListener('click', (e) => { e.stopPropagation(); if (state.user) { const isHidden = profileMenu.getAttribute('aria-hidden') === 'true'; profileMenu.setAttribute('aria-hidden', isHidden ? 'false' : 'true'); } else { openAuthModal('login'); } });
+// FECHAR MENU AO CLICAR FORA DELE
 
 document.addEventListener('click', (e) => {
   if (!profileMenu) return;
+
   const isOpen = profileMenu.getAttribute('aria-hidden') === 'false';
+
+  // Se estiver aberto e o clique NÃO foi no botão nem dentro do menu → fecha
+  if (
+    isOpen &&
+    !profileMenu.contains(e.target) &&
+    e.target !== btnProfile &&
+    !e.target.closest('#edit-profile')
+  ) {
   if (isOpen && !profileMenu.contains(e.target) && e.target !== btnProfile && !e.target.closest('#edit-profile')) {
     profileMenu.setAttribute('aria-hidden', 'true');
   }
 });
 
 pmLogout?.addEventListener('click', () => { setToken(''); setUser(null); window.location.reload(); });
+function initCarousel() { if (!carouselTrack || slides.length === 0) return; let currentSlide = 0; const totalSlides = slides.length; let slideInterval; const updateSlide = () => { carouselTrack.style.transform = `translateX(-${currentSlide * 100}%)`; dots.forEach((dot, index) => { dot.classList.toggle('active', index === currentSlide); }); }; const nextSlide = () => { currentSlide = (currentSlide + 1) % totalSlides; updateSlide(); }; const prevSlide = () => { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; updateSlide(); }; nextBtn?.addEventListener('click', nextSlide); prevBtn?.addEventListener('click', prevSlide); slideInterval = setInterval(nextSlide, 5000); }
 
 function initCarousel() { 
   if (!carouselTrack || slides.length === 0) return; 
@@ -1183,27 +1347,103 @@ function initCarousel() {
 
 // ================= MEUS PEDIDOS (HISTÓRICO) =================
 pmHistory?.addEventListener('click', async () => {
+  if (!state.user) {
+    openAuthModal('login');
+    return;
+  }
+
   if (!state.user) { openAuthModal('login'); return; }
   profileMenu.setAttribute('aria-hidden', 'true');
   historyModal.setAttribute('aria-hidden', 'false');
+  historyList.innerHTML =
+    '<div style="text-align:center; padding:20px; color:#888;">Carregando pedidos... 🔄</div>';
+
   historyList.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">Carregando...</div>';
   try {
     const orders = await apiGet('/orders/me');
+
+    if (!orders || orders.length === 0) {
+      historyList.innerHTML =
+        '<div style="text-align:center; padding:30px; color:#888;">Você ainda não fez pedidos. 🍔</div>';
+      return;
+    }
+
     if (!orders || orders.length === 0) { historyList.innerHTML = '<div>Vazio</div>'; return; }
     historyList.innerHTML = '';
+
     orders.forEach(order => {
+      const date = new Date(order.created_at).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const statusMap = {
+        'novo': '🟡 Recebido',
+        'aguardando_pagamento': '⏳ Aguardando Pix',
+        'em_preparo': '🔥 Preparando',
+        'saiu_entrega': '🛵 Saiu para Entrega',
+        'entregue': '✅ Entregue',
+        'cancelado': '❌ Cancelado'
+      };
+
+      const statusLabel = statusMap[order.status] || order.status;
+      const statusColor =
+        order.status === 'cancelado'
+          ? '#ef4444'
+          : order.status === 'entregue'
+            ? '#10b981'
+            : '#f59e0b';
+
       const date = new Date(order.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
       const statusMap = { 'novo': 'Recebido', 'aguardando_pagamento': 'Aguardando Pix', 'em_preparo': 'Preparando', 'saiu_entrega': 'Saiu!', 'entregue': 'Entregue', 'cancelado': 'Cancelado' };
       const div = document.createElement('div');
       div.className = 'history-card';
+
       div.innerHTML = `
+        <div class="history-header"
+          style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;">
+          <strong>Pedido #${order.id}</strong>
+          <span style="font-size:12px; color:#666;">${date}</span>
+        </div>
+
+        <div style="font-size:13px; color:#444; margin-bottom:10px;">
+          ${order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="background:${statusColor}; color:white; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold;">
+            ${statusLabel}
+          </span>
+          <strong style="color:var(--primary);">${brl(order.total)}</strong>
+        </div>
+
+        ${order.status === 'aguardando_pagamento'
+          ? `<button class="btn block"
+              style="margin-top:10px; font-size:12px; height:auto; padding:8px;"
+              onclick="window.location.reload()">
+              Pagar Agora (Ver Rastreio)
+            </button>`
+          : ''
+        }
         <div style="display:flex; justify-content:space-between;"><strong>Pedido #${order.id}</strong><span>${date}</span></div>
         <div style="font-size:13px; margin:10px 0;">${order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}</div>
         <div style="display:flex; justify-content:space-between;"><span>${statusMap[order.status] || order.status}</span><strong>${brl(order.total)}</strong></div>
         ${order.status === 'aguardando_pagamento' ? `<button class="btn block" onclick="window.location.reload()">Pagar Agora</button>` : ''}
       `;
+
       historyList.appendChild(div);
     });
+
+  } catch (err) {
+    historyList.innerHTML =
+      `<div style="color:red; text-align:center;">Erro ao carregar: ${err.message}</div>`;
+  }
+});
+
+hmClose?.addEventListener('click', () => {
+  historyModal.setAttribute('aria-hidden', 'true');
   } catch (err) { historyList.innerHTML = `<div>Erro: ${err.message}</div>`; }
 });
 
@@ -1211,20 +1451,85 @@ hmClose?.addEventListener('click', () => historyModal.setAttribute('aria-hidden'
 
 // ================= CONFIGURAÇÕES (MEUS DADOS) =================
 pmSettings?.addEventListener('click', async () => {
+  if (!state.user) {
+    openAuthModal('login');
+    return;
+  }
+
+  const btnSave = formSettings.querySelector('button[type="submit"]');
+  const originalText = btnSave.textContent;
+  btnSave.textContent = "Carregando...";
+  btnSave.disabled = true;
+
   if (!state.user) { openAuthModal('login'); return; }
   profileMenu.setAttribute('aria-hidden', 'true');
   settingsModal.setAttribute('aria-hidden', 'false');
+
   try {
     const freshUser = await apiGet('/auth/me');
     setUser(freshUser);
   } catch (err) {
+    console.error("Erro ao carregar perfil fresco:", err);
+
+    // Fallback (se der erro, usa o que já está no state)
     if (setName) setName.value = state.user.name || '';
+    if (setPhone) setPhone.value = state.user.phone || '';
+    if (setEmail) setEmail.value = state.user.email || '';
+  } finally {
+    if (setPass) setPass.value = '';
+    if (settingsFb) settingsFb.textContent = '';
+    btnSave.textContent = originalText;
+    btnSave.disabled = false;
   }
 });
 
 formSettings?.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  const btn = formSettings.querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
+
+  btn.textContent = "Salvando...";
+  btn.disabled = true;
+  if (settingsFb) settingsFb.textContent = '';
+
   try {
+    const payload = {
+      name: setName.value,
+      phone: setPhone.value,
+      email: setEmail.value,
+      password: setPass.value
+    };
+
+    const res = await apiSend('/auth/update', 'PATCH', payload);
+
+    if (res.success) {
+      alert("✅ Dados atualizados com sucesso!");
+
+      state.user = res.user;
+
+      if (res.token) {
+        localStorage.setItem('token', res.token);
+        state.token = res.token;
+      }
+
+      setUser(res.user);
+      settingsModal.setAttribute('aria-hidden', 'true');
+    }
+
+  } catch (err) {
+    if (settingsFb) {
+      settingsFb.style.color = 'red';
+      settingsFb.textContent = err.message || "Erro ao atualizar.";
+    }
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+});
+
+smClose?.addEventListener('click', () => {
+  settingsModal.setAttribute('aria-hidden', 'true');
     const res = await apiSend('/auth/update', 'PATCH', { name: setName.value, phone: setPhone.value, email: setEmail.value, password: setPass.value });
     if (res.success) { alert("Dados atualizados!"); setUser(res.user); settingsModal.setAttribute('aria-hidden', 'true'); }
   } catch (err) { settingsFb.textContent = err.message; }
@@ -1233,10 +1538,14 @@ formSettings?.addEventListener('submit', async (e) => {
 smClose?.addEventListener('click', () => settingsModal.setAttribute('aria-hidden', 'true'));
 
 const searchInput = document.getElementById('search');
+
 searchInput?.addEventListener('input', debounce(() => {
   state.filters.q = searchInput.value;
   renderItems();
 }, 300));
+
+
+
 
 window.addEventListener('DOMContentLoaded', loadData);
 
