@@ -50,8 +50,6 @@ body.admin-page {
 
   display: flex; justify-content: center; align-items: center; height: 100vh;
 
-  background: var(--header-bg);
-
 }
 
 .login-box {
