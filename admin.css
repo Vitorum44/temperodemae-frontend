@@ -27,13 +27,14 @@
 body.admin-page {
   background:
     linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-    url('/public-assets/banner2.png') center/cover no-repeat fixed;
+    url('/assets/banner2.png') center/cover no-repeat fixed;
 
   font-family: 'Inter', sans-serif;
   margin: 0;
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
 }
+
 
 .login-box {
   backdrop-filter: blur(8px);
