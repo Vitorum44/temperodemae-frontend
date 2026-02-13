@@ -413,12 +413,34 @@ window.saveProduct = async () => {
     };
 
 
-    if (!data.name || !data.price || !data.stock || !data.categoryId) {
-      alert("Preencha todos os campos obrigatórios.");
-      btn.innerText = originalText;
-      btn.disabled = false;
-      return;
-    }
+    if (!data.name.trim()) {
+  alert("Informe o nome do produto.");
+  btn.innerText = originalText;
+  btn.disabled = false;
+  return;
+}
+
+if (isNaN(data.price)) {
+  alert("Informe um preço válido.");
+  btn.innerText = originalText;
+  btn.disabled = false;
+  return;
+}
+
+if (isNaN(data.stock)) {
+  alert("Informe o estoque.");
+  btn.innerText = originalText;
+  btn.disabled = false;
+  return;
+}
+
+if (!data.category_id) {
+  alert("Selecione uma categoria.");
+  btn.innerText = originalText;
+  btn.disabled = false;
+  return;
+}
+
 
 
 
