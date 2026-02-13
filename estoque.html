@@ -51,73 +51,70 @@
 
     <!-- ================= PRODUTOS (INALTERADO) ================= -->
     <section class="section-box">
-  <div class="page-header">
-    <div>
-      <h2>Produtos</h2>
-      <p class="subtitle">Gerencie seus lanches, preços e estoque.</p>
-    </div>
+      <div class="page-header">
+        <div>
+          <h2>Produtos</h2>
+          <p class="subtitle">Gerencie seus lanches, preços e estoque.</p>
+        </div>
 
-    <button class="btn-primary" onclick="openNewProduct()">
-      + Novo Produto
-    </button>
-  </div>
+        <button class="btn-primary" onclick="openNewProduct()">
+          + Novo Produto
+        </button>
+      </div>
 
-  <!-- 🔍 CAMPO DE BUSCA -->
-  <div class="estoque-search-container" style="margin: 16px 0;">
-    <div class="search-box" style="position: relative; max-width: 350px;">
-      <input 
-        type="text" 
-        id="search-product" 
-        placeholder="🔍 Buscar produto..." 
-        style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none;"
-      >
-    </div>
-  </div>
+      <!-- 🔍 CAMPO DE BUSCA -->
+      <div class="estoque-search-container" style="margin: 16px 0;">
+        <div class="search-box" style="position: relative; max-width: 350px;">
+          <input type="text" id="search-product" placeholder="🔍 Buscar produto..."
+            style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none;">
+        </div>
+      </div>
 
-  <table class="inventory-table">
-    <thead>
-      <tr>
-        <th>Foto</th>
-        <th>Nome</th>
-        <th>Categoria</th>
-        <th>Subcategoria</th>
-        <th>Preço</th>
-        <th>Estoque</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody id="inventory-list"></tbody>
-  </table>
-</section>
+      <table class="inventory-table">
+        <thead>
+          <tr>
+            <th>Foto</th>
+            <th>Nome</th>
+            <th>Categoria</th>
+            <th>Subcategoria</th>
+            <th>Preço</th>
+            <th>Estoque</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="inventory-list"></tbody>
+      </table>
+    </section>
 
 
   </main>
 
   <!-- ================= MODAL CRIAR CATEGORIA ================= -->
   <div id="category-modal" class="modal-overlay hidden">
-  <div class="modal-card modal-small"> <div class="modal-header">
-      <h3>Nova Categoria</h3>
-      <button class="modal-close" onclick="closeCategoryModal()">×</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="form-group">
-        <label for="category-name-input">Nome da categoria</label>
-        <div class="input-wrapper">
-          <input type="text" id="category-name-input" placeholder="Ex: Bebidas, Promoções..." autocomplete="off">
-        </div>
-        <p class="input-hint">Pressione Enter para salvar rapidamente.</p>
+    <div class="modal-card modal-small">
+      <div class="modal-header">
+        <h3>Nova Categoria</h3>
+        <button class="modal-close" onclick="closeCategoryModal()">×</button>
       </div>
-    </div>
 
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeCategoryModal()">Cancelar</button>
-      <button class="btn-confirm" onclick="saveCategory()">Salvar</button>
-    </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="category-name-input">Nome da categoria</label>
+          <div class="input-wrapper">
+            <input type="text" id="category-name-input" placeholder="Ex: Bebidas, Promoções..." autocomplete="off">
+          </div>
+          <p class="input-hint">Pressione Enter para salvar rapidamente.</p>
+        </div>
+      </div>
 
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeCategoryModal()">Cancelar</button>
+        <button class="btn-confirm" onclick="saveCategory()">Salvar</button>
+      </div>
+
+    </div>
   </div>
-</div>
 
 
   <!-- MODAL PRODUTO -->
@@ -202,58 +199,68 @@
   </div>
 
   <div id="edit-modal" class="modal-overlay hidden">
-  <div class="modal-card modal-small">
-    
-    <div class="modal-header">
-      <h3 id="edit-modal-title">Editar</h3>
-      <button class="modal-close" onclick="closeEditModal()">×</button>
-    </div>
+    <div class="modal-card">
 
-    <div class="modal-body">
-      <div class="form-group">
-        <label for="edit-input">Nome</label>
-        <input type="text" id="edit-input" autocomplete="off">
-        <input type="hidden" id="edit-id">
-        <input type="hidden" id="edit-type"> 
+      <div class="modal-header">
+        <h3 id="edit-modal-title">Editar</h3>
+        <button class="modal-close" onclick="closeEditModal()">×</button>
       </div>
-      <p class="input-hint">Pressione Enter para salvar.</p>
-    </div>
 
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
-      <button class="btn-confirm" onclick="saveEdit()">Salvar Alterações</button>
-    </div>
+      <div class="modal-body">
+        <label style="font-weight: 600; color: #374151; font-size: 14px;">Nome</label>
+        <input type="text" id="edit-input" class="modal-input" placeholder="Digite o novo nome..." autocomplete="off">
 
+        <div style="display:none;">
+          <input type="hidden" id="edit-id">
+          <input type="hidden" id="edit-type">
+        </div>
+        <p class="input-hint">Pressione Enter para salvar ou Esc para sair.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+        <button class="btn-confirm" onclick="saveEdit()">Salvar Alterações</button>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<div id="delete-modal" class="modal-overlay hidden">
-  <div class="modal-card modal-small">
-    
-    <div class="modal-header">
-      <h3>Excluir Item</h3>
-      <button class="modal-close" onclick="closeDeleteModal()">×</button>
+  <div id="delete-modal" class="modal-overlay hidden">
+    <div class="modal-card modal-small">
+
+      <div class="modal-body" style="text-align: center; padding-top: 32px;">
+
+        <div
+          style="margin: 0 auto; width: 50px; height: 50px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ef4444; margin-bottom: 16px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+        </div>
+
+        <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px;">Excluir Item?</h3>
+
+        <p id="delete-message" style="color: #6b7280; font-size: 14px; margin-bottom: 0;">
+          Você tem certeza? Essa ação não pode ser desfeita.
+        </p>
+
+        <input type="hidden" id="delete-id">
+        <input type="hidden" id="delete-type">
+      </div>
+
+      <div class="modal-footer"
+        style="justify-content: center; background: transparent; border-top: none; padding-bottom: 32px;">
+        <button class="btn-cancel" onclick="closeDeleteModal()" style="width: 100px;">Cancelar</button>
+        <button class="btn-confirm btn-danger-action" onclick="confirmDelete()" style="width: 100px;">Sim,
+          Excluir</button>
+      </div>
+
     </div>
-
-    <div class="modal-body">
-      <p id="delete-message" style="color: #374151; font-size: 15px; line-height: 1.5;">
-        Tem certeza?
-      </p>
-      <p style="color: #6b7280; font-size: 13px; margin-top: 8px;">
-        Essa ação não poderá ser desfeita.
-      </p>
-      
-      <input type="hidden" id="delete-id">
-      <input type="hidden" id="delete-type">
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeDeleteModal()">Cancelar</button>
-      <button class="btn-danger" onclick="confirmDelete()">Sim, Excluir</button>
-    </div>
-
   </div>
-</div>
 
   <!-- SCRIPT -->
   <script src="js/estoque.js"></script>
