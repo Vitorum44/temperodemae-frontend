@@ -659,6 +659,10 @@ html {
 }
 
 
+/* ============================================================
+   MOBILE PRODUTOS – CARD PROFISSIONAL COM AÇÕES VISÍVEIS
+   ============================================================ */
+
 @media (max-width: 600px) {
 
   .inventory-table {
@@ -672,45 +676,41 @@ html {
   .inventory-table tbody {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
 
   .inventory-table tbody tr {
     display: flex;
-    flex-direction: row;
-    gap: 14px;
+    flex-direction: column;
     background: #ffffff;
-    border-radius: 18px;
-    padding: 14px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-    align-items: flex-start;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.06);
   }
 
   .inventory-table td {
     display: block;
     border: none;
     padding: 0;
-    font-size: 13px;
   }
 
-  /* FOTO */
+  /* ===== TOPO: FOTO + INFO ===== */
+
   .inventory-table td:nth-child(1) {
-    width: 80px;
-    flex-shrink: 0;
+    margin-bottom: 12px;
   }
 
   .product-thumb {
-    width: 70px;
-    height: 70px;
-    border-radius: 12px;
+    width: 75px;
+    height: 75px;
+    border-radius: 14px;
   }
 
-  /* CONTEÚDO PRINCIPAL */
   .inventory-table td:nth-child(2) {
-    flex: 1;
+    margin-bottom: 6px;
   }
 
-  /* ESCONDE categoria e subcategoria no mobile */
+  /* ESCONDE categoria e subcategoria */
   .inventory-table td:nth-child(3),
   .inventory-table td:nth-child(4) {
     display: none;
@@ -718,31 +718,40 @@ html {
 
   /* PREÇO */
   .inventory-table td:nth-child(5) {
+    font-size: 16px;
     font-weight: 700;
     color: #16a34a;
-    margin-top: 6px;
+    margin: 6px 0;
   }
 
   /* ESTOQUE */
   .inventory-table td:nth-child(6) {
-    margin-top: 4px;
-    font-size: 12px;
+    font-size: 13px;
     color: #6b7280;
+    margin-bottom: 6px;
   }
 
-  /* SWITCH E AÇÕES */
-  .inventory-table td:nth-child(7),
+  /* SWITCH */
+  .inventory-table td:nth-child(7) {
+    margin-bottom: 10px;
+  }
+
+  /* ===== AÇÕES ===== */
+
   .inventory-table td:nth-child(8) {
-    margin-top: 8px;
+    display: flex;
+    gap: 8px;
   }
 
   .btn-text {
-    font-size: 11px;
-    padding: 6px 8px;
-    border-radius: 8px;
+    flex: 1;
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 10px;
   }
 
 }
+
 
 
 @media (max-width: 600px) {
