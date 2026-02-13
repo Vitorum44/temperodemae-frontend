@@ -660,35 +660,34 @@ html {
 
 
 /* ============================================================
-   MOBILE PRODUTOS – ESTILO LISTA COMPACTA (TUDO NA MESMA LINHA)
+   MOBILE PRODUTOS – LISTA COMPACTA ORGANIZADA
    ============================================================ */
 
 @media (max-width: 600px) {
-
-  .inventory-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
 
   .inventory-table thead {
     display: none;
   }
 
+  .inventory-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .inventory-table tbody tr {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 10px;
+    gap: 12px;
     background: #ffffff;
-    border-radius: 14px;
-    margin-bottom: 10px;
+    padding: 12px;
+    border-radius: 16px;
     box-shadow: 0 4px 14px rgba(0,0,0,0.06);
   }
 
   .inventory-table td {
     border: none;
     padding: 0;
-    white-space: nowrap;
     font-size: 12px;
   }
 
@@ -698,22 +697,33 @@ html {
   }
 
   .product-thumb {
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
+    width: 55px;
+    height: 55px;
+    border-radius: 12px;
   }
 
-  /* NOME + DESCRIÇÃO */
+  /* BLOCO NOME + CATEGORIA */
   .inventory-table td:nth-child(2) {
     flex: 1;
     min-width: 0;
   }
 
-  .product-description {
-    display: none; /* esconde descrição pra não quebrar linha */
+  .product-name-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111827;
   }
 
-  /* ESCONDE categoria e subcategoria */
+  .product-description {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ESCONDE colunas extras */
   .inventory-table td:nth-child(3),
   .inventory-table td:nth-child(4) {
     display: none;
@@ -721,8 +731,8 @@ html {
 
   /* PREÇO */
   .inventory-table td:nth-child(5) {
-    color: #16a34a;
     font-weight: 700;
+    color: #16a34a;
     font-size: 13px;
   }
 
@@ -730,11 +740,13 @@ html {
   .inventory-table td:nth-child(6) {
     font-size: 11px;
     color: #6b7280;
+    width: 30px;
+    text-align: center;
   }
 
   /* SWITCH */
   .inventory-table td:nth-child(7) {
-    transform: scale(0.8);
+    transform: scale(0.85);
   }
 
   /* AÇÕES */
