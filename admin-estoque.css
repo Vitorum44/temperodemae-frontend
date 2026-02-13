@@ -659,7 +659,7 @@ html {
 }
 
 
-/* ================= MOBILE PRODUTOS - LINHA PERFEITA ================= */
+/* ================= MOBILE PRODUTOS ORGANIZADO DE VERDADE ================= */
 @media (max-width: 600px) {
 
   .inventory-table thead {
@@ -669,48 +669,47 @@ html {
   .inventory-table tbody tr {
     display: flex;
     align-items: center;
-    background: #fff;
+    background: #ffffff;
     padding: 10px 12px;
     border-radius: 16px;
     box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-    gap: 8px;
+    gap: 10px;
   }
 
   .inventory-table td {
     border: none;
     padding: 0;
-    white-space: normal; /* 🔥 permite quebra */
-    font-size: 11px;
+    white-space: normal;
+    font-size: 12px;
   }
 
   /* FOTO */
   .inventory-table td:nth-child(1) {
-    flex: 0 0 48px;
+    flex: 0 0 50px;
   }
 
   .product-thumb {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
   }
 
-  /* BLOCO NOME */
+  /* NOME */
   .inventory-table td:nth-child(2) {
     flex: 1;
     min-width: 0;
   }
 
   .product-name-text {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    line-height: 1.2;
   }
 
   .product-description {
     display: none;
   }
 
-  /* ESCONDE CATEGORIA */
+  /* ESCONDE categoria/subcategoria */
   .inventory-table td:nth-child(3),
   .inventory-table td:nth-child(4) {
     display: none;
@@ -718,10 +717,10 @@ html {
 
   /* PREÇO */
   .inventory-table td:nth-child(5) {
-    flex: 0 0 60px;
+    flex: 0 0 70px;
+    text-align: right;
     font-weight: 700;
     color: #16a34a;
-    text-align: right;
   }
 
   /* ESTOQUE */
@@ -733,24 +732,22 @@ html {
 
   /* SWITCH */
   .inventory-table td:nth-child(7) {
-    flex: 0 0 50px;
-    transform: scale(0.8);
+    flex: 0 0 55px;
+    transform: scale(0.85);
   }
 
   /* BOTÕES */
   .inventory-table td:nth-child(8) {
     display: flex;
     gap: 4px;
-    flex: 0 0 auto;
   }
 
   .btn-text {
-    font-size: 9px;
-    padding: 3px 6px;
+    font-size: 10px;
+    padding: 4px 6px;
     border-radius: 6px;
   }
 }
-
 
 
 
