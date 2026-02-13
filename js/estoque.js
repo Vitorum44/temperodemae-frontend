@@ -414,32 +414,32 @@ window.saveProduct = async () => {
 
 
     if (!data.name.trim()) {
-  alert("Informe o nome do produto.");
-  btn.innerText = originalText;
-  btn.disabled = false;
-  return;
-}
+      alert("Informe o nome do produto.");
+      btn.innerText = originalText;
+      btn.disabled = false;
+      return;
+    }
 
-if (isNaN(data.price)) {
-  alert("Informe um preço válido.");
-  btn.innerText = originalText;
-  btn.disabled = false;
-  return;
-}
+    if (isNaN(data.price)) {
+      alert("Informe um preço válido.");
+      btn.innerText = originalText;
+      btn.disabled = false;
+      return;
+    }
 
-if (isNaN(data.stock)) {
-  alert("Informe o estoque.");
-  btn.innerText = originalText;
-  btn.disabled = false;
-  return;
-}
+    if (isNaN(data.stock)) {
+      alert("Informe o estoque.");
+      btn.innerText = originalText;
+      btn.disabled = false;
+      return;
+    }
 
-if (!data.category_id) {
-  alert("Selecione uma categoria.");
-  btn.innerText = originalText;
-  btn.disabled = false;
-  return;
-}
+    if (!data.category_id) {
+      alert("Selecione uma categoria.");
+      btn.innerText = originalText;
+      btn.disabled = false;
+      return;
+    }
 
 
 
@@ -529,10 +529,27 @@ function renderProducts() {
           <span class="slider"></span>
         </label>
       </td>
-      <td>
-        <button class="btn-text" onclick="editProduct('${p.id}')">Editar</button>
-        <button class="btn-text danger" onclick="deleteProduct('${p.id}')">Excluir</button>
-      </td>
+      <td style="position: relative;">
+  <div class="product-actions">
+    
+    <!-- Botões normais (desktop) -->
+    <div class="product-buttons">
+      <button class="btn-text" onclick="editProduct('${p.id}')">Editar</button>
+      <button class="btn-text danger" onclick="deleteProduct('${p.id}')">Excluir</button>
+    </div>
+
+    <!-- 3 pontinhos (mobile) -->
+    <div class="product-dots">⋮</div>
+
+    <!-- Menu escondido (mobile) -->
+    <div class="product-menu">
+      <button onclick="editProduct('${p.id}')">Editar</button>
+      <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
+    </div>
+
+  </div>
+</td>
+
     `;
     tbody.appendChild(tr);
   });
@@ -608,6 +625,35 @@ function closeOnOverlay(event) {
     event.target.classList.add("hidden");
   }
 }
+
+document.addEventListener("click", function (e) {
+  const dots = e.target.closest(".product-dots");
+  const menuClicked = e.target.closest(".product-menu");
+
+  // Se clicou nos 3 pontinhos
+  if (dots) {
+    e.stopPropagation();
+
+    // Fecha todos primeiro
+    document.querySelectorAll(".product-menu").forEach(menu => {
+      menu.style.display = "none";
+    });
+
+    const menu = dots.nextElementSibling;
+    menu.style.display = "flex";
+    return;
+  }
+
+  // Se clicou dentro do menu, não fecha
+  if (menuClicked) return;
+
+  // Se clicou fora, fecha tudo
+  document.querySelectorAll(".product-menu").forEach(menu => {
+    menu.style.display = "none";
+  });
+});
+
+
 
 
 
