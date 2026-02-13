@@ -361,3 +361,169 @@
 .product-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; transition: transform 0.25s ease, box-shadow 0.25s ease; cursor: pointer; position: relative; z-index: 1; }
 .product-thumb:hover { transform: scale(2) translateY(-5px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25); z-index: 10; }
 
+/* ==========================================================================
+   MODAIS ROBUSTOS E PROFISSIONAIS
+   ========================================================================== */
+
+/* Fundo Escuro com Desfoque */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6); /* Escurece o fundo */
+  backdrop-filter: blur(4px);     /* Desfoque estilo Apple/Windows 11 */
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease-in-out;
+}
+
+.modal-overlay:not(.hidden) {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* O Cartão do Modal */
+.modal-card {
+  background: #ffffff;
+  width: 90%;
+  max-width: 480px; /* Largura ideal para leitura */
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: scale(0.95) translateY(10px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); /* Efeito elástico suave */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Animação de Entrada */
+.modal-overlay:not(.hidden) .modal-card {
+  transform: scale(1) translateY(0);
+}
+
+/* Versão Pequena (Ex: Exclusão) */
+.modal-small {
+  max-width: 400px;
+}
+
+/* Cabeçalho */
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: 0.2s;
+}
+.modal-close:hover { color: #111827; }
+
+/* Corpo */
+.modal-body {
+  padding: 24px;
+  font-size: 15px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+/* Inputs dentro do modal */
+.modal-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: 0.2s;
+  outline: none;
+  margin-top: 10px;
+}
+
+.modal-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 6px;
+}
+
+/* Rodapé (Botões) */
+.modal-footer {
+  padding: 16px 24px;
+  background: #f9fafb;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Botões do Modal */
+.btn-cancel {
+  padding: 10px 18px;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-cancel:hover { background: #f3f4f6; }
+
+.btn-confirm {
+  padding: 10px 18px;
+  background: #3b82f6; /* Azul Padrão */
+  border: none;
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+  transition: 0.2s;
+}
+.btn-confirm:hover { background: #2563eb; transform: translateY(-1px); }
+
+.btn-danger-action {
+  background: #ef4444 !important; /* Vermelho Perigo */
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.4) !important;
+}
+.btn-danger-action:hover { background: #dc2626 !important; }
+
+/* Ícone de Alerta (Opcional) */
+.icon-warning {
+  width: 48px;
+  height: 48px;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  font-size: 24px;
+}
