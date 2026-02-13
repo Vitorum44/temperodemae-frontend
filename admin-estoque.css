@@ -546,10 +546,6 @@ html {
     transition: all 0.3s ease;
   }
 
-  .admin-grid {
-    margin-top: 70px;
-  }
-
 }
 
 .btn,
@@ -641,6 +637,75 @@ html {
   }
 
 }
+
+.bottom-nav a {
+  font-size: 11px;
+}
+
+.bottom-nav .material-icons-outlined {
+  font-size: 22px;
+}
+
+.topbar.scrolled {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.bottom-nav a {
+  transition: transform 0.15s ease;
+}
+
+.bottom-nav a:active {
+  transform: scale(0.9);
+}
+
+
+@media (max-width: 600px) {
+
+  .inventory-table {
+    display: block;
+  }
+
+  .inventory-table thead {
+    display: none;
+  }
+
+  .inventory-table tbody {
+    display: block;
+  }
+
+  .inventory-table tbody tr {
+    display: block;
+    background: #ffffff;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  }
+
+  .inventory-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    white-space: normal;
+    border: none;
+  }
+
+  .inventory-table td:first-child {
+    justify-content: center;
+  }
+
+  .product-thumb {
+    width: 70px;
+    height: 70px;
+  }
+
+}
+
+
+
+
+
 
 
 
