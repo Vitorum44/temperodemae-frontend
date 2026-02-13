@@ -32,7 +32,7 @@ async function api(url, method = "GET", body) {
     });
 
     if (!res.ok) {
-      if(res.status === 204) return true;
+      if (res.status === 204) return true;
       console.error("Erro na requisição:", res.status);
       return null;
     }
@@ -46,14 +46,14 @@ async function api(url, method = "GET", body) {
 /* ================= LOAD ================= */
 async function loadData() {
   let openIds = getOpenCategories();
-  
+
   state.categories = await api("/categories") || [];
   state.subcategories = await api("/subcategories") || [];
   state.products = await api(PRODUCTS_ENDPOINT) || [];
 
   if (isFirstLoad) {
-      openIds = state.categories.map(c => String(c.id));
-      isFirstLoad = false;
+    openIds = state.categories.map(c => String(c.id));
+    isFirstLoad = false;
   }
 
   renderCategories(openIds);
@@ -77,8 +77,8 @@ function renderCategories(openIds = []) {
 
   state.categories.forEach(cat => {
     const catWrapper = document.createElement("div");
-    catWrapper.className = "ns-category"; 
-    
+    catWrapper.className = "ns-category";
+
     const isOpen = openIds.includes(String(cat.id));
     const hiddenClass = isOpen ? "" : "hidden";
     const arrowClass = isOpen ? "ns-arrow open" : "ns-arrow";
@@ -111,8 +111,8 @@ function renderCategories(openIds = []) {
 
 function renderSubRows(categoryId) {
   const subs = state.subcategories.filter(s => {
-      const pai = s.category_id || s.categoryId || s.parent_id;
-      return String(pai) === String(categoryId);
+    const pai = s.category_id || s.categoryId || s.parent_id;
+    return String(pai) === String(categoryId);
   });
 
   if (subs.length === 0) return "";
@@ -153,8 +153,8 @@ function toggleSubs(id) {
   if (el) {
     const isHidden = el.classList.toggle("hidden");
     if (arrow) {
-        if (isHidden) arrow.classList.remove("open");
-        else arrow.classList.add("open");
+      if (isHidden) arrow.classList.remove("open");
+      else arrow.classList.add("open");
     }
   }
 }
@@ -177,8 +177,8 @@ function openMenuReal(button, type, id) {
   }
 
   const rect = button.getBoundingClientRect();
-  const top = rect.bottom + window.scrollY + 5; 
-  const left = rect.left + window.scrollX - 140; 
+  const top = rect.bottom + window.scrollY + 5;
+  const left = rect.left + window.scrollX - 140;
   menu.style.position = "absolute"; menu.style.top = top + "px"; menu.style.left = left + "px";
   document.body.appendChild(menu);
 }
@@ -189,12 +189,12 @@ function actionNewSub(id) {
   closeMenus();
   const subsDiv = document.getElementById(`subs-${id}`);
   const arrow = document.getElementById(`arrow-${id}`);
-  
+
   if (subsDiv) {
     subsDiv.classList.remove("hidden");
-    if(arrow) arrow.classList.add("open"); 
+    if (arrow) arrow.classList.add("open");
   }
-  
+
   const box = document.getElementById(`new-sub-${id}`);
   const input = document.getElementById(`sub-input-${id}`);
   if (box && input) {
@@ -219,11 +219,11 @@ async function saveSub(catId) {
   if (result) {
     state.subcategories.push({ id: Date.now(), name: name, category_id: catId });
     cancelSub(catId);
-    
+
     const openIds = getOpenCategories();
-    if(!openIds.includes(String(catId))) openIds.push(String(catId));
+    if (!openIds.includes(String(catId))) openIds.push(String(catId));
     renderCategories(openIds);
-    
+
     setTimeout(loadData, 1000);
   } else {
     alert("Erro ao salvar.");
@@ -245,7 +245,7 @@ function actionEditCat(id) {
   $("edit-modal-title").innerText = "Editar Categoria";
   $("edit-input").value = cat.name;
   $("edit-id").value = id;
-  $("edit-type").value = "category"; 
+  $("edit-type").value = "category";
   openEditModal();
 }
 
@@ -256,7 +256,7 @@ function actionEditSub(id) {
   $("edit-modal-title").innerText = "Editar Subcategoria";
   $("edit-input").value = sub.name;
   $("edit-id").value = id;
-  $("edit-type").value = "subcategory"; 
+  $("edit-type").value = "subcategory";
   openEditModal();
 }
 
@@ -280,7 +280,7 @@ async function saveEdit() {
   if (!name) return alert("O nome não pode ser vazio.");
   const endpoint = type === "category" ? `/categories/${id}` : `/subcategories/${id}`;
   const result = await api(endpoint, "PATCH", { name });
-  if (result) { closeEditModal(); loadData(); } 
+  if (result) { closeEditModal(); loadData(); }
   else { alert("Erro ao salvar a edição."); }
 }
 
@@ -301,53 +301,66 @@ function actionDelSub(id) {
 }
 
 function openDeleteModal(id, type, name) {
-    const modal = $("delete-modal");
-    const msg = $("delete-message");
-    
-    // Configura o texto
-    if (type === "category") {
-        msg.innerText = `Você tem certeza que deseja excluir a categoria "${name}"? Todas as subcategorias serão apagadas.`;
-    } else {
-        msg.innerText = `Você tem certeza que deseja excluir a subcategoria "${name}"?`;
-    }
+  const modal = $("delete-modal");
+  const msg = $("delete-message");
 
-    // Configura os IDs ocultos
-    $("delete-id").value = id;
-    $("delete-type").value = type;
+  // Configura o texto
+  if (type === "category") {
+    msg.innerText = `Você tem certeza que deseja excluir a categoria "${name}"? Todas as subcategorias serão apagadas.`;
+  } else if (type === "subcategory") {
+    msg.innerText = `Você tem certeza que deseja excluir a subcategoria "${name}"?`;
+  } else if (type === "product") {
+    msg.innerText = `Você tem certeza que deseja excluir o produto "${name}"?`;
+  }
 
-    modal.classList.remove("hidden");
+
+  // Configura os IDs ocultos
+  $("delete-id").value = id;
+  $("delete-type").value = type;
+
+  modal.classList.remove("hidden");
 }
 
 function closeDeleteModal() {
-    $("delete-modal").classList.add("hidden");
+  $("delete-modal").classList.add("hidden");
 }
 
 async function confirmDelete() {
-    const id = $("delete-id").value;
-    const type = $("delete-type").value;
-    const endpoint = type === "category" ? `/categories/${id}` : `/subcategories/${id}`;
+  const id = $("delete-id").value;
+  const type = $("delete-type").value;
 
-    const result = await api(endpoint, "DELETE");
-    
-    // Se a API retornar sucesso (ou 204 No Content que é tratado no api())
-    // Fechamos o modal e recarregamos
-    closeDeleteModal();
-    loadData();
+  let endpoint = "";
+
+  if (type === "category") {
+    endpoint = `/categories/${id}`;
+  } else if (type === "subcategory") {
+    endpoint = `/subcategories/${id}`;
+  } else if (type === "product") {
+    endpoint = `/items/${id}`;
+  }
+
+  if (!endpoint) return;
+
+  await api(endpoint, "DELETE");
+
+  closeDeleteModal();
+  await loadData();
 }
+
 
 
 /* ================= MODAL PRODUTO ================= */
 window.openNewProduct = () => {
-    editingProductId = null; selectedImageFile = null; removeImage();
-    $("product-modal-title").innerText = "Novo Produto";
-    $("prod-id").value = ""; $("prod-name").value = ""; $("prod-description").value = ""; $("prod-price").value = ""; $("prod-stock").value = "";
-    fillCategorySelects();
-    openProductModal();
+  editingProductId = null; selectedImageFile = null; removeImage();
+  $("product-modal-title").innerText = "Novo Produto";
+  $("prod-id").value = ""; $("prod-name").value = ""; $("prod-description").value = ""; $("prod-price").value = ""; $("prod-stock").value = "";
+  fillCategorySelects();
+  openProductModal();
 };
 
 window.editProduct = (id) => {
   const p = state.products.find(x => x.id === id); if (!p) return;
-  editingProductId = id; 
+  editingProductId = id;
   $("product-modal-title").innerText = "Editar Produto";
   $("prod-id").value = p.id; $("prod-name").value = p.name; $("prod-description").value = p.description || ""; $("prod-price").value = p.price; $("prod-stock").value = p.stock;
   fillCategorySelects(p.category_id, p.subcategory_id);
@@ -367,7 +380,7 @@ async function uploadImage(file) { const fd = new FormData(); fd.append("file", 
 window.saveProduct = async () => {
   const btn = document.querySelector('#product-modal .btn-confirm');
   const originalText = btn.innerText;
-  
+
   // 1. Avisa que está salvando
   btn.innerText = "Salvando...";
   btn.disabled = true;
@@ -400,7 +413,7 @@ window.saveProduct = async () => {
     // 3. Só fecha se deu certo (se result não for null)
     if (result) {
       alert("Produto salvo com sucesso!"); // Feedback visual
-      closeProductModal(); 
+      closeProductModal();
       await loadData(); // <--- ISSO AQUI ATUALIZA A LISTA SOZINHO
     } else {
       alert("Erro ao salvar. Verifique se você está logado como Admin.");
@@ -421,11 +434,11 @@ window.saveProduct = async () => {
 window.openCategoryModal = () => {
   const modal = $("category-modal");
   const input = $("category-name-input");
-  
+
   modal.classList.remove("hidden");
   input.value = "";
-  setTimeout(() => input.focus(), 100); 
-  
+  setTimeout(() => input.focus(), 100);
+
   input.onkeydown = (e) => {
     if (e.key === "Enter") saveCategory();
     if (e.key === "Escape") closeCategoryModal();
@@ -445,8 +458,8 @@ window.saveCategory = async () => {
 
 /* ================= LISTA E SELECTS ================= */
 function renderProducts() {
-  const tbody = $("inventory-list"); 
-  if (!tbody) return; 
+  const tbody = $("inventory-list");
+  if (!tbody) return;
   tbody.innerHTML = "";
 
   // 🔍 Ordena trazendo o buscado para o topo
@@ -484,19 +497,19 @@ function renderProducts() {
 
 
   function sortProductsBySearch(products, term) {
-  if (!term) return products;
+    if (!term) return products;
 
-  const t = term.toLowerCase();
+    const t = term.toLowerCase();
 
-  return products.slice().sort((a, b) => {
-    const aMatch = a.name.toLowerCase().includes(t);
-    const bMatch = b.name.toLowerCase().includes(t);
+    return products.slice().sort((a, b) => {
+      const aMatch = a.name.toLowerCase().includes(t);
+      const bMatch = b.name.toLowerCase().includes(t);
 
-    if (aMatch && !bMatch) return -1;
-    if (!aMatch && bMatch) return 1;
-    return 0;
-  });
-}
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
+      return 0;
+    });
+  }
 
 
 }
@@ -514,12 +527,14 @@ function fillCategorySelects(catId = null, subId = null) {
 }
 $("prod-category")?.addEventListener("change", e => { fillCategorySelects(e.target.value, null); });
 
-window.toggleProductStatus = async (id, current) => { await api(`/items/${id}`, "PATCH", { active: !current }); const p = state.products.find(x => x.id === id); if(p) p.active = !current; renderProducts(); };
-window.deleteProduct = async (id) => { 
-    if (!confirm("Excluir?")) return; 
-    await api(`/items/${id}`, "DELETE"); 
-    await loadData(); // <--- Adicionei o await aqui pra ficar perfeito
+window.toggleProductStatus = async (id, current) => { await api(`/items/${id}`, "PATCH", { active: !current }); const p = state.products.find(x => x.id === id); if (p) p.active = !current; renderProducts(); };
+window.deleteProduct = (id) => {
+  const product = state.products.find(p => String(p.id) === String(id));
+  if (!product) return;
+
+  openDeleteModal(id, "product", product.name);
 };
+
 
 loadData();
 
