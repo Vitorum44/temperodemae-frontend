@@ -670,37 +670,80 @@ html {
   }
 
   .inventory-table tbody {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   .inventory-table tbody tr {
-    display: block;
+    display: flex;
+    flex-direction: row;
+    gap: 14px;
     background: #ffffff;
-    margin-bottom: 16px;
-    border-radius: 16px;
-    padding: 16px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    align-items: flex-start;
   }
 
   .inventory-table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    white-space: normal;
+    display: block;
     border: none;
+    padding: 0;
+    font-size: 13px;
   }
 
-  .inventory-table td:first-child {
-    justify-content: center;
+  /* FOTO */
+  .inventory-table td:nth-child(1) {
+    width: 80px;
+    flex-shrink: 0;
   }
 
   .product-thumb {
     width: 70px;
     height: 70px;
+    border-radius: 12px;
+  }
+
+  /* CONTEÚDO PRINCIPAL */
+  .inventory-table td:nth-child(2) {
+    flex: 1;
+  }
+
+  /* ESCONDE categoria e subcategoria no mobile */
+  .inventory-table td:nth-child(3),
+  .inventory-table td:nth-child(4) {
+    display: none;
+  }
+
+  /* PREÇO */
+  .inventory-table td:nth-child(5) {
+    font-weight: 700;
+    color: #16a34a;
+    margin-top: 6px;
+  }
+
+  /* ESTOQUE */
+  .inventory-table td:nth-child(6) {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  /* SWITCH E AÇÕES */
+  .inventory-table td:nth-child(7),
+  .inventory-table td:nth-child(8) {
+    margin-top: 8px;
+  }
+
+  .btn-text {
+    font-size: 11px;
+    padding: 6px 8px;
+    border-radius: 8px;
   }
 
 }
+
 
 @media (max-width: 600px) {
 
