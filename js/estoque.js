@@ -572,5 +572,12 @@ function closeNotify() {
     $("notify-modal").classList.add("hidden");
 }
 
+function closeOnOverlay(event) {
+    if (event.target.classList.contains("modal-overlay")) {
+        event.target.classList.add("hidden");
+    }
+}
+
+
 
 
