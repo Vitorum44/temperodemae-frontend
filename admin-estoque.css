@@ -702,10 +702,12 @@ html {
     border-radius: 12px;
   }
 
-  /* BLOCO NOME + CATEGORIA */
+  /* BLOCO NOME + DESCRIÇÃO + PREÇO */
   .inventory-table td:nth-child(2) {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .product-name-text {
@@ -723,17 +725,24 @@ html {
     text-overflow: ellipsis;
   }
 
-  /* ESCONDE colunas extras */
+  /* ESCONDE categoria e subcategoria */
   .inventory-table td:nth-child(3),
   .inventory-table td:nth-child(4) {
     display: none;
   }
 
-  /* PREÇO */
+  /* ESCONDE preço original */
   .inventory-table td:nth-child(5) {
+    display: none;
+  }
+
+  /* MOSTRA PREÇO ABAIXO DO NOME */
+  .inventory-table td:nth-child(2)::after {
+    content: attr(data-price);
     font-weight: 700;
     color: #16a34a;
     font-size: 13px;
+    margin-top: 4px;
   }
 
   /* ESTOQUE */
@@ -762,6 +771,7 @@ html {
   }
 
 }
+
 
 
 
