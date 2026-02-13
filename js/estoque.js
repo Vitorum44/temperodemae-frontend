@@ -402,16 +402,24 @@ window.saveProduct = async () => {
       imageUrl = await uploadImage(selectedImageFile);
     }
 
-    // Monta os dados
     const data = {
       name: $("prod-name").value,
       description: $("prod-description").value,
-      price: Number($("prod-price").value.replace(',', '.')), // Garante formato certo
+      price: Number($("prod-price").value.replace(',', '.')),
       stock: Number($("prod-stock").value),
-      category_id: $("prod-category").value,
-      subcategory_id: $("prod-subcategory").value,
+      categoryId: $("prod-category").value,
+      subcategoryId: $("prod-subcategory").value,
       active: true
     };
+
+    if (!data.name || !data.price || !data.stock || !data.categoryId) {
+      alert("Preencha todos os campos obrigatórios.");
+      btn.innerText = originalText;
+      btn.disabled = false;
+      return;
+    }
+
+
 
     if (imageUrl) data.image_url = imageUrl;
 
@@ -423,7 +431,7 @@ window.saveProduct = async () => {
 
 
       showNotify("Sucesso 🎉", "Produto salvo com sucesso!");
- // Feedback visual
+      // Feedback visual
       closeProductModal();
       await loadData(); // <--- ISSO AQUI ATUALIZA A LISTA SOZINHO
     } else {
@@ -563,19 +571,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 function showNotify(title, message) {
-    $("notify-title").innerText = title;
-    $("notify-message").innerText = message;
-    $("notify-modal").classList.remove("hidden");
+  $("notify-title").innerText = title;
+  $("notify-message").innerText = message;
+  $("notify-modal").classList.remove("hidden");
 }
 
 function closeNotify() {
-    $("notify-modal").classList.add("hidden");
+  $("notify-modal").classList.add("hidden");
 }
 
 function closeOnOverlay(event) {
-    if (event.target.classList.contains("modal-overlay")) {
-        event.target.classList.add("hidden");
-    }
+  if (event.target.classList.contains("modal-overlay")) {
+    event.target.classList.add("hidden");
+  }
 }
 
 
