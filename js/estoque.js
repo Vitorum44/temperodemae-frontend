@@ -365,12 +365,55 @@ function hideImageActions() { const a = $("image-actions"); if (a) a.remove(); }
 async function uploadImage(file) { const fd = new FormData(); fd.append("file", file); const res = await fetch(`${API}/upload`, { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }, body: fd }); if (!res.ok) throw new Error("Erro"); return (await res.json()).url; }
 
 window.saveProduct = async () => {
-  const id = $("prod-id").value; let imageUrl = null;
-  if (selectedImageFile) imageUrl = await uploadImage(selectedImageFile);
-  const data = { name: $("prod-name").value, description: $("prod-description").value, price: Number($("prod-price").value), stock: Number($("prod-stock").value), category_id: $("prod-category").value, subcategory_id: $("prod-subcategory").value, active: true };
-  if (imageUrl) data.image_url = imageUrl;
-  await api(id ? `/items/${id}` : "/items", id ? "PATCH" : "POST", data);
-  closeProductModal(); loadData();
+  const btn = document.querySelector('#product-modal .btn-confirm');
+  const originalText = btn.innerText;
+  
+  // 1. Avisa que está salvando
+  btn.innerText = "Salvando...";
+  btn.disabled = true;
+
+  try {
+    const id = $("prod-id").value;
+    let imageUrl = null;
+
+    // Upload de imagem (se tiver)
+    if (selectedImageFile) {
+      imageUrl = await uploadImage(selectedImageFile);
+    }
+
+    // Monta os dados
+    const data = {
+      name: $("prod-name").value,
+      description: $("prod-description").value,
+      price: Number($("prod-price").value.replace(',', '.')), // Garante formato certo
+      stock: Number($("prod-stock").value),
+      category_id: $("prod-category").value,
+      subcategory_id: $("prod-subcategory").value,
+      active: true
+    };
+
+    if (imageUrl) data.image_url = imageUrl;
+
+    // 2. Envia para o servidor e ESPERA a resposta
+    const result = await api(id ? `/items/${id}` : "/items", id ? "PATCH" : "POST", data);
+
+    // 3. Só fecha se deu certo (se result não for null)
+    if (result) {
+      alert("Produto salvo com sucesso!"); // Feedback visual
+      closeProductModal(); 
+      await loadData(); // <--- ISSO AQUI ATUALIZA A LISTA SOZINHO
+    } else {
+      alert("Erro ao salvar. Verifique se você está logado como Admin.");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("Erro técnico ao salvar.");
+  } finally {
+    // Restaura o botão
+    btn.innerText = originalText;
+    btn.disabled = false;
+  }
 };
 
 
@@ -472,7 +515,11 @@ function fillCategorySelects(catId = null, subId = null) {
 $("prod-category")?.addEventListener("change", e => { fillCategorySelects(e.target.value, null); });
 
 window.toggleProductStatus = async (id, current) => { await api(`/items/${id}`, "PATCH", { active: !current }); const p = state.products.find(x => x.id === id); if(p) p.active = !current; renderProducts(); };
-window.deleteProduct = async (id) => { if (!confirm("Excluir?")) return; await api(`/items/${id}`, "DELETE"); loadData(); };
+window.deleteProduct = async (id) => { 
+    if (!confirm("Excluir?")) return; 
+    await api(`/items/${id}`, "DELETE"); 
+    await loadData(); // <--- Adicionei o await aqui pra ficar perfeito
+};
 
 loadData();
 
@@ -487,6 +534,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-
 
 
