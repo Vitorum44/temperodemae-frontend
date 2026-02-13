@@ -702,6 +702,52 @@ html {
 
 }
 
+@media (max-width: 600px) {
+
+  #category-list {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .ns-category-row {
+    border-radius: 18px;
+    margin-bottom: 10px;
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    border: none;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .btn-primary {
+    padding: 8px 14px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+}
+
+@media (max-width: 600px) {
+
+  .nav-menu {
+    display: none;
+  }
+
+  .topbar-content {
+    justify-content: space-between;
+  }
+
+  .topbar h2 {
+    font-size: 18px;
+  }
+
+}
+
+
+
 
 
 
