@@ -921,12 +921,6 @@ body.admin-page {
   }
 }
 
-@media (max-width: 600px) {
-  .bottom-nav {
-    display: flex !important;
-  }
-}
-
 
 /* ==========================================================
    MENU INFERIOR MOBILE (BOTTOM NAV)
