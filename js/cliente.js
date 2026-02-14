@@ -1534,19 +1534,40 @@ document.addEventListener('DOMContentLoaded', () => {
   sections.forEach(s => observer.observe(s));
 });
 
-/* ==============================
-   LOGOUT MOBILE (BOTÃO PERFIL)
-============================== */
+/* =====================================
+   LOGOUT MOBILE CORRIGIDO DEFINITIVO
+===================================== */
 
 const pmMobileLogout = document.getElementById('pm-mobile-logout');
 
 pmMobileLogout?.addEventListener('click', () => {
-  setToken('');
-  setUser(null);
+
+  // limpa token
+  localStorage.removeItem('token');
+  state.token = '';
+
+  // limpa usuário
+  state.user = null;
+
+  // limpa carrinho
   localStorage.removeItem('cart');
-  localStorage.removeItem('lastOrderId');
+  state.cart = [];
+
+  // fecha modal
+  const mobileModal = document.getElementById('profile-mobile-modal');
+  if (mobileModal) {
+    mobileModal.setAttribute('aria-hidden', 'true');
+  }
+
+  // atualiza botão perfil
+  if (btnProfile) {
+    btnProfile.textContent = '👤 Perfil';
+  }
+
+  // recarrega página
   window.location.reload();
 });
+
 
 
 // 🔥 DEIXA GLOBAL PARA O HTML ENXERGAR
