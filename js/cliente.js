@@ -1536,3 +1536,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 🔥 DEIXA GLOBAL PARA O HTML ENXERGAR
 window.openAuthModal = openAuthModal;
+window.state = state;
