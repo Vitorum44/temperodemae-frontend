@@ -853,4 +853,20 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
   background: #dc2626;
 }
 
+/* =========================================
+   AJUSTE BOLINHA ACIMA DO BOTTOM NAV
+========================================= */
+@media (max-width: 768px) {
+
+  .floating-bubble {
+    bottom: 100px !important;
+  }
+
+  .floating-bubble.cart-mode {
+    bottom: 100px !important;
+  }
+
+}
+
+
 
