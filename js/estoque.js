@@ -552,6 +552,7 @@ function renderProducts() {
 
 
 
+
     `;
     tbody.appendChild(tr);
   });
