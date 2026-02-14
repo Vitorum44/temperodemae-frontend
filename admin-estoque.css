@@ -852,6 +852,22 @@ html {
 
 }
 
+/* =====================================================
+   CONTROLE FINAL DO MENU MOBILE
+   ===================================================== */
+
+/* 🔴 Sempre escondido por padrão */
+.bottom-nav {
+  display: none;
+}
+
+/* 🟢 Só aparece no mobile */
+@media (max-width: 600px) {
+  .bottom-nav {
+    display: flex !important;
+  }
+}
+
 
 
 
