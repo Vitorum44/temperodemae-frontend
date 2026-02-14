@@ -1533,3 +1533,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { rootMargin: '-20% 0px -70% 0px' });
   sections.forEach(s => observer.observe(s));
 });
+
+// ATIVAR MENU SELECIONADO
+document.querySelectorAll(".app-bottom-nav .nav-item").forEach(item => {
+  item.addEventListener("click", function () {
+    document.querySelectorAll(".app-bottom-nav .nav-item")
+      .forEach(i => i.classList.remove("active"));
+
+    this.classList.add("active");
+  });
+});
