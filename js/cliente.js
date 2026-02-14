@@ -1534,6 +1534,21 @@ document.addEventListener('DOMContentLoaded', () => {
   sections.forEach(s => observer.observe(s));
 });
 
+/* ==============================
+   LOGOUT MOBILE (BOTÃO PERFIL)
+============================== */
+
+const pmMobileLogout = document.getElementById('pm-mobile-logout');
+
+pmMobileLogout?.addEventListener('click', () => {
+  setToken('');
+  setUser(null);
+  localStorage.removeItem('cart');
+  localStorage.removeItem('lastOrderId');
+  window.location.reload();
+});
+
+
 // 🔥 DEIXA GLOBAL PARA O HTML ENXERGAR
 window.openAuthModal = openAuthModal;
 window.state = state;
