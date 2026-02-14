@@ -697,16 +697,15 @@
       document.getElementById("btn-perfil")?.addEventListener("click", (e) => {
         e.preventDefault();
 
-        const user = localStorage.getItem("user");
-
-        if (!user) {
-          document.getElementById("auth-modal")
-            ?.setAttribute("aria-hidden", "false");
+        if (!window.state || !window.state.token) {
+          window.openAuthModal('login');
           return;
         }
 
+        const profileMobileModal = document.getElementById("profile-mobile-modal");
         profileMobileModal?.setAttribute("aria-hidden", "false");
       });
+
 
 
       // Fechar modal
