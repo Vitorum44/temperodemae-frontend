@@ -693,15 +693,19 @@
       const profileMobileModal = document.getElementById("profile-mobile-modal");
 
       document.getElementById("btn-perfil")?.addEventListener("click", (e) => {
-        e.preventDefault();
+  e.preventDefault();
 
-        if (!state.user) {
-          openAuthModal("login");
-          return;
-        }
+  const user = localStorage.getItem("user");
 
-        profileMobileModal?.setAttribute("aria-hidden", "false");
-      });
+  if (!user) {
+    document.getElementById("auth-modal")
+      ?.setAttribute("aria-hidden", "false");
+    return;
+  }
+
+  profileMobileModal?.setAttribute("aria-hidden", "false");
+});
+
 
       // Fechar modal
       document.getElementById("pm-mobile-close")?.addEventListener("click", () => {
