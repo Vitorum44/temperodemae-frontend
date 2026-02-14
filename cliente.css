@@ -1781,7 +1781,9 @@ input[type="radio"] {
   #carrinho .modal-body {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: 110px;
+    padding-bottom: calc(70px + 70px + 30px);
+
+
     /* ajuste ideal */
   }
 
