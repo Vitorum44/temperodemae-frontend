@@ -1533,3 +1533,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { rootMargin: '-20% 0px -70% 0px' });
   sections.forEach(s => observer.observe(s));
 });
+
+// 🔥 DEIXA GLOBAL PARA O HTML ENXERGAR
+window.openAuthModal = openAuthModal;
