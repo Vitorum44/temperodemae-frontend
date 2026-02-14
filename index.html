@@ -718,14 +718,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ordersList.innerHTML = "Carregando...";
 
     try {
-      const res = await fetch(`${window.API_URL || ""}/orders/me`, {
-        headers: {
-          Authorization: `Bearer ${window.state.token}`
-        }
-      });
-
-      if (!res.ok) throw new Error("Erro ao buscar pedidos");
-
+    
       const orders = await window.apiGet('/orders/me');
 
 
