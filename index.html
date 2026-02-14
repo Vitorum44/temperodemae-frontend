@@ -10,7 +10,6 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
   <link
     href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;800;900&display=swap"
-    
     rel="stylesheet">
 
   <link rel="stylesheet" href="./styles.css">
@@ -616,39 +615,67 @@
     });
   </script>
 
-<nav class="app-bottom-nav">
+  <nav class="app-bottom-nav">
 
-  <a href="index.html" class="nav-item active">
-    <span class="material-icons-outlined">restaurant_menu</span>
-    <small>Cardápio</small>
-  </a>
+    <a href="#" class="nav-item active" id="btn-cardapio">
+      <span class="material-icons-outlined">restaurant_menu</span>
+      <small>Cardápio</small>
+    </a>
 
-  <a href="#buscar" class="nav-item" id="btn-buscar">
-    <span class="material-icons-outlined">search</span>
-    <small>Buscar</small>
-  </a>
+    <a href="#" class="nav-item" id="btn-buscar">
+      <span class="material-icons-outlined">search</span>
+      <small>Buscar</small>
+    </a>
 
-  <a href="#" class="nav-item" id="btn-pedidos">
-    <span class="material-icons-outlined">receipt_long</span>
-    <small>Pedidos</small>
-  </a>
+    <a href="#" class="nav-item" id="btn-pedidos">
+      <span class="material-icons-outlined">receipt_long</span>
+      <small>Pedidos</small>
+    </a>
 
-  <a href="perfil.html" class="nav-item">
-    <span class="material-icons-outlined">person</span>
-    <small>Perfil</small>
-  </a>
+    <a href="#" class="nav-item" id="btn-perfil">
+      <span class="material-icons-outlined">person</span>
+      <small>Perfil</small>
+    </a>
 
-</nav>
+  </nav>
 
-<div class="modal-pedidos hidden" id="modalPedidos">
-  <div class="modal-content">
-    <h3>Meus Pedidos</h3>
-    <div id="listaPedidos">
-      Nenhum pedido ainda.
-    </div>
-    <button onclick="fecharPedidos()">Fechar</button>
-  </div>
-</div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const searchInput = document.getElementById("search");
+
+      // 🍔 Cardápio
+      document.getElementById("btn-cardapio")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      // 🔍 Buscar
+      document.getElementById("btn-buscar")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        searchInput?.scrollIntoView({ behavior: "smooth" });
+        searchInput?.focus();
+      });
+
+      // 🛒 Pedidos
+      document.getElementById("btn-pedidos")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById("history-modal")?.classList.remove("hidden");
+        document.getElementById("history-modal")?.setAttribute("aria-hidden", "false");
+
+      });
+
+      // 👤 Perfil
+      document.getElementById("btn-perfil")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById("settings-modal")?.classList.remove("hidden");
+        document.getElementById("settings-modal")?.setAttribute("aria-hidden", "false");
+
+      });
+
+    });
+  </script>
+
 
 
 
