@@ -118,3 +118,68 @@ iframe { width: 100%; height: 100%; border: none; }
     opacity: 0.5;
     background: #e5e7eb; /* Cinza claro */
 }
+
+/* ==========================================================
+   MENU INFERIOR MOBILE (BOTTOM NAV)
+   ========================================================== */
+
+/* 🔒 ESCONDE NO DESKTOP */
+.bottom-nav {
+  display: none;
+}
+
+/* 📱 APARECE SOMENTE NO MOBILE */
+@media (max-width: 600px) {
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background: #ffffff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
+    z-index: 999;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  .bottom-nav a {
+    text-decoration: none;
+    font-size: 11px;
+    color: #6B7280;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .bottom-nav a .material-icons-outlined {
+    font-size: 22px;
+    transition: all 0.2s ease;
+  }
+
+  /* 🔵 BOTÃO ATIVO */
+  .bottom-nav a.active {
+    color: #ef4444; /* vermelho do seu sistema */
+    font-weight: 600;
+  }
+
+  .bottom-nav a.active .material-icons-outlined {
+    transform: translateY(-2px);
+  }
+
+  /* 🔘 EFEITO AO CLICAR */
+  .bottom-nav a:active {
+    transform: scale(0.9);
+  }
+
+  /* 👇 Espaço para não esconder conteúdo */
+  body {
+    padding-bottom: 75px;
+  }
+
+}
