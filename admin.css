@@ -921,16 +921,23 @@ body.admin-page {
   }
 }
 
+@media (max-width: 600px) {
+  .bottom-nav {
+    display: flex !important;
+  }
+}
+
+
 /* ==========================================================
    MENU INFERIOR MOBILE (BOTTOM NAV)
    ========================================================== */
 
-/* 🔒 ESCONDE COMPLETAMENTE NO DESKTOP */
+/* 🔒 ESCONDE NO DESKTOP */
 .bottom-nav {
   display: none !important;
 }
 
-/* 📱 APARECE SOMENTE NO MOBILE */
+/* 📱 MOBILE */
 @media (max-width: 600px) {
 
   .bottom-nav {
@@ -944,8 +951,8 @@ body.admin-page {
     justify-content: space-around;
     align-items: center;
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
-    z-index: 9999;
     border-top: 1px solid #f1f5f9;
+    z-index: 9999;
   }
 
   .bottom-nav a {
@@ -964,7 +971,7 @@ body.admin-page {
     transition: all 0.2s ease;
   }
 
-  /* BOTÃO ATIVO */
+  /* 🔴 ATIVO */
   .bottom-nav a.active {
     color: var(--primary);
     font-weight: 700;
@@ -974,16 +981,25 @@ body.admin-page {
     transform: translateY(-2px);
   }
 
-  /* EFEITO AO CLICAR */
+  /* 👇 efeito clique */
   .bottom-nav a:active {
     transform: scale(0.9);
   }
 
-  /* Espaço inferior para não cobrir conteúdo */
+  /* 👇 evita esconder conteúdo */
   body {
     padding-bottom: 75px;
   }
 }
+
+
+/* 🔥 FORÇA ESCONDER BOTTOM NAV NO DESKTOP */
+@media (min-width: 601px) {
+  .bottom-nav {
+    display: none !important;
+  }
+}
+
 
 
 
