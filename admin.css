@@ -994,6 +994,28 @@ body.admin-page {
   }
 }
 
+/* ==========================================================
+   ESCONDER MENU SUPERIOR NO MOBILE (ADMIN)
+   ========================================================== */
+
+@media (max-width: 600px) {
+
+  .nav-menu {
+    display: none !important;
+  }
+
+  .btn-logout {
+    padding: 6px 14px;
+    font-size: 11px;
+  }
+
+  .topbar-content {
+    justify-content: space-between;
+  }
+
+}
+
+
 
 
 
