@@ -654,9 +654,11 @@
           ⚙️ Configurações
         </button>
 
-        <button id="pm-mobile-logout" class="btn block" style="background:#ef4444; color:white;">
-          🚪 Sair
+        <button id="pm-mobile-logout" class="btn">
+          <span class="material-icons-outlined">logout</span>
+          Sair
         </button>
+
 
       </div>
 
@@ -695,13 +697,17 @@
       document.getElementById("btn-perfil")?.addEventListener("click", (e) => {
         e.preventDefault();
 
-        if (!window.state || !state.user) {
-          openAuthModal("login");
+        const user = localStorage.getItem("user");
+
+        if (!user) {
+          document.getElementById("auth-modal")
+            ?.setAttribute("aria-hidden", "false");
           return;
         }
 
         profileMobileModal?.setAttribute("aria-hidden", "false");
       });
+
 
       // Fechar modal
       document.getElementById("pm-mobile-close")?.addEventListener("click", () => {
