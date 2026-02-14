@@ -672,110 +672,149 @@
 
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
 
-      const searchInput = document.getElementById("search");
+  const profileMobileModal = document.getElementById("profile-mobile-modal");
+  const searchInput = document.getElementById("search");
+  const menuPage = document.getElementById("menu-page");
+  const ordersPage = document.getElementById("orders-page");
 
-      // 🍔 Cardápio
-      document.getElementById("btn-cardapio")?.addEventListener("click", (e) => {
-        e.preventDefault();
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
+  /* =========================
+     🍔 CARDÁPIO
+  ========================= */
+  document.getElementById("btn-cardapio")?.addEventListener("click", (e) => {
+    e.preventDefault();
 
-      // 🔍 Buscar
-      document.getElementById("btn-buscar")?.addEventListener("click", (e) => {
-        e.preventDefault();
-        searchInput?.scrollIntoView({ behavior: "smooth" });
-        searchInput?.focus();
-      });
+    ordersPage.style.display = "none";
+    menuPage.style.display = "block";
 
-      const menuPage = document.getElementById("menu-page");
-      const ordersPage = document.getElementById("orders-page");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 
-      document.getElementById("btn-pedidos")?.addEventListener("click", async (e) => {
-        e.preventDefault();
+  /* =========================
+     🔍 BUSCAR
+  ========================= */
+  document.getElementById("btn-buscar")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    searchInput?.scrollIntoView({ behavior: "smooth" });
+    searchInput?.focus();
+  });
 
-        if (!state.user) {
-          openAuthModal('login');
-          return;
-        }
+  /* =========================
+     📦 PEDIDOS (HISTÓRICO)
+  ========================= */
+  document.getElementById("btn-pedidos")?.addEventListener("click", async (e) => {
+    e.preventDefault();
 
-        menuPage.style.display = "none";
-        ordersPage.style.display = "block";
+    if (!window.state?.user) {
+      window.openAuthModal("login");
+      return;
+    }
 
-        const ordersList = document.getElementById("orders-list");
-        ordersList.innerHTML = "Carregando...";
+    menuPage.style.display = "none";
+    ordersPage.style.display = "block";
 
-        try {
-          const orders = await apiGet('/orders/me');
+    const ordersList = document.getElementById("orders-list");
+    ordersList.innerHTML = "Carregando...";
 
-          if (!orders.length) {
-            ordersList.innerHTML = "<p style='color:#666'>Você ainda não fez pedidos.</p>";
-            return;
-          }
-
-          ordersList.innerHTML = "";
-
-          orders.forEach(order => {
-            const date = new Date(order.created_at).toLocaleDateString('pt-BR');
-
-            const div = document.createElement("div");
-            div.className = "order-card";
-
-            div.innerHTML = `
-        <div class="order-header">
-          <strong>Pedido #${order.id}</strong>
-          <span>${date}</span>
-        </div>
-
-        <div class="order-items">
-          ${order.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join("")}
-        </div>
-
-        <div class="order-footer">
-          <strong>${brl(order.total)}</strong>
-        </div>
-      `;
-
-            ordersList.appendChild(div);
-          });
-
-        } catch (err) {
-          ordersList.innerHTML = "Erro ao carregar pedidos.";
+    try {
+      const res = await fetch(`${window.API_URL || ""}/orders/me`, {
+        headers: {
+          Authorization: `Bearer ${window.state.token}`
         }
       });
 
-      document.getElementById("btn-cardapio")?.addEventListener("click", (e) => {
-  e.preventDefault();
+      if (!res.ok) throw new Error("Erro ao buscar pedidos");
 
-  ordersPage.style.display = "none";
-  menuPage.style.display = "block";
+      const orders = await res.json();
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
+      if (!orders.length) {
+        ordersList.innerHTML = "<p style='color:#666'>Você ainda não fez pedidos.</p>";
+        return;
+      }
+
+      ordersList.innerHTML = "";
+
+      orders.forEach(order => {
+        const date = new Date(order.created_at).toLocaleDateString('pt-BR');
+
+        const div = document.createElement("div");
+        div.className = "order-card";
+
+        div.innerHTML = `
+          <div class="order-header">
+            <strong>Pedido #${order.id}</strong>
+            <span>${date}</span>
+          </div>
+
+          <div class="order-items">
+            ${order.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join("")}
+          </div>
+
+          <div class="order-footer">
+            <strong>${(order.total || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</strong>
+          </div>
+        `;
+
+        ordersList.appendChild(div);
+      });
+
+    } catch (err) {
+      ordersList.innerHTML = "Erro ao carregar pedidos.";
+    }
+  });
+
+  /* =========================
+     👤 PERFIL (MOBILE)
+  ========================= */
+  document.getElementById("btn-perfil")?.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    if (!window.state?.user) {
+      window.openAuthModal("login");
+      return;
+    }
+
+    profileMobileModal?.setAttribute("aria-hidden", "false");
+  });
+
+  /* =========================
+     ❌ FECHAR MODAL PERFIL
+  ========================= */
+  document.getElementById("pm-mobile-close")?.addEventListener("click", () => {
+    profileMobileModal?.setAttribute("aria-hidden", "true");
+  });
+
+  /* =========================
+     ⚙️ ABRIR CONFIGURAÇÕES
+  ========================= */
+  document.getElementById("pm-mobile-settings")?.addEventListener("click", () => {
+    profileMobileModal?.setAttribute("aria-hidden", "true");
+    document.getElementById("settings-modal")?.setAttribute("aria-hidden", "false");
+  });
+
+  /* =========================
+     🚪 LOGOUT MOBILE
+  ========================= */
+  document.getElementById("pm-mobile-logout")?.addEventListener("click", () => {
+
+    localStorage.removeItem("token");
+    localStorage.removeItem("cart");
+
+    if (window.state) {
+      window.state.token = "";
+      window.state.user = null;
+      window.state.cart = [];
+    }
+
+    profileMobileModal?.setAttribute("aria-hidden", "true");
+
+    window.location.reload();
+  });
+
 });
+</script>
 
-
-      // Fechar modal
-      document.getElementById("pm-mobile-close")?.addEventListener("click", () => {
-        profileMobileModal?.setAttribute("aria-hidden", "true");
-      });
-
-      // Abrir configurações
-      document.getElementById("pm-mobile-settings")?.addEventListener("click", () => {
-        profileMobileModal?.setAttribute("aria-hidden", "true");
-        document.getElementById("settings-modal")?.setAttribute("aria-hidden", "false");
-      });
-
-      // Logout
-      document.getElementById("pm-mobile-logout")?.addEventListener("click", () => {
-        setToken('');
-        setUser(null);
-        window.location.reload();
-      });
-
-
-    });
-  </script>
 
 
 
