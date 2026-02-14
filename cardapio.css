@@ -119,16 +119,75 @@ iframe { width: 100%; height: 100%; border: none; }
     background: #e5e7eb; /* Cinza claro */
 }
 
+/* ======== AJUSTES FINOS PARA MOBILE ======== */
+@media (max-width: 600px) {
+
+  /* O card do pedido */
+  .order-card {
+    padding: 12px;
+    margin: 8px 0;
+  }
+
+  /* Cabeçalho do pedido (#9 e horário) */
+  .order-header {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Linha do item (foto + nome + preço) */
+  .order-item {
+    gap: 8px;
+  }
+
+  .order-item img {
+    width: 45px;
+    height: 45px;
+  }
+
+  /* Nome do produto quebrar linha melhor */
+  .order-item-name {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  /* Endereço quebrar linha certinho */
+  .order-address {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  /* Distância e total alinhados */
+  .order-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  /* Botões maiores e empilhados */
+  .order-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-delivery,
+  .btn-cancel {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px;
+  }
+}
+
+
 /* ==========================================================
    MENU INFERIOR MOBILE (BOTTOM NAV)
    ========================================================== */
 
 /* 🔒 ESCONDE NO DESKTOP */
 .bottom-nav {
-  display: none;
+  display: none !important;
 }
 
-/* 📱 APARECE SOMENTE NO MOBILE */
+/* 📱 MOBILE */
 @media (max-width: 600px) {
 
   .bottom-nav {
@@ -138,12 +197,12 @@ iframe { width: 100%; height: 100%; border: none; }
     width: 100%;
     height: 65px;
     background: #ffffff;
-    display: flex;
+    display: flex !important;
     justify-content: space-around;
     align-items: center;
     box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
-    z-index: 999;
     border-top: 1px solid #f1f5f9;
+    z-index: 9999;
   }
 
   .bottom-nav a {
@@ -162,24 +221,52 @@ iframe { width: 100%; height: 100%; border: none; }
     transition: all 0.2s ease;
   }
 
-  /* 🔵 BOTÃO ATIVO */
+  /* 🔴 ATIVO */
   .bottom-nav a.active {
-    color: #ef4444; /* vermelho do seu sistema */
-    font-weight: 600;
+    color: var(--primary);
+    font-weight: 700;
   }
 
   .bottom-nav a.active .material-icons-outlined {
     transform: translateY(-2px);
   }
 
-  /* 🔘 EFEITO AO CLICAR */
+  /* 👇 efeito clique */
   .bottom-nav a:active {
     transform: scale(0.9);
   }
 
-  /* 👇 Espaço para não esconder conteúdo */
+  /* 👇 evita esconder conteúdo */
   body {
     padding-bottom: 75px;
+  }
+}
+
+
+/* 🔥 FORÇA ESCONDER BOTTOM NAV NO DESKTOP */
+@media (min-width: 601px) {
+  .bottom-nav {
+    display: none !important;
+  }
+}
+
+/* ==========================================================
+   ESCONDER MENU SUPERIOR NO MOBILE (ADMIN)
+   ========================================================== */
+
+@media (max-width: 600px) {
+
+  .nav-menu {
+    display: none !important;
+  }
+
+  .btn-logout {
+    padding: 6px 14px;
+    font-size: 11px;
+  }
+
+  .topbar-content {
+    justify-content: space-between;
   }
 
 }
