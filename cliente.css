@@ -868,5 +868,35 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
 
 }
 
+/* ======================================
+   CORREÇÃO MODAL SOBRE BOTTOM NAV
+====================================== */
+
+.modal {
+  z-index: 10000 !important;
+}
+
+.modal-dialog {
+  z-index: 10001 !important;
+}
+
+/* =========================================
+   CORREÇÃO BOTÃO FINALIZAR NO MOBILE
+========================================= */
+@media (max-width: 768px) {
+
+  #carrinho .modal-dialog {
+    max-height: 100vh !important;
+    height: 100vh !important;
+    padding-bottom: 140px !important; /* espaço pra bottom nav */
+  }
+
+  #carrinho .modal-body {
+    padding-bottom: 120px !important; /* garante espaço pro botão */
+  }
+
+}
+
+
 
 
