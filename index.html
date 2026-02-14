@@ -726,7 +726,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (!res.ok) throw new Error("Erro ao buscar pedidos");
 
-      const orders = await res.json();
+      const orders = await window.apiGet('/orders/me');
+
 
       if (!orders.length) {
         ordersList.innerHTML = "<p style='color:#666'>Você ainda não fez pedidos.</p>";
