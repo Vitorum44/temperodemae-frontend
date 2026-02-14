@@ -639,6 +639,31 @@
 
   </nav>
 
+  <!-- MODAL PERFIL MOBILE -->
+  <div id="profile-mobile-modal" class="modal" aria-hidden="true">
+    <div class="modal-dialog" style="max-width:400px;">
+
+      <div class="modal-header row between center">
+        <strong>Perfil</strong>
+        <button id="pm-mobile-close" class="btn text">✖</button>
+      </div>
+
+      <div style="padding:20px; display:flex; flex-direction:column; gap:15px;">
+
+        <button id="pm-mobile-settings" class="btn block">
+          ⚙️ Configurações
+        </button>
+
+        <button id="pm-mobile-logout" class="btn block" style="background:#ef4444; color:white;">
+          🚪 Sair
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+
   <script>
     document.addEventListener("DOMContentLoaded", () => {
 
@@ -665,13 +690,37 @@
 
       });
 
-      // 👤 Perfil
+      const profileMobileModal = document.getElementById("profile-mobile-modal");
+
       document.getElementById("btn-perfil")?.addEventListener("click", (e) => {
         e.preventDefault();
-        document.getElementById("settings-modal")?.classList.remove("hidden");
-        document.getElementById("settings-modal")?.setAttribute("aria-hidden", "false");
 
+        if (!window.state || !state.user) {
+          openAuthModal("login");
+          return;
+        }
+
+        profileMobileModal?.setAttribute("aria-hidden", "false");
       });
+
+      // Fechar modal
+      document.getElementById("pm-mobile-close")?.addEventListener("click", () => {
+        profileMobileModal?.setAttribute("aria-hidden", "true");
+      });
+
+      // Abrir configurações
+      document.getElementById("pm-mobile-settings")?.addEventListener("click", () => {
+        profileMobileModal?.setAttribute("aria-hidden", "true");
+        document.getElementById("settings-modal")?.setAttribute("aria-hidden", "false");
+      });
+
+      // Logout
+      document.getElementById("pm-mobile-logout")?.addEventListener("click", () => {
+        setToken('');
+        setUser(null);
+        window.location.reload();
+      });
+
 
     });
   </script>
