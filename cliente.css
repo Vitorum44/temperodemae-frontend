@@ -859,7 +859,7 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
 @media (max-width: 768px) {
 
   .floating-bubble {
-    bottom: 100px !important;
+    bottom: calc(70px + 20px); /* bottom nav + margem */
   }
 
   .floating-bubble.cart-mode {
@@ -880,30 +880,41 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
   z-index: 10001 !important;
 }
 
-/* =========================================
-   CORREÇÃO BOTÃO FINALIZAR NO MOBILE
-========================================= */
 @media (max-width: 768px) {
 
   #carrinho .modal-dialog {
-    max-height: 100vh !important;
-    height: 100vh !important;
-    padding-bottom: 140px !important; /* espaço pra bottom nav */
+    height: 100dvh; /* usa altura dinâmica real do mobile */
+    display: flex;
+    flex-direction: column;
   }
 
   #carrinho .modal-body {
-    padding-bottom: 120px !important; /* garante espaço pro botão */
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 160px; /* espaço real para botão + bottom nav */
+  }
+
+  #btn-finalize {
+    position: sticky;
+    bottom: 80px; /* altura da bottom-nav */
+    z-index: 10;
   }
 
 }
 
 
+
+#orders-page {
+  min-height: 100vh;
+  background: #f9fafb;
+}
+
 .order-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  background: white;
+  padding: 15px;
+  border-radius: 14px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 .order-header {
@@ -911,19 +922,21 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
   justify-content: space-between;
   margin-bottom: 10px;
   font-size: 14px;
-  color: #666;
+  color: #555;
 }
 
 .order-items {
-  font-size: 14px;
+  font-size: 13px;
   margin-bottom: 10px;
+  color: #444;
 }
 
 .order-footer {
-  font-size: 16px;
+  text-align: right;
   font-weight: bold;
   color: var(--primary);
 }
+
 
 
 
