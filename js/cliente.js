@@ -1573,3 +1573,5 @@ pmMobileLogout?.addEventListener('click', () => {
 // 🔥 DEIXA GLOBAL PARA O HTML ENXERGAR
 window.openAuthModal = openAuthModal;
 window.state = state;
+window.apiGet = apiGet;
+
