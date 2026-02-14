@@ -794,30 +794,59 @@ html {
   body {
     padding-bottom: 70px;
   }
-
-  /* ===== PRODUTO MENU (3 PONTINHOS) ===== */
-
-  .product-buttons { display: none; }
-  .product-dots { display: flex; }
-
 }
 
-/* ===== AÇÕES PRODUTO (BASE) ===== */
+/* ===== AÇÕES PRODUTO (CONTROLE FINAL LIMPO E DEFINITIVO) ===== */
 
-/* Desktop padrão */
+/* Base */
 .product-dots {
   display: none;
 }
 
-.product-buttons {
-  display: flex;
-}
-
-
-/* ESCONDE MENU MOBILE NO DESKTOP */
-.bottom-nav {
+.product-menu {
   display: none;
 }
+
+/* ===== DESKTOP ===== */
+@media (min-width: 601px) {
+
+  .product-buttons {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .product-dots,
+  .product-menu {
+    display: none !important;
+  }
+
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 600px) {
+
+  .product-buttons {
+    display: none !important;
+  }
+
+  .product-dots {
+    display: flex !important;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #e5e7eb;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #fff;
+    font-size: 18px;
+  }
+
+}
+
+
+
 
 
 
