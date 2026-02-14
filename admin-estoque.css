@@ -260,15 +260,19 @@
    DAQUI PARA BAIXO: PRODUTOS, MODAL E UPLOAD (INTOCADO)
    ========================================================================== */
 
-.hidden { display: none !important; }
+.hidden { 
+  display: none !important; 
+}
 
-/* Tabela de Produtos */
+/* ===== TABELA ===== */
+
 .inventory-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: collapse; /* remove espaços fantasmas */
   table-layout: fixed;
 }
 
+/* Cabeçalho */
 .inventory-table thead th {
   font-size: 13px;
   font-weight: 600;
@@ -277,22 +281,25 @@
   text-align: left;
 }
 
+/* Linhas */
 .inventory-table tbody tr {
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+  background: #ffffff;
+  box-shadow: none;                 /* 🔥 REMOVE SOMBRA */
+  border-bottom: 1px solid #f3f4f6; /* Linha limpa e profissional */
 }
 
-.inventory-table tbody tr+tr td {
-  border-top: 12px solid transparent;
+/* Remove aquele espaçamento fake entre linhas */
+.inventory-table tbody tr + tr td {
+  border-top: none;
 }
 
+/* Células */
 .inventory-table td {
   padding: 14px 12px;
   font-size: 14px;
   white-space: nowrap;
-  vertical-align: top;
+  vertical-align: middle; /* deixa tudo alinhado certinho */
 }
-
 /* Larguras */
 .inventory-table th:nth-child(1), .inventory-table td:nth-child(1) { width: 72px; }
 .inventory-table th:nth-child(2), .inventory-table td:nth-child(2) { width: 220px; }
