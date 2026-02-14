@@ -868,6 +868,85 @@ html {
   }
 }
 
+/* =====================================================
+   MENU FLUTUANTE DOS PRODUTOS (3 PONTINHOS MOBILE)
+   ===================================================== */
+
+.product-actions {
+  position: relative;
+}
+
+/* Botão 3 pontinhos */
+.product-dots {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #ffffff;
+  font-size: 18px;
+  color: #6b7280;
+  transition: 0.2s ease;
+}
+
+.product-dots:hover {
+  background: #f3f4f6;
+  color: #111827;
+  transform: rotate(90deg);
+}
+
+/* Menu dropdown */
+.product-menu {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  min-width: 130px;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 9999;
+}
+
+/* Quando estiver ativo */
+.product-menu.active {
+  display: flex;
+}
+
+/* Botões internos */
+.product-menu button {
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  color: #374151;
+}
+
+.product-menu button:hover {
+  background: #f3f4f6;
+}
+
+.product-menu button.danger {
+  color: #ef4444;
+}
+
+.product-menu button.danger:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+
 
 
 
