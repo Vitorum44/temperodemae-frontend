@@ -1543,3 +1543,22 @@ document.querySelectorAll(".app-bottom-nav .nav-item").forEach(item => {
     this.classList.add("active");
   });
 });
+
+document.getElementById("btn-buscar")?.addEventListener("click", function(e){
+  e.preventDefault();
+  const campoBusca = document.querySelector("input[type='text']");
+  if(campoBusca){
+    campoBusca.scrollIntoView({ behavior: "smooth", block: "center" });
+    campoBusca.focus();
+  }
+});
+
+
+document.getElementById("btn-pedidos")?.addEventListener("click", function(e){
+  e.preventDefault();
+  document.getElementById("modalPedidos").classList.remove("hidden");
+});
+
+function fecharPedidos(){
+  document.getElementById("modalPedidos").classList.add("hidden");
+}
