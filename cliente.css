@@ -880,27 +880,41 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
   z-index: 10001 !important;
 }
 
+/* =========================================
+   CORREÇÃO DEFINITIVA CARRINHO MOBILE
+========================================= */
+
 @media (max-width: 768px) {
 
+  #carrinho {
+    display: flex;
+    align-items: flex-end;
+  }
+
   #carrinho .modal-dialog {
-    height: 100dvh; /* usa altura dinâmica real do mobile */
+    height: 100dvh;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden; /* 🔥 IMPORTANTE */
   }
 
   #carrinho .modal-body {
     flex: 1;
-    overflow-y: auto;
-    padding-bottom: 160px; /* espaço real para botão + bottom nav */
+    overflow-y: auto; /* 🔥 SCROLL FICA AQUI */
+    padding-bottom: 140px; /* espaço pro botão */
   }
 
   #btn-finalize {
     position: sticky;
-    bottom: 80px; /* altura da bottom-nav */
-    z-index: 10;
+    bottom: 80px; /* altura da bottom nav */
+    z-index: 20;
   }
 
 }
+
 
 
 
@@ -936,8 +950,6 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
   font-weight: bold;
   color: var(--primary);
 }
-
-
 
 
 
