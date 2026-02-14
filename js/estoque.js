@@ -630,31 +630,40 @@ function closeOnOverlay(event) {
 }
 
 document.addEventListener("click", function (e) {
+
   const dots = e.target.closest(".product-dots");
   const menuClicked = e.target.closest(".product-menu");
 
-  // Se clicou nos 3 pontinhos
+  // 🔴 Se clicou nos 3 pontinhos
   if (dots) {
     e.stopPropagation();
 
+    const menu = dots.parentElement.querySelector(".product-menu");
+    const isOpen = menu.classList.contains("active");
+
     // Fecha todos primeiro
-    document.querySelectorAll(".product-menu").forEach(menu => {
-      menu.style.display = "none";
+    document.querySelectorAll(".product-menu").forEach(m => {
+      m.classList.remove("active");
     });
 
-    const menu = dots.nextElementSibling;
-    menu.style.display = "flex";
+    // Se NÃO estava aberto, abre
+    if (!isOpen) {
+      menu.classList.add("active");
+    }
+
     return;
   }
 
-  // Se clicou dentro do menu, não fecha
+  // 🟢 Se clicou dentro do menu, não fecha
   if (menuClicked) return;
 
-  // Se clicou fora, fecha tudo
+  // 🔵 Se clicou fora, fecha tudo
   document.querySelectorAll(".product-menu").forEach(menu => {
-    menu.style.display = "none";
+    menu.classList.remove("active");
   });
+
 });
+
 
 
 
