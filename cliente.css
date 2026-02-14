@@ -677,16 +677,23 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
 @keyframes slideUp { to { transform: translateY(0); } }
 
 
-/* ===============================
-   BOTTOM NAV APP
-================================ */
+/* =====================================================
+   BOTTOM NAV APP (VERSÃO FINAL ORGANIZADA)
+===================================================== */
 
+/* 🔒 ESCONDE NO DESKTOP */
 .app-bottom-nav {
   display: none;
 }
 
+/* =====================================================
+   MOBILE
+===================================================== */
 @media (max-width: 768px) {
 
+  /* ===============================
+     BOTTOM NAV
+  ================================ */
   .app-bottom-nav {
     position: fixed;
     bottom: 0;
@@ -715,6 +722,7 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
 
   .app-bottom-nav .nav-item .material-icons-outlined {
     font-size: 24px;
+    transition: 0.2s ease;
   }
 
   .app-bottom-nav .nav-item.active {
@@ -722,26 +730,41 @@ input[type="radio"] { accent-color: var(--primary); transform: scale(1.2); }
     font-weight: 600;
   }
 
+  .app-bottom-nav .nav-item.active .material-icons-outlined {
+    transform: translateY(-2px);
+  }
+
   .app-bottom-nav .nav-item:active {
     transform: scale(0.92);
   }
 
-  /* espaço para não cobrir conteúdo */
+  /* Espaço para não cobrir conteúdo */
   body {
     padding-bottom: 85px;
   }
-}
 
+  /* ===============================
+     HEADER SUPERIOR
+  ================================ */
 
-@media (max-width: 768px) {
+  /* Oculta navegação superior central */
   .main-header .row.center.gap {
     display: none !important;
   }
 
+  /* Centraliza logo */
   .main-header .container {
     justify-content: center !important;
   }
+
+  /* ===============================
+     PERFIL
+  ================================ */
+
+  /* Oculta "Meus Pedidos" no perfil apenas no mobile */
+  #pm-history {
+    display: none !important;
+  }
+
 }
-
-
 
