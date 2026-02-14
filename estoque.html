@@ -1,310 +1,744 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
 
 <head>
-  <meta charset="UTF-8">
-  <title>Estoque</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="admin.css">
-  <link rel="stylesheet" href="admin-estoque.css">
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tempero de Mãe — Cardápio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-  <link rel="icon" href="data:,">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./cliente.css">
+
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='70' x='18' font-size='80'%3E🍔%3C/text%3E%3C/svg%3E">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    /* Definição das variáveis padrão */
+    :root {
+      --header-bg: #0F172A;
+      --primary: #3B82F6;
+      --bg-page: #F3F4F6;
+    }
+
+    /* CORRIGIDO: Aponta diretamente para a classe do seu cabeçalho */
+    .main-header {
+      background-color: var(--header-bg) !important;
+      transition: background-color 0.5s ease;
+    }
+
+    /* Fundo da página */
+    body.cliente-page {
+      background-color: var(--bg-page) !important;
+    }
+
+    /* Botões */
+    .btn.primary,
+    .add-btn,
+    #float-cart-btn {
+      background-color: var(--primary) !important;
+    }
+
+    /* Cor do texto do preço ou ícones se necessário */
+    .text-primary {
+      color: var(--primary) !important;
+    }
+  </style>
 </head>
 
-<body>
+<body class="cliente-page">
 
-  <header class="topbar">
-    <div class="topbar-content">
-      <div style="display:flex; align-items:center; gap:30px;">
-        <h2 style="margin:0; color:white;">📊 Estoque</h2>
+  <header class="main-header">
+    <div class="container row between center">
+      <img id="store-logo" src="./assets/logo-sem-fundo.png" alt="Tempero de Mãe" class="logo-img">
 
-        <nav class="nav-menu">
-          <a href="admin.html" class="nav-link">Pedidos</a>
-          <a href="estoque.html" class="nav-link active">Estoque</a>
-          <a href="cardapio.html" class="nav-link">Cardápio</a>
-        </nav>
+      <div class="row center gap">
+        <div style="position: relative;">
+          <button id="edit-profile" class="cart-badge btn text">👤 Perfil</button>
+          <div id="profile-menu" class="profile-menu" aria-hidden="true">
+            <div class="pm-item" id="pm-history">📜 Meus Pedidos</div>
+            <div class="pm-item" id="pm-settings">⚙️ Configurações</div>
+            <div class="pm-item" id="pm-logout" style="color:#d62300; display:flex; align-items:center; gap:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H5C3.9 2 3 2.9 3 4V20C3 21.1 3.9 22 5 22H14" stroke="#d62300" stroke-width="2"
+                  stroke-linecap="round" />
+                <path d="M10 12H21" stroke="#d62300" stroke-width="2" stroke-linecap="round" />
+                <path d="M18 9L21 12L18 15" stroke="#d62300" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              Sair
+            </div>
+
+          </div>
+        </div>
+        <a id="open-cart" href="#" class="cart-badge row center gap">
+          <span>🧺 Carrinho</span>
+          <span id="cart-count" class="badge">0</span>
+        </a>
       </div>
-
-      <button class="btn-logout" id="btn-logout">SAIR</button>
     </div>
   </header>
 
+  <section class="hero">
+    <div class="carousel">
+      <div class="carousel-track">
+        <div class="slide"><img src="./assets/banner1.png" alt="Promoção 1"></div>
+        <div class="slide"><img src="./assets/banner2.png" alt="Promoção 2"></div>
+        <div class="slide"><img src="./assets/banner3.png" alt="Promoção 3"></div>
+      </div>
+      <button class="carousel-btn prev">❮</button>
+      <button class="carousel-btn next">❯</button>
+      <div class="carousel-dots"><span class="dot active"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+    </div>
+    <div class="container search-container-overlay">
+      <div class="search-wrap">
+        <input id="search" class="input" placeholder="O que vamos comer hoje?" />
+      </div>
+    </div>
+  </section>
+
   <main class="container">
-
-    <!-- ================= CATEGORIAS ================= -->
-    <section class="section-box">
-      <div class="page-header">
-        <div>
-          <h2>Categorias</h2>
-          <p class="subtitle">Organize seu cardápio criando categorias e subcategorias.</p>
-        </div>
-
-        <button class="btn-primary" onclick="openCategoryModal()">Criar categoria</button>
-      </div>
-
-      <div id="category-list" class="category-tree"></div>
-    </section>
-
-    <!-- ================= PRODUTOS (INALTERADO) ================= -->
-    <section class="section-box">
-      <div class="page-header">
-        <div>
-          <h2>Produtos</h2>
-          <p class="subtitle">Gerencie seus lanches, preços e estoque.</p>
-        </div>
-
-        <button class="btn-primary" onclick="openNewProduct()">
-          + Novo Produto
-        </button>
-      </div>
-
-      <!-- 🔍 CAMPO DE BUSCA -->
-      <div class="estoque-search-container" style="margin: 16px 0;">
-        <div class="search-box" style="position: relative; max-width: 350px;">
-          <input type="text" id="search-product" placeholder="🔍 Buscar produto..."
-            style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #e5e7eb; outline: none;">
-        </div>
-      </div>
-
-      <table class="inventory-table">
-        <thead>
-          <tr>
-            <th>Foto</th>
-            <th>Nome</th>
-            <th>Categoria</th>
-            <th>Subcategoria</th>
-            <th>Preço</th>
-            <th>Estoque</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="inventory-list"></tbody>
-      </table>
-    </section>
-
-
+    <div id="sticky-bar-anchor"></div>
+    <div class="sticky-category-bar">
+      <div id="category-chips" class="chips"></div>
+    </div>
+    <section id="menu-grid" class="grid" style="margin-top: 20px;"></section>
   </main>
 
-  <!-- ================= MODAL CRIAR CATEGORIA ================= -->
-  <div id="category-modal" class="modal-overlay hidden">
-    <div class="modal-card modal-small">
-      <div class="modal-header">
-        <h3>Nova Categoria</h3>
-        <button class="modal-close" onclick="closeCategoryModal()">×</button>
+  <aside id="carrinho" aria-hidden="true">
+    <div class="modal-dialog">
+
+      <div class="modal-header row between center" style="border-bottom: 1px solid #eee; margin-bottom: 0;">
+        <strong>Seu Pedido</strong>
+        <button id="close-cart" class="btn text">✖</button>
       </div>
 
       <div class="modal-body">
-        <div class="form-group">
-          <label for="category-name-input">Nome da categoria</label>
-          <div class="input-wrapper">
-            <input type="text" id="category-name-input" placeholder="Ex: Bebidas, Promoções..." autocomplete="off">
-          </div>
-          <p class="input-hint">Pressione Enter para salvar rapidamente.</p>
-        </div>
-      </div>
+        <div id="cart-items" class="list"></div>
 
-      <div class="modal-footer">
-        <button class="btn-cancel" onclick="closeCategoryModal()">Cancelar</button>
-        <button class="btn-confirm" onclick="saveCategory()">Salvar</button>
-      </div>
-
-    </div>
-  </div>
-
-
-  <!-- MODAL PRODUTO -->
-  <div id="product-modal" class="modal-overlay hidden" onclick="closeOnOverlay(event)">
-    <div class="modal-card" onclick="event.stopPropagation()">
-
-      <div class="modal-header">
-        <h3 id="product-modal-title">Novo Produto</h3>
-        <button class="modal-close" onclick="closeProductModal()">×</button>
-      </div>
-
-      <div class="modal-body">
-        <input type="hidden" id="prod-id">
-
-        <!-- FOTO -->
-        <div class="form-group">
-          <label>Foto do produto</label>
-
-          <div class="upload-box">
-
-            <!-- INPUT FILE -->
-            <input type="file" id="prod-image" accept="image/*" hidden onchange="previewImage(event)">
-
-            <!-- BOTÕES SOBRE A IMAGEM -->
-            <div id="image-actions" class="image-actions hidden">
-              <button type="button" class="img-btn edit" onclick="openImagePicker()" title="Alterar foto">✏️</button>
-
-              <button type="button" class="img-btn remove" onclick="removeImage()" title="Remover foto">✖️</button>
-            </div>
-
-            <!-- PLACEHOLDER -->
-            <div class="upload-content" id="upload-placeholder" onclick="openImagePicker()">
-              <div class="upload-icon">＋</div>
-              <p><strong>Arraste e solte</strong>, ou selecione fotos do produto</p>
-            </div>
-
-            <!-- PREVIEW -->
-            <img id="image-preview" class="upload-preview hidden">
-          </div>
+        <div class="totals">
+          <div class="row between"><span>Subtotal</span><strong id="cart-subtotal">R$ 0,00</strong></div>
+          <div class="row between"><span>Frete</span><strong id="cart-fee">R$ 0,00</strong></div>
+          <div class="row between total"><span>Total</span><strong id="cart-grandtotal">R$ 0,00</strong></div>
         </div>
 
-        <!-- DADOS -->
-        <div class="form-group">
-          <label>Nome</label>
-          <input id="prod-name" placeholder="Nome do produto">
-        </div>
+        <form id="order-form" class="form">
 
-        <div class="form-group">
-          <label>Descrição</label>
-          <input id="prod-description" placeholder="Descrição">
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>Preço</label>
-            <input id="prod-price" type="number">
+          <div id="schedule-box"
+            style="display:none; background:#fceded; padding:10px; border:2px solid #d62300; border-radius:12px; margin-bottom:15px;">
+            <p style="color:#d62300; font-weight:900; margin:0 0 5px 0;">🔴 LOJA FECHADA</p>
+            <label style="font-size:13px; color:#502314; font-weight:bold;">Agendar entrega para:</label>
+            <input type="datetime-local" id="order-schedule" class="input"
+              style="margin-top:5px; background: white; color: #502314;">
           </div>
 
-          <div class="form-group">
-            <label>Estoque</label>
-            <input id="prod-stock" type="number">
+          <label class="title" style="margin-top:8px">Como deseja receber?</label>
+          <div class="field-row">
+            <label class="radio"><input type="radio" name="fulfillment" id="fulfill-delivery" value="delivery"
+                checked><span>Entrega 🛵</span></label>
+            <label class="radio" style="margin-left:16px"><input type="radio" name="fulfillment" id="fulfill-pickup"
+                value="pickup"><span>Retirar 🏃</span></label>
+          </div>
+
+          <label class="title" style="margin-top:8px">Seus dados</label>
+          <input id="cust-name" class="input" placeholder="Seu nome" required />
+          <input id="cust-phone" class="input" placeholder="WhatsApp" required />
+
+          <div class="address-wrapper">
+            <input id="cust-address" class="input" placeholder="Rua e Número..." autocomplete="off" />
+          </div>
+
+
+
+          <input id="cust-neighborhood" class="input" placeholder="Bairro" style="margin-bottom: 10px;" />
+
+          <input id="cust-reference" class="input" placeholder="Ponto de referência" style="margin-top: 0;" />
+      </div>
+      <input id="coupon-code" class="input" placeholder="Tem cupom?" style="margin-top:10px" />
+
+      <label class="title" style="margin-top:16px; display:block">Pagamento</label>
+
+      <div class="payment-stack">
+        <label class="radio-box">
+          <input type="radio" name="payment" value="Pix" checked>
+          <span>Pix</span>
+        </label>
+
+        <label class="radio-box">
+          <input type="radio" name="payment" value="Cartão">
+          <span>Cartão</span>
+        </label>
+
+        <label class="radio-box">
+          <input type="radio" name="payment" value="Dinheiro" id="pay-cash">
+          <span>Dinheiro</span>
+        </label>
+
+        <div id="cash-change-box" class="change-box" style="display:none;">
+          <label class="radio-box" style="border:none; padding:0; margin-bottom:5px; background:transparent;">
+            <input type="checkbox" id="need-change">
+            <span>Precisa de troco?</span>
+          </label>
+          <input id="change-amount" type="number" class="input" placeholder="Troco para quanto?"
+            style="display:none; width:100%;" />
+        </div>
+      </div>
+      <button id="btn-finalize" class="btn primary block" type="submit" style="margin-top:20px">Finalizar
+        Pedido</button>
+      <div id="order-feedback" class="muted" style="margin-top:8px; font-weight:bold; color: #d62300;"></div>
+      </form>
+    </div>
+    </div>
+  </aside>
+
+  <!-- ==================== MODAL DE AUTENTICAÇÃO (VERSÃO CORRIGIDA) ==================== -->
+  <div id="auth-modal" class="modal" aria-hidden="true">
+    <div class="modal-dialog">
+
+      <div class="modal-header row between center">
+        <strong id="auth-title">Acesse sua conta</strong>
+        <button id="am-close" class="btn text">✖</button>
+      </div>
+
+      <div id="auth-tabs" class="row gap" style="margin: 8px 0 12px">
+        <button id="tab-login" class="btn primary" style="flex:1;">Login</button>
+        <button id="tab-signup" class="btn" style="flex:1;">Cadastrar</button>
+      </div>
+
+      <!-- ================= LOGIN ================= -->
+      <form id="form-login" class="form">
+        <label style="font-size:12px; font-weight:bold; color:#502314;">WhatsApp</label>
+        <input id="login-phone" class="input" placeholder="(00) 00000-0000" type="tel" />
+
+        <label style="font-size:12px; font-weight:bold; color:#502314; margin-top:10px;">Senha</label>
+        <input id="login-password" type="password" class="input" placeholder="******" />
+
+        <div style="display: flex; justify-content: flex-end; margin: 8px 0;">
+          <button type="button" id="btn-forgot-pass"
+            style="background: none; border: none; color: #d62300; font-size: 13px; font-weight: bold; cursor: pointer; text-decoration: underline;">
+            Esqueci minha senha
+          </button>
+        </div>
+
+        <button class="btn primary block" type="submit">ENTRAR NA CONTA</button>
+
+        <div id="login-feedback" class="muted"
+          style="margin-top:8px;color:#d62300; text-align:center; font-weight:bold;"></div>
+      </form>
+
+      <!-- ================= CADASTRO ================= -->
+      <form id="form-signup" class="form" style="display:none">
+        <label style="font-size:12px; font-weight:bold; color:#502314;">Nome Completo</label>
+        <input id="signup-name" class="input" placeholder="Seu nome" required />
+
+        <label style="font-size:12px; font-weight:bold; color:#502314; margin-top:8px;">
+          WhatsApp (Login)
+        </label>
+        <input id="signup-phone" class="input" placeholder="(00) 00000-0000" required type="tel" />
+
+        <label style="font-size:12px; font-weight:bold; color:#502314; margin-top:8px;">
+          E-mail (Para recuperar senha)
+        </label>
+        <input id="signup-email" class="input" placeholder="seu@email.com" type="email" />
+
+        <label style="font-size:12px; font-weight:bold; color:#502314; margin-top:8px;">
+          Crie uma Senha
+        </label>
+        <input id="signup-password" type="password" class="input" placeholder="******" required />
+
+        <button class="btn primary block" type="submit" style="margin-top:15px;">CADASTRAR</button>
+
+        <div id="signup-feedback" class="muted"
+          style="margin-top:8px;color:#d62300; text-align:center; font-weight:bold;"></div>
+      </form>
+
+      <!-- ================= RECUPERAÇÃO DE SENHA ================= -->
+      <div id="recovery-flow" style="display:none;">
+
+        <div id="rec-step-1">
+          <p style="font-size:14px; color:#666; margin-bottom:10px;">
+            Informe seu WhatsApp para receber o código de 6 dígitos.
+          </p>
+
+          <input id="rec-phone-input" class="input" placeholder="Seu WhatsApp" />
+
+          <button id="btn-send-code" class="btn primary block" style="margin-top:10px;">
+            ENVIAR CÓDIGO
+          </button>
+        </div>
+
+        <div id="rec-step-2" style="display:none;">
+          <div
+            style="background:#e0f2fe; padding:10px; border-radius:8px; color:#0369a1; font-size:13px; margin-bottom:10px; text-align:center;">
+            <strong>Código enviado!</strong><br>
+            Verifique seu E-mail (ou Console).
+          </div>
+
+          <label style="font-size:12px; font-weight:bold; color:#502314;">
+            Código de 6 dígitos
+          </label>
+
+          <input id="rec-token-input" class="input" placeholder="000000"
+            style="letter-spacing: 3px; font-weight:bold; font-size:18px; text-align:center;" maxlength="6" />
+
+          <label style="font-size:12px; font-weight:bold; color:#502314; margin-top:10px;">
+            Nova Senha
+          </label>
+
+          <input id="rec-newpass-input" type="password" class="input" placeholder="Nova senha" />
+
+          <button id="btn-verify-code" class="btn primary block" style="margin-top:15px;">
+            ALTERAR SENHA
+          </button>
+        </div>
+
+        <button id="btn-back-auth" class="btn block"
+          style="margin-top:10px; color:#666; background:transparent; border:1px solid #ccc;">
+          Voltar
+        </button>
+
+        <div id="rec-feedback" class="muted" style="margin-top:8px; text-align:center; font-weight:bold;">
+        </div>
+
+      </div>
+      <!-- ============== FIM RECUPERAÇÃO ============== -->
+
+    </div>
+  </div>
+
+
+  <!-- ========== MODAL MEUS PEDIDOS ========== -->
+  <div id="history-modal" class="modal" aria-hidden="true">
+    <div class="modal-dialog" style="max-width: 600px;">
+      <div class="modal-header row between center">
+        <strong>Meus Pedidos</strong>
+        <button id="hm-close" class="btn text">✖</button>
+      </div>
+      <div id="history-list" class="list" style="margin-top:16px; max-height:60vh; overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- ========== MODAL CONFIGURAÇÕES ========== -->
+  <div id="settings-modal" class="modal" aria-hidden="true">
+    <div class="modal-dialog" style="max-width: 400px;">
+      <div class="modal-header row between center">
+        <strong>Meus Dados</strong>
+        <button id="sm-close" class="btn text">✖</button>
+      </div>
+
+      <form id="form-settings" class="form">
+        <label>Nome Completo</label>
+        <input id="set-name" class="input" placeholder="Seu nome" required />
+
+        <label style="margin-top:10px;">WhatsApp</label>
+        <input id="set-phone" class="input" placeholder="Seu número" required />
+
+        <label style="margin-top:10px;">E-mail</label>
+        <input id="set-email" class="input" type="email" placeholder="seu@email.com" />
+
+        <label style="margin-top:10px;">Nova senha (opcional)</label>
+        <input id="set-pass" type="password" class="input" placeholder="Nova senha" />
+
+        <button class="btn primary block" type="submit" style="margin-top:15px;">
+          Salvar Alterações
+        </button>
+
+        <div id="settings-feedback" class="muted"
+          style="margin-top:8px;color:#d62300; text-align:center; font-weight:bold;">
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+
+  <div id="tracking-modal" class="modal" aria-hidden="true">
+    <div class="modal-dialog" style="max-width: 400px; text-align: center;">
+      <div class="modal-header row between center"><strong>Acompanhar Pedido</strong><button id="tm-close"
+          class="btn text">✖</button></div>
+      <div style="padding: 20px 0;">
+        <h2 style="color: var(--primary); margin-bottom: 4px; font-family: 'Fredoka', sans-serif;">Pedido #<span
+            id="track-id">...</span></h2>
+        <p class="muted" id="track-msg" style="margin-bottom: 20px; font-weight:bold;">Aguardando atualização...</p>
+        <div class="timeline" style="margin-bottom: 25px;">
+          <div class="timeline-track"></div>
+          <div id="timeline-progress" class="timeline-progress"></div>
+          <div class="step" id="step-novo">
+            <div class="icon">📝</div>
+            <div class="label">Recebido</div>
+          </div>
+          <div class="step" id="step-em_preparo">
+            <div class="icon">🔥</div>
+            <div class="label">Fogo!</div>
+          </div>
+          <div class="step" id="step-saiu_entrega">
+            <div class="icon">🛵</div>
+            <div class="label">Saiu</div>
+          </div>
+          <div class="step" id="step-entregue">
+            <div class="icon">😋</div>
+            <div class="label">Chegou</div>
           </div>
         </div>
-
-        <div class="form-group">
-          <label>Categoria</label>
-          <select id="prod-category"></select>
-        </div>
-
-        <div class="form-group">
-          <label>Subcategoria</label>
-          <select id="prod-subcategory"></select>
-        </div>
+        <div
+          style="background: #fff; border-radius: 12px; padding: 15px; text-align: left; border: 2px solid #e5e0d8; margin-bottom: 20px; color: #502314;">
+          <h4
+            style="margin: 0 0 10px 0; font-size: 14px; color: #888; border-bottom: 1px dashed #e5e0d8; padding-bottom: 8px;">
+            Resumo do Pedido</h4>
+          <div id="track-items-list"
+            style="font-size: 14px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px;"></div>
+          <div class="row between"
+            style="font-weight: 900; font-size: 18px; border-top: 1px dashed #e5e0d8; padding-top: 10px; color: var(--primary);">
+            <span>Total</span><span id="track-total-display">R$ 0,00</span>
+          </div>
+        </div><a id="btn-track-wa" href="#" target="_blank" class="btn block"
+          style="background: #25D366; color: white; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; border:none; box-shadow: 0 4px 0 #1da851;"><span>💬
+            Falar com o Restaurante</span></a><button id="btn-cancel-order" class="btn block"
+          style="background: white; border: 2px solid #d62300; color: #d62300; margin-top: 12px; width: 100%; display: none; cursor: pointer; font-weight: bold;">❌
+          Cancelar Pedido</button>
       </div>
-
-      <div class="modal-footer">
-        <button class="btn-cancel" onclick="closeProductModal()">Cancelar</button>
-        <button class="btn-confirm" onclick="saveProduct()">Salvar</button>
-      </div>
-
     </div>
   </div>
 
-  <div id="edit-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-      
-      <div class="modal-header">
-        <h3 id="edit-modal-title" style="margin:0; font-size:18px; color:#111;">Editar</h3>
-        <button class="modal-close" onclick="closeEditModal()">×</button>
-      </div>
-  
-      <div class="modal-body">
-        <label style="font-weight: 600; color: #374151; font-size: 14px; display:block; margin-bottom:5px;">Nome</label>
-        <input type="text" id="edit-input" class="modal-input" placeholder="Digite o novo nome..." autocomplete="off">
-        
-        <div style="display:none;">
-          <input type="hidden" id="edit-id"> 
-          <input type="hidden" id="edit-type"> 
+  <div id="product-details-modal" class="modal" aria-hidden="true">
+    <div class="modal-dialog"
+      style="max-width: 450px; padding: 0; overflow: hidden; border: none; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+      <div class="pd-image-header"><img id="pd-image" src="" alt="Foto do produto"><button id="pd-close"
+          class="btn">✕</button></div>
+      <div style="padding: 25px; background: #fff;">
+        <h2 id="pd-name"
+          style="margin: 0 0 8px 0; font-family: 'Fredoka', sans-serif; color: #502314; font-size: 26px;">Nome do
+          Produto</h2>
+        <p id="pd-desc" class="muted" style="font-size: 15px; line-height: 1.5; margin-bottom: 20px; color: #777;">
+          Descrição...</p>
+        <h3 id="pd-price" style="color: var(--primary); margin-bottom: 20px; font-size: 28px; font-weight: 900;">R$
+          0,00
+        </h3><label
+          style="font-size: 14px; font-weight: bold; color: #502314; margin-bottom: 8px; display: block;">Alguma
+          observação?</label><textarea id="pd-obs" class="input" placeholder="Ex: Tirar a cebola, maionese à parte..."
+          rows="3"
+          style="width: 100%; margin-bottom: 20px; background: #f9f9f9; border-color: #ddd; resize: none;"></textarea>
+        <div class="row between center" style="gap: 15px;">
+          <div
+            style="display: flex; align-items: center; gap: 10px; background: #f5ebdc; padding: 5px 10px; border-radius: 50px; border: 2px solid #e0d0b8;">
+            <button id="pd-minus"
+              style="background: transparent; border: none; color: #502314; font-size: 24px; cursor: pointer; font-weight:bold;">−</button><span
+              id="pd-qty"
+              style="font-weight: 900; width: 30px; text-align: center; color: #502314; font-size: 18px;">1</span><button
+              id="pd-plus"
+              style="background: transparent; border: none; color: var(--primary); font-size: 24px; cursor: pointer; font-weight:bold;">＋</button>
+          </div><button id="pd-add-btn" class="btn primary"
+            style="flex: 1; justify-content: space-between; display: flex; font-size: 16px;"><span>Adicionar</span><span
+              id="pd-total-btn">R$ 0,00</span></button>
         </div>
-        <p class="input-hint" style="color:#9ca3af; font-size:13px; margin-top:5px;">Pressione Enter para salvar.</p>
       </div>
-  
-      <div class="modal-footer">
-        <button class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
-        <button class="btn-confirm" onclick="saveEdit()">Salvar Alterações</button>
-      </div>
-  
     </div>
   </div>
-  
-  <div id="delete-modal" class="modal-overlay hidden">
-    <div class="modal-card modal-small" style="max-width: 400px;">
-      
-      <div class="modal-body" style="text-align: center; padding-top: 32px;">
-        
-        <div style="margin: 0 auto; width: 60px; height: 60px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ef4444; margin-bottom: 16px;">
-          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+
+  <footer class="app-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col brand-col">
+          <img src="./assets/logo-otemperodemae.png" alt="Tempero de Mãe" class="footer-logo">
+          <p>Sabor de verdade, ingredientes frescos e aquele toque especial.</p>
         </div>
-  
-        <h3 style="font-size: 20px; font-weight: 800; color: #1f2937; margin-bottom: 10px;">Tem certeza?</h3>
-        
-        <p id="delete-message" style="color: #6b7280; font-size: 15px; margin-top: 0;">
-          Essa ação é permanente e não pode ser desfeita.
-        </p>
-        
-        <input type="hidden" id="delete-id">
-        <input type="hidden" id="delete-type">
+        <div class="footer-col">
+          <h4>Endereço</h4>
+          <ul>
+            <li style="white-space: nowrap;">📍 R. Lauro Bezerra, 89 - Pajuçara</li>
+            <li>📍 Natal - RN</li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Política de Privacidade</a></li>
+            <li><a href="#">Termos de Uso</a></li>
+          </ul>
+        </div>
       </div>
-  
-      <div class="modal-footer" style="justify-content: center; background: transparent; border-top: none; padding-bottom: 32px;">
-        <button class="btn-cancel" onclick="closeDeleteModal()" style="width: 120px; margin-right: 10px;">Cancelar</button>
-        <button class="btn-confirm btn-danger-action" onclick="confirmDelete()" style="width: 120px;">Excluir</button>
+
+      <div class="social-central">
+        <h4 style="color:#f5ebdc; font-family:'Fredoka', sans-serif; font-size:22px;">Fale com a gente</h4>
+
+        <div class="social-icons" style="display: flex; gap: 15px; justify-content: center;">
+
+          <a href="https://www.instagram.com/otemperodemaeoficial/" target="_blank" class="social-btn instagram">
+            <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
+            </svg>
+          </a>
+
+          <a href="https://wa.me/558498364794?text=Olá!%20Gostaria%20de%20tirar%20uma%20dúvida." target="_blank"
+            class="social-btn whatsapp">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+            </svg>
+          </a>
+
+        </div>
       </div>
-  
-    </div>
-  </div>
 
-  <div id="notify-modal" class="modal-overlay hidden">
-  <div class="modal-card modal-small">
-    <div class="modal-body" style="text-align:center;">
-      <h3 id="notify-title"></h3>
-      <p id="notify-message"></p>
+      <div class="footer-bottom">
+        <span>© 2025 O Tempero de Mãe. Feito com carinho. 🍔</span>
+        <button id="back-to-top" class="btn-top">⬆</button>
+      </div>
     </div>
-    <div class="modal-footer" style="justify-content:center;">
-      <button class="btn-confirm" onclick="closeNotify()">OK</button>
-    </div>
-  </div>
-</div>
+  </footer>
 
+  <div id="float-cart-btn" class="floating-bubble cart-mode" hidden><span class="bubble-icon">🛍️</span><span
+      id="float-cart-count" class="bubble-counter">0</span></div>
 
-  <!-- SCRIPT -->
-  <script src="js/estoque.js"></script>
+  <div id="tracking-bubble" class="floating-bubble" hidden><span class="bubble-icon">🛵</span></div>
+
+  <script>
+    document.getElementById('back-to-top')?.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
 
 
   <script>
-    document.getElementById("btn-logout").onclick = () => {
-      localStorage.removeItem("token");
-      window.location.href = "admin.html";
-    };
+    const API_BASE = "https://api-temperodemae.onrender.com";
+    let ultimoEstado = null;
+
+    // 1. Busca atualizações
+    async function checarAtualizacoes() {
+      try {
+        const res = await fetch(`${API_BASE}/store/appearance?t=${Date.now()}`);
+        if (res.ok) {
+          const dadosNovos = await res.json();
+
+          // Compara para ver se mudou algo
+          if (JSON.stringify(dadosNovos) !== JSON.stringify(ultimoEstado)) {
+            aplicarTema(dadosNovos);
+            ultimoEstado = dadosNovos;
+          }
+        }
+      } catch (e) { console.log("Aguardando servidor..."); }
+    }
+
+    // 2. Aplica as mudanças
+    function aplicarTema(data) {
+      const root = document.documentElement.style;
+
+      // CORES
+      if (data.colors) {
+        if (data.colors.header) root.setProperty('--header-bg', data.colors.header);
+        if (data.colors.primary) root.setProperty('--primary', data.colors.primary);
+        if (data.colors.background) root.setProperty('--bg-page', data.colors.background);
+      }
+
+      // LOGO
+      if (data.logo_url) {
+        const logo = document.getElementById('store-logo');
+        if (logo && logo.src !== data.logo_url) logo.src = data.logo_url;
+      }
+
+      // BANNERS (INTELIGENTE)
+      if (data.banners && Array.isArray(data.banners)) {
+        atualizarBanners(data.banners);
+      }
+    }
+
+    // 3. Função que reconstrói o Slider e esconde botões se tiver só 1
+    function atualizarBanners(listaImagens) {
+      const track = document.querySelector('.carousel-track');
+      const dotsContainer = document.querySelector('.carousel-dots');
+      const prevBtn = document.querySelector('.carousel-btn.prev');
+      const nextBtn = document.querySelector('.carousel-btn.next');
+
+      if (!track || !dotsContainer) return;
+
+      // Limpa tudo
+      track.innerHTML = '';
+      dotsContainer.innerHTML = '';
+
+      // Reseta posição para evitar o fundo preto
+      track.style.transform = 'translateX(0)';
+
+      // Cria os novos slides
+      listaImagens.forEach((url, index) => {
+        // Slide
+        const slide = document.createElement('div');
+        slide.className = 'slide';
+        // Garante que a imagem ocupe tudo sem sobrar espaço preto
+        slide.innerHTML = `<img src="${url}" alt="Banner" style="width:100%; height:100%; object-fit:cover;">`;
+        track.appendChild(slide);
+
+        // Bolinha
+        const dot = document.createElement('span');
+        dot.className = index === 0 ? 'dot active' : 'dot';
+        dotsContainer.appendChild(dot);
+      });
+
+      // LÓGICA DO BANNER ÚNICO
+      if (listaImagens.length <= 1) {
+        // Se tiver 1 ou 0: Esconde setas e bolinhas
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (dotsContainer) dotsContainer.style.display = 'none';
+      } else {
+        // Se tiver mais de 1: Mostra tudo
+        if (prevBtn) prevBtn.style.display = 'block'; // ou flex
+        if (nextBtn) nextBtn.style.display = 'block';
+        if (dotsContainer) dotsContainer.style.display = 'flex';
+      }
+    }
+
+    // --- INICIALIZAÇÃO ---
+    checarAtualizacoes();
+    setInterval(checarAtualizacoes, 2000);
+
+    // Ouvinte do Admin
+    window.addEventListener('message', (event) => {
+      const d = event.data;
+      const tempState = ultimoEstado ? JSON.parse(JSON.stringify(ultimoEstado)) : {};
+
+      if (d.type === 'UPDATE_COLORS') tempState.colors = { header: d.header, primary: d.primary, background: d.background };
+      if (d.type === 'UPDATE_LOGO') tempState.logo_url = d.src;
+      if (d.type === 'UPDATE_BANNERS') {
+        tempState.banners = d.banners;
+        atualizarBanners(d.banners); // Força atualização imediata
+      }
+
+      aplicarTema(tempState);
+    });
   </script>
 
-  <!-- MENU INFERIOR MOBILE -->
-<div class="bottom-nav">
-  <a href="admin.html">
-    <span class="material-icons-outlined">home</span>
-    <small>Pedidos</small>
-  </a>
+  <nav class="app-bottom-nav">
 
-  <a href="estoque.html" class="active">
-    <span class="material-icons-outlined">inventory_2</span>
-    <small>Estoque</small>
-  </a>
+    <a href="#" class="nav-item active" id="btn-cardapio">
+      <span class="material-icons-outlined">restaurant_menu</span>
+      <small>Cardápio</small>
+    </a>
 
-  <a href="cardapio.html">
-    <span class="material-icons-outlined">restaurant_menu</span>
-    <small>Cardápio</small>
-  </a>
-</div>
+    <a href="#" class="nav-item" id="btn-buscar">
+      <span class="material-icons-outlined">search</span>
+      <small>Buscar</small>
+    </a>
 
-<script>
-window.addEventListener("scroll", function() {
-  const header = document.querySelector(".topbar");
-  if (window.scrollY > 10) {
-    header.classList.add("scrolled");
-  } else {
-    header.classList.remove("scrolled");
-  }
-});
-</script>
+    <a href="#" class="nav-item" id="btn-pedidos">
+      <span class="material-icons-outlined">receipt_long</span>
+      <small>Pedidos</small>
+    </a>
 
+    <a href="#" class="nav-item" id="btn-perfil">
+      <span class="material-icons-outlined">person</span>
+      <small>Perfil</small>
+    </a>
+
+  </nav>
+
+  <!-- MODAL PERFIL MOBILE -->
+  <div id="profile-mobile-modal" class="modal" aria-hidden="true">
+    <div class="modal-dialog" style="max-width:400px;">
+
+      <div class="modal-header row between center">
+        <strong>Perfil</strong>
+        <button id="pm-mobile-close" class="btn text">✖</button>
+      </div>
+
+      <div style="padding:20px; display:flex; flex-direction:column; gap:15px;">
+
+        <button id="pm-mobile-settings" class="btn block">
+          ⚙️ Configurações
+        </button>
+
+        <button id="pm-mobile-logout" class="btn block" style="background:#ef4444; color:white;">
+          🚪 Sair
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const searchInput = document.getElementById("search");
+
+      // 🍔 Cardápio
+      document.getElementById("btn-cardapio")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      // 🔍 Buscar
+      document.getElementById("btn-buscar")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        searchInput?.scrollIntoView({ behavior: "smooth" });
+        searchInput?.focus();
+      });
+
+      // 🛒 Pedidos
+      document.getElementById("btn-pedidos")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById("history-modal")?.classList.remove("hidden");
+        document.getElementById("history-modal")?.setAttribute("aria-hidden", "false");
+
+      });
+
+      const profileMobileModal = document.getElementById("profile-mobile-modal");
+
+      document.getElementById("btn-perfil")?.addEventListener("click", (e) => {
+        e.preventDefault();
+
+        if (!state.user) {
+          openAuthModal("login");
+          return;
+        }
+
+        profileMobileModal?.setAttribute("aria-hidden", "false");
+      });
+
+      // Fechar modal
+      document.getElementById("pm-mobile-close")?.addEventListener("click", () => {
+        profileMobileModal?.setAttribute("aria-hidden", "true");
+      });
+
+      // Abrir configurações
+      document.getElementById("pm-mobile-settings")?.addEventListener("click", () => {
+        profileMobileModal?.setAttribute("aria-hidden", "true");
+        document.getElementById("settings-modal")?.setAttribute("aria-hidden", "false");
+      });
+
+      // Logout
+      document.getElementById("pm-mobile-logout")?.addEventListener("click", () => {
+        setToken('');
+        setUser(null);
+        window.location.reload();
+      });
+
+
+    });
+  </script>
+
+
+
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="./js/app-api.js"></script>
+  <script>
+    window.GOOGLE_MAPS_KEY = "AIzaSyDhkrpTfpEDmgBwCqakU0GGdr7NB_CSU1I";
+  </script>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDhkrpTfpEDmgBwCqakU0GGdr7NB_CSU1I&libraries=places&language=pt-BR&region=BR"
+    defer></script>
+
+
+  <script type="module" src="./js/cliente.js"></script>
 
 </body>
 
