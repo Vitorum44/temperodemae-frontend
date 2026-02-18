@@ -118,26 +118,14 @@
     <div id="orders-list"></div>
   </section>
 
-  <aside id="carrinho" aria-hidden="true">
+ <aside id="carrinho" aria-hidden="true">
   <div class="modal-dialog">
 
-    <!-- HEADER -->
-    <div class="modal-header row between center" style="border-bottom:1px solid #eee; margin-bottom:0;">
-      <strong>Seu Pedido</strong>
-      <button id="close-cart" class="btn text">✖</button>
-    </div>
-
-    <!-- BODY COM SCROLL -->
-    <aside id="carrinho" aria-hidden="true">
-  <div class="modal-dialog">
-
-    <!-- HEADER -->
     <div class="modal-header row between center">
       <strong>Seu Pedido</strong>
       <button id="close-cart" class="btn text">✖</button>
     </div>
 
-    <!-- BODY -->
     <div class="modal-body">
 
       <div id="cart-items" class="list"></div>
@@ -157,31 +145,26 @@
         </div>
       </div>
 
-      <!-- FORM COMEÇA AQUI -->
       <form id="order-form" class="form">
 
-        <!-- AGENDAMENTO -->
         <div id="schedule-box" style="display:none; background:#fceded; padding:10px; border:2px solid #d62300; border-radius:12px; margin-bottom:15px;">
           <p style="color:#d62300; font-weight:900; margin:0 0 5px 0;">🔴 LOJA FECHADA</p>
           <label style="font-size:13px; color:#502314; font-weight:bold;">Agendar entrega para:</label>
           <input type="datetime-local" id="order-schedule" class="input">
         </div>
 
-        <!-- ENTREGA / RETIRADA -->
         <label class="title">Como deseja receber?</label>
         <div class="field-row">
           <label class="radio">
             <input type="radio" name="fulfillment" id="fulfill-delivery" value="delivery" checked>
             <span>Entrega 🛵</span>
           </label>
-
           <label class="radio">
             <input type="radio" name="fulfillment" id="fulfill-pickup" value="pickup">
             <span>Retirar 🏃</span>
           </label>
         </div>
 
-        <!-- DADOS -->
         <label class="title">Seus dados</label>
         <input id="cust-name" class="input" placeholder="Seu nome" required>
         <input id="cust-phone" class="input" placeholder="WhatsApp" required>
@@ -193,12 +176,9 @@
         <input id="cust-neighborhood" class="input" placeholder="Bairro">
         <input id="cust-reference" class="input" placeholder="Ponto de referência">
 
-        <!-- CUPOM -->
         <input id="coupon-code" class="input" placeholder="Tem cupom?">
 
-        <!-- PAGAMENTO -->
         <label class="title">Pagamento</label>
-
         <div class="payment-stack">
           <label class="radio-box">
             <input type="radio" name="payment" value="Pix" checked>
@@ -225,7 +205,6 @@
           </div>
         </div>
 
-        <!-- BOTÃO FINAL -->
         <button id="btn-finalize" class="btn primary block" type="submit">
           Finalizar Pedido
         </button>
@@ -233,11 +212,11 @@
         <div id="order-feedback" class="muted" style="margin-top:8px; font-weight:bold; color:#d62300;"></div>
 
       </form>
-      <!-- FORM TERMINA AQUI -->
 
     </div>
   </div>
 </aside>
+
 
 
   <!-- ==================== MODAL DE AUTENTICAÇÃO (VERSÃO CORRIGIDA) ==================== -->
