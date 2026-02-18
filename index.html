@@ -128,56 +128,76 @@
     </div>
 
     <!-- BODY COM SCROLL -->
+    <aside id="carrinho" aria-hidden="true">
+  <div class="modal-dialog">
+
+    <!-- HEADER -->
+    <div class="modal-header row between center">
+      <strong>Seu Pedido</strong>
+      <button id="close-cart" class="btn text">✖</button>
+    </div>
+
+    <!-- BODY -->
     <div class="modal-body">
 
       <div id="cart-items" class="list"></div>
 
       <div class="totals">
-        <div class="row between"><span>Subtotal</span><strong id="cart-subtotal">R$ 0,00</strong></div>
-        <div class="row between"><span>Frete</span><strong id="cart-fee">R$ 0,00</strong></div>
-        <div class="row between total"><span>Total</span><strong id="cart-grandtotal">R$ 0,00</strong></div>
+        <div class="row between">
+          <span>Subtotal</span>
+          <strong id="cart-subtotal">R$ 0,00</strong>
+        </div>
+        <div class="row between">
+          <span>Frete</span>
+          <strong id="cart-fee">R$ 0,00</strong>
+        </div>
+        <div class="row between total">
+          <span>Total</span>
+          <strong id="cart-grandtotal">R$ 0,00</strong>
+        </div>
       </div>
 
+      <!-- FORM COMEÇA AQUI -->
       <form id="order-form" class="form">
 
         <!-- AGENDAMENTO -->
         <div id="schedule-box" style="display:none; background:#fceded; padding:10px; border:2px solid #d62300; border-radius:12px; margin-bottom:15px;">
           <p style="color:#d62300; font-weight:900; margin:0 0 5px 0;">🔴 LOJA FECHADA</p>
           <label style="font-size:13px; color:#502314; font-weight:bold;">Agendar entrega para:</label>
-          <input type="datetime-local" id="order-schedule" class="input" style="margin-top:5px; background:white; color:#502314;">
+          <input type="datetime-local" id="order-schedule" class="input">
         </div>
 
-        <!-- RECEBIMENTO -->
-        <label class="title" style="margin-top:8px">Como deseja receber?</label>
+        <!-- ENTREGA / RETIRADA -->
+        <label class="title">Como deseja receber?</label>
         <div class="field-row">
           <label class="radio">
             <input type="radio" name="fulfillment" id="fulfill-delivery" value="delivery" checked>
             <span>Entrega 🛵</span>
           </label>
 
-          <label class="radio" style="margin-left:16px">
+          <label class="radio">
             <input type="radio" name="fulfillment" id="fulfill-pickup" value="pickup">
             <span>Retirar 🏃</span>
           </label>
         </div>
 
         <!-- DADOS -->
-        <label class="title" style="margin-top:8px">Seus dados</label>
-        <input id="cust-name" class="input" placeholder="Seu nome" required />
-        <input id="cust-phone" class="input" placeholder="WhatsApp" required />
+        <label class="title">Seus dados</label>
+        <input id="cust-name" class="input" placeholder="Seu nome" required>
+        <input id="cust-phone" class="input" placeholder="WhatsApp" required>
 
         <div class="address-wrapper">
-          <input id="cust-address" class="input" placeholder="Rua e Número..." autocomplete="off" />
+          <input id="cust-address" class="input" placeholder="Rua e Número..." autocomplete="off">
         </div>
 
-        <input id="cust-neighborhood" class="input" placeholder="Bairro" style="margin-bottom:10px;" />
-        <input id="cust-reference" class="input" placeholder="Ponto de referência" />
+        <input id="cust-neighborhood" class="input" placeholder="Bairro">
+        <input id="cust-reference" class="input" placeholder="Ponto de referência">
 
         <!-- CUPOM -->
-        <input id="coupon-code" class="input" placeholder="Tem cupom?" style="margin-top:12px" />
+        <input id="coupon-code" class="input" placeholder="Tem cupom?">
 
         <!-- PAGAMENTO -->
-        <label class="title" style="margin-top:16px">Pagamento</label>
+        <label class="title">Pagamento</label>
 
         <div class="payment-stack">
           <label class="radio-box">
@@ -195,30 +215,30 @@
             <span>Dinheiro</span>
           </label>
 
-          <!-- TROCO -->
           <div id="cash-change-box" class="change-box" style="display:none;">
-            <label class="radio-box" style="border:none; padding:0; margin-bottom:5px; background:transparent;">
+            <label class="radio-box" style="border:none; padding:0; background:transparent;">
               <input type="checkbox" id="need-change">
               <span>Precisa de troco?</span>
             </label>
 
-            <input id="change-amount" type="number" class="input" placeholder="Troco para quanto?" style="display:none; width:100%;" />
+            <input id="change-amount" type="number" class="input" placeholder="Troco para quanto?" style="display:none;">
           </div>
         </div>
+
+        <!-- BOTÃO FINAL -->
+        <button id="btn-finalize" class="btn primary block" type="submit">
+          Finalizar Pedido
+        </button>
 
         <div id="order-feedback" class="muted" style="margin-top:8px; font-weight:bold; color:#d62300;"></div>
 
       </form>
+      <!-- FORM TERMINA AQUI -->
 
     </div>
-
-    <!-- BOTÃO FIXO -->
-    <button id="btn-finalize" class="btn primary block" type="submit">
-      Finalizar Pedido
-    </button>
-
   </div>
 </aside>
+
 
   <!-- ==================== MODAL DE AUTENTICAÇÃO (VERSÃO CORRIGIDA) ==================== -->
   <div id="auth-modal" class="modal" aria-hidden="true">
