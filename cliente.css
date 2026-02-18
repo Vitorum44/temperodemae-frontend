@@ -1757,9 +1757,8 @@ input[type="radio"] {
 }
 
 /* =========================================
-   CORREÇÃO DEFINITIVA CARRINHO MOBILE
+   CARRINHO MOBILE — SCROLL + BOTÃO FIXO
 ========================================= */
-
 @media (max-width: 768px) {
 
   #carrinho {
@@ -1775,24 +1774,16 @@ input[type="radio"] {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* 🔥 IMPORTANTE */
   }
 
+  /* 🔥 ÁREA SCROLLÁVEL */
   #carrinho .modal-body {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: calc(70px + 70px + 30px);
-
-
-    /* ajuste ideal */
+    padding-bottom: 180px; /* ← espaço real do botão + safe */
   }
 
-
-
-}
-
-@media (max-width: 768px) {
-
+  /* 🔥 BOTÃO FIXO */
   #btn-finalize {
     position: fixed;
     left: 16px;
