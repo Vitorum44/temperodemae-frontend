@@ -1,0 +1,13 @@
+{
+  "colors": {
+    "header": "#0f172a",
+    "primary": "#e01010",
+    "background": "#f3f4f6"
+  },
+  "logo_url": "https://lmdyykptnqufgsyhobps.supabase.co/storage/v1/object/public/menu-images/1770656332597_logo_otemperodemae.png",
+  "banners": [
+    "https://lmdyykptnqufgsyhobps.supabase.co/storage/v1/object/public/menu-images/1770608576695_banner2.png",
+    "https://lmdyykptnqufgsyhobps.supabase.co/storage/v1/object/public/menu-images/1770608580784_banner3.png",
+    "https://lmdyykptnqufgsyhobps.supabase.co/storage/v1/object/public/menu-images/1770660806272_banner1.png"
+  ]
+}
