@@ -648,14 +648,48 @@ pdMinus?.addEventListener('click', () => { if (state.selectedQty > 1) { state.se
 pdAddBtn?.addEventListener('click', () => { addToCart(state.selectedItem, state.selectedQty, pdObs.value); pdModal.setAttribute("aria-hidden", "true"); });
 
 // ================= CARRINHO =================
-function saveCart() { localStorage.setItem('cart', JSON.stringify(state.cart)); }
-
 function addToCart(item, qty = 1, obs = "") {
-  if (!state.token || !state.user) { pdModal.setAttribute("aria-hidden", "true"); openAuthModal('login'); return; }
+
+  // 🔒 BLOQUEIO SE ESTIVER ESGOTADO
+  if (Number(item.stock) <= 0) {
+    alert("Produto esgotado.");
+    return;
+  }
+
+  // 🔒 EXIGE LOGIN
+  if (!state.token || !state.user) {
+    pdModal.setAttribute("aria-hidden", "true");
+    openAuthModal('login');
+    return;
+  }
+
   const existingItem = state.cart.find(x => x.id === item.id && x.obs === obs);
-  if (existingItem) { existingItem.qty += qty; } else { state.cart.push({ id: item.id, name: item.name, price: Number(item.price), image: item.image_url || item.imageUrl, qty: qty, obs: obs }); }
-  saveCart(); updateCartUI(); if (fb) { fb.textContent = "Item adicionado!"; setTimeout(() => fb.textContent = "", 2000); }
-  if (floatCartBtn) { floatCartBtn.classList.add('anim-pop'); setTimeout(() => floatCartBtn.classList.remove('anim-pop'), 300); }
+
+  if (existingItem) {
+    existingItem.qty += qty;
+  } else {
+    state.cart.push({
+      id: item.id,
+      name: item.name,
+      price: Number(item.price),
+      image: item.image_url || item.imageUrl,
+      qty: qty,
+      obs: obs
+    });
+  }
+
+  saveCart();
+  updateCartUI();
+
+  if (fb) {
+    fb.textContent = "Item adicionado!";
+    setTimeout(() => fb.textContent = "", 2000);
+  }
+
+  if (floatCartBtn) {
+    floatCartBtn.classList.add('anim-pop');
+    setTimeout(() => floatCartBtn.classList.remove('anim-pop'), 300);
+  }
 }
 
 function removeFromCart(index) { state.cart.splice(index, 1); saveCart(); updateCartUI(); }
@@ -1147,11 +1181,7 @@ btnSendCode?.addEventListener('click', async () => {
     await apiSend('/auth/request-reset', 'POST', { phone });
 
     recFb.style.color = 'green';
-    recFb.textContent = "Código enviado! Verifique seu e-mail (ou console).";
-
-    // Vai para etapa 2
-    recStep1.style.display = 'none';
-    recStep2.style.display = 'block';
+    recFb.textContent = "Nova senha enviada para seu e-mail.";
 
   } catch (err) {
     recFb.style.color = 'red';
