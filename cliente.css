@@ -1837,3 +1837,17 @@ input[type="radio"] {
   font-weight: bold;
   color: var(--primary);
 }
+
+.badge-esgotado{
+  background:#ef4444;
+  color:#fff;
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:bold;
+}
+
+.item-card.sold-out{
+  opacity:0.6;
+  pointer-events:none;
+}
