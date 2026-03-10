@@ -648,6 +648,10 @@ pdMinus?.addEventListener('click', () => { if (state.selectedQty > 1) { state.se
 pdAddBtn?.addEventListener('click', () => { addToCart(state.selectedItem, state.selectedQty, pdObs.value); pdModal.setAttribute("aria-hidden", "true"); });
 
 // ================= CARRINHO =================
+function saveCart() {
+  localStorage.setItem('cart', JSON.stringify(state.cart));
+}
+
 function addToCart(item, qty = 1, obs = "") {
 
   // 🔒 BLOQUEIO SE ESTIVER ESGOTADO
