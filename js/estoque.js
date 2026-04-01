@@ -821,6 +821,15 @@ document.getElementById("modal-acomp").addEventListener("click", (e)=>{
   }
 })
 
+document.addEventListener("click", e => {
+
+  // 🔥 DELETAR OPÇÃO
+  if (e.target.classList.contains("del")) {
+    e.target.parentElement.remove();
+  }
+
+});
+
 
 
 
