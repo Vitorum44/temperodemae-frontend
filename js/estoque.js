@@ -768,15 +768,16 @@ document
   console.log("SALVANDO:", groups);
 
   await fetch(API + "/acompanhamentos", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      produto: produtoAtual,
-      groups
-    })
-  });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${localStorage.getItem("token")}`
+  },
+  body: JSON.stringify({
+    produto: produtoAtual,
+    groups
+  })
+});
 
   showNotify("Sucesso", "Acompanhamentos salvos!");
 });
