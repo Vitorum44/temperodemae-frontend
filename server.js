@@ -13,13 +13,18 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Resend } from "resend";
 
 dotenv.config();
+
+
 
 // --- CONFIGURAÇÃO DE DIRETÓRIO (ES Modules) ---
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const APPEARANCE_FILE = path.join(__dirname, 'appearance_settings.json');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const app = express();
 
@@ -81,7 +86,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- CONFIGURAÇÕES DE ENV ---
 const JWT_SECRET = process.env.JWT_SECRET || "segredo_padrao";
@@ -91,15 +97,18 @@ const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
 
 // --- CONFIGURAÇÃO DE E-MAIL ---
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  }
+  },
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 100,
+  rateLimit: 10,
+  socketTimeout: 10000 // 10 segundos
 });
+
 
 const mpClient = MP_ACCESS_TOKEN ? new MercadoPagoConfig({ accessToken: MP_ACCESS_TOKEN }) : null;
 
@@ -153,35 +162,44 @@ function adminMiddleware(req, res, next) {
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // ==================================================================
-// ROTAS DE APARÊNCIA (CARDÁPIO)
+// ROTAS DE APARÊNCIA (SALVAS NO NEON / POSTGRES)
 // ==================================================================
 
-app.get('/store/appearance', (req, res) => {
+app.get('/store/appearance', async (req, res) => {
   try {
-    if (fs.existsSync(APPEARANCE_FILE)) {
-      const data = fs.readFileSync(APPEARANCE_FILE, 'utf8');
-      res.json(JSON.parse(data));
+    const { rows } = await pool.query("SELECT settings FROM appearance_settings WHERE id = 1");
+    
+    if (rows.length > 0) {
+      res.json(rows[0].settings);
     } else {
       res.json({
-        colors: { header: "#0F172A", primary: "#3B82F6", background: "#F3F4F6" },
+        colors: { header: "#0F172A", primary: "#d62300", "background": "#F3F4F6" },
         logo_url: "",
         banners: []
       });
     }
   } catch (error) {
-    console.error("Erro ao ler aparência:", error);
+    console.error("Erro ao ler aparência do banco:", error);
     res.status(500).json({ error: "Erro interno" });
   }
 });
 
-app.post('/store/appearance', (req, res) => {
+app.post('/store/appearance', adminMiddleware, async (req, res) => {
   try {
     const settings = req.body;
     if (!settings.colors) return res.status(400).json({ error: "Dados inválidos" });
-    fs.writeFileSync(APPEARANCE_FILE, JSON.stringify(settings, null, 2));
-    res.json({ success: true, message: "Configurações salvas!" });
+
+    // Salva direto no Neon! Atualiza as informações onde o ID é 1
+    await pool.query(
+      `INSERT INTO appearance_settings (id, settings) 
+       VALUES (1, $1) 
+       ON CONFLICT (id) DO UPDATE SET settings = EXCLUDED.settings`,
+      [JSON.stringify(settings)]
+    );
+
+    res.json({ success: true, message: "Configurações salvas no Banco de Dados!" });
   } catch (error) {
-    console.error("Erro ao salvar aparência:", error);
+    console.error("Erro ao salvar aparência no banco:", error);
     res.status(500).json({ error: "Erro ao salvar" });
   }
 });
@@ -259,12 +277,144 @@ app.post("/auth/register", async (req, res) => {
   }
 });
 
+
 app.get("/settings", async (req, res) => { 
   try {
     const { rows } = await pool.query("SELECT * FROM store_settings ORDER BY id ASC");
     res.json(rows); 
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// 🔥 COLE AQUI EMBAIXO 🔥
+app.get("/auth/me", authMiddleware, async (req, res) => {
+  try {
+    res.json({
+      id: req.user.id || null,
+      name: req.user.name || "Admin",
+      role: req.user.role
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao validar usuário" });
+  }
+});
+
+
+// ================= ATUALIZAR DADOS DO USUÁRIO =================
+app.patch("/auth/update", authMiddleware, async (req, res) => {
+  const { name, phone, email, password } = req.body;
+
+  try {
+
+    let password_hash = null;
+
+    if (password && password.trim().length >= 6) {
+      password_hash = await bcrypt.hash(password, 10);
+    }
+
+    if (password_hash) {
+      await pool.query(
+        `UPDATE customers 
+         SET name=$1, phone=$2, email=$3, password_hash=$4 
+         WHERE id=$5`,
+        [name, phone, email, password_hash, req.user.id]
+      );
+    } else {
+      await pool.query(
+        `UPDATE customers 
+         SET name=$1, phone=$2, email=$3
+         WHERE id=$4`,
+        [name, phone, email, req.user.id]
+      );
+    }
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Erro ao atualizar usuário:", err);
+    res.status(500).json({ error: "Erro ao atualizar dados" });
+  }
+});
+
+// ================= RECUPERAÇÃO DE SENHA (GRÁTIS POR E-MAIL) =================
+app.post("/auth/request-reset", async (req, res) => {
+  const identifier = req.body.phone || req.body.email || req.body.login;
+
+  if (!identifier) {
+    return res.status(400).json({ error: "Informe o número do WhatsApp cadastrado." });
+  }
+
+  try {
+
+    // 1️⃣ Procura usuário no banco
+    const { rows } = await pool.query(
+      "SELECT id, name, email FROM customers WHERE phone = $1 OR email = $1 LIMIT 1",
+      [identifier]
+    );
+
+    const user = rows[0];
+
+    if (!user) {
+      return res.status(400).json({ error: "Nenhuma conta encontrada com este número." });
+    }
+
+    // 2️⃣ Verifica se tem email cadastrado
+    if (!user.email) {
+      return res.status(400).json({
+        error: "Esta conta não possui e-mail cadastrado. Fale com o suporte."
+      });
+    }
+
+    // 3️⃣ Gera nova senha provisória
+    const novaSenha = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const password_hash = await bcrypt.hash(novaSenha, 10);
+
+    // 4️⃣ Atualiza senha no banco
+    await pool.query(
+      "UPDATE customers SET password_hash = $1 WHERE id = $2",
+      [password_hash, user.id]
+    );
+
+    // 5️⃣ Envia e-mail usando RESEND
+    await resend.emails.send({
+      from: "Tempero de Mãe <onboarding@resend.dev>",
+      to: user.email,
+      subject: "Recuperação de Senha - Tempero de Mãe",
+      html: `
+        <div style="font-family:sans-serif;padding:20px;color:#111">
+          <h2>Olá, ${user.name}! 🍔</h2>
+
+          <p>Você solicitou recuperação de senha no nosso site.</p>
+
+          <p>Sua nova senha provisória é:</p>
+
+          <h1 style="color:#d62300;font-size:32px">${novaSenha}</h1>
+
+          <p>
+            Faça login usando essa senha e depois altere no seu perfil se quiser.
+          </p>
+
+          <hr style="margin:20px 0">
+
+          <small style="color:#777">
+            Tempero de Mãe Delivery
+          </small>
+        </div>
+      `
+    });
+
+    return res.json({
+      success: true,
+      message: "Enviamos uma nova senha para o seu e-mail cadastrado!"
+    });
+
+  } catch (err) {
+    console.error("❌ ERRO AO RECUPERAR SENHA:", err);
+    return res.status(500).json({
+      error: "Erro interno. Tente novamente mais tarde."
+    });
   }
 });
 
@@ -300,11 +450,21 @@ app.get("/menu_items", async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+
 // ================= ROTAS ADMIN (Migradas para pg e Cloudinary) =================
 
-app.post("/upload", adminMiddleware, upload.single("file"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "Arquivo obrigatório" });
-  return res.json({ url: req.file.path });
+app.post("/upload", adminMiddleware, (req, res) => {
+  upload.single("file")(req, res, (err) => {
+    // Se der erro no Multer/Cloudinary, ele cai aqui e imprime o erro real!
+    if (err) {
+      console.error("❌ ERRO NO CLOUDINARY:", err.message);
+      console.error("🔍 DETALHES DO ERRO:", JSON.stringify(err, null, 2));
+      return res.status(500).json({ error: "Erro ao subir imagem", detalhes: err.message });
+    }
+    
+    if (!req.file) return res.status(400).json({ error: "Arquivo obrigatório" });
+    return res.json({ url: req.file.path });
+  });
 });
 
 app.post("/items", adminMiddleware, async (req, res) => { 
@@ -381,6 +541,50 @@ app.patch("/orders/:id/status", adminMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ================= ACOMPANHAMENTOS 🔥 =================
+
+// SALVAR
+app.post("/acompanhamentos", adminMiddleware, async (req, res) => {
+  try {
+    const { produto, groups } = req.body;
+
+    if (!produto || !groups) {
+      return res.status(400).json({ error: "Dados inválidos" });
+    }
+
+    await pool.query(
+      `
+      INSERT INTO product_acompanhamentos (product_id, groups)
+      VALUES ($1, $2)
+      ON CONFLICT (product_id)
+      DO UPDATE SET groups = EXCLUDED.groups
+      `,
+      [produto, JSON.stringify(groups)]
+    );
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Erro ao salvar acompanhamentos:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// BUSCAR
+app.get("/acompanhamentos/:id", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT groups FROM product_acompanhamentos WHERE product_id = $1 LIMIT 1",
+      [req.params.id]
+    );
+
+    res.json(rows[0]?.groups || []);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ================= PEDIDOS (Migrados para pg) =================
 
 app.get("/orders/me", authMiddleware, async (req, res) => {
@@ -447,6 +651,42 @@ app.post("/orders", async (req, res) => {
 
     let savedOrder = rows[0];
 
+
+    // ================= BAIXAR ESTOQUE =================
+try {
+  const items = order.items;
+
+  for (const item of items) {
+
+    // verifica estoque atual
+    const { rows } = await pool.query(
+      "SELECT stock FROM menu_items WHERE id = $1",
+      [item.itemId]
+    );
+
+    const product = rows[0];
+
+    if (!product) {
+      return res.status(400).json({ error: "Produto não encontrado" });
+    }
+
+    if (product.stock < item.qty) {
+      return res.status(400).json({
+        error: `Estoque insuficiente para ${item.name}`
+      });
+    }
+
+    // diminui estoque
+    await pool.query(
+      "UPDATE menu_items SET stock = stock - $1 WHERE id = $2",
+      [item.qty, item.itemId]
+    );
+  }
+
+} catch (stockError) {
+  console.error("Erro ao atualizar estoque:", stockError);
+}
+
     if (order.paymentMethod === 'Pix' && mpClient) {
       try {
         console.log(`🤖 Gerando Pix para Pedido #${savedOrder.id}...`);
@@ -495,6 +735,109 @@ app.post("/orders", async (req, res) => {
   }
 });
 
+// ================= RESETAR SENHA =================
+app.post("/auth/reset-password", async (req, res) => {
+
+  const { token, password } = req.body;
+
+  try {
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    const hash = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      "UPDATE customers SET password_hash=$1 WHERE id=$2",
+      [hash, decoded.id]
+    );
+
+    res.json({ success: true });
+
+  } catch {
+
+    res.status(400).json({
+      error: "Token inválido ou expirado"
+    });
+
+  }
+
+});
+
+
+// ================= ESQUECI MINHA SENHA (LINK MÁGICO) =================
+app.post("/auth/forgot-password", async (req, res) => {
+
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Informe seu e-mail." });
+  }
+
+  try {
+
+    const { rows } = await pool.query(
+      "SELECT id, name, email FROM customers WHERE email = $1 LIMIT 1",
+      [email]
+    );
+
+    const user = rows[0];
+
+    if (!user) {
+      return res.json({ success: true }); 
+      // não revela se existe ou não
+    }
+
+    const token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const resetLink = `https://temperodemae.vercel.app/reset-password.html?token=${token}`;
+
+    await resend.emails.send({
+      from: "Tempero de Mãe <onboarding@resend.dev>",
+      to: user.email,
+      subject: "Redefinir senha",
+      html: `
+        <h2>Olá ${user.name}</h2>
+
+        <p>Clique no botão abaixo para redefinir sua senha:</p>
+
+        <a href="${resetLink}" style="
+          background:#d62300;
+          color:white;
+          padding:12px 20px;
+          border-radius:8px;
+          text-decoration:none;
+          font-weight:bold;
+        ">
+        Redefinir senha
+        </a>
+
+        <p>Este link expira em 15 minutos.</p>
+      `
+    });
+
+    res.json({ success: true });
+
+  } catch (err) {
+
+    console.error("Erro forgot password:", err);
+
+    res.status(500).json({
+      error: "Erro ao enviar recuperação."
+    });
+
+  }
+
+});
+
+
+
 // ================= WEBHOOK MERCADO PAGO =================
 app.post("/webhook/mercadopago", express.json(), async (req, res) => {
   console.log("🔔 Webhook recebido:", req.body);
@@ -536,12 +879,6 @@ app.post("/webhook/mercadopago", express.json(), async (req, res) => {
   }
 });
 
-// ================= SERVIR ARQUIVOS HTML =================
-app.use(express.static(__dirname));
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
 
 
 const PORT = process.env.PORT || 3000;
