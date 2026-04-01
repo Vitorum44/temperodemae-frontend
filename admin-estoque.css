@@ -3214,7 +3214,7 @@ margin-top:10px;
 .inventory-table th:nth-child(5), .inventory-table td:nth-child(5) { width: 110px; }
 .inventory-table th:nth-child(6), .inventory-table td:nth-child(6) { width: 90px; text-align: center; }
 .inventory-table th:nth-child(7), .inventory-table td:nth-child(7) { width: 110px; text-align: center; }
-.inventory-table th:nth-child(8), .inventory-table td:nth-child(8) { width: 150px; text-align: right; }
+.inventory-table th:nth-child(8), .inventory-table td:nth-child(8) { width: 190px; text-align: right; }
 
 /* Foto e Texto */
 .product-thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; }
