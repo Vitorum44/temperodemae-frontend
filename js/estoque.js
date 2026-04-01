@@ -836,6 +836,22 @@ document.addEventListener("click", e => {
 
 });
 
+function showNotify(title, message) {
+  const titleEl = document.getElementById("notify-title");
+  const msgEl = document.getElementById("notify-message");
+  const modal = document.getElementById("notify-modal");
+
+  if (titleEl) titleEl.innerText = title;
+  if (msgEl) msgEl.innerText = message;
+
+  if (modal) modal.classList.remove("hidden");
+}
+
+function closeNotify() {
+  const modal = document.getElementById("notify-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
 
 
 
