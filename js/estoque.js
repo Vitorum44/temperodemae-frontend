@@ -725,56 +725,61 @@ e.target
 })
 
 // =======================================
-// SALVAR ACOMPANHAMENTOS
+// SALVAR ACOMPANHAMENTOS (VERSÃO COMPLETA)
 // =======================================
 
 document
 .getElementById("save-acomp")
-.addEventListener("click",async ()=>{
+.addEventListener("click", async () => {
 
-const groups = []
+  const groups = [];
 
-document
-.querySelectorAll(".group-box")
-.forEach(g=>{
+  document.querySelectorAll(".group-box").forEach(g => {
 
-const nome = g.querySelector("input").value
+    const inputs = g.querySelectorAll("input");
 
-groups.push({
-nome
-})
+    const nome = inputs[0]?.value;
+    const min = inputs[1]?.value;
+    const max = inputs[2]?.value;
 
-})
+    const opcoes = [];
 
-await fetch(API + "/produtos/acompanhamentos",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-produto:produtoAtual,
-groups
-})
-})
+    g.querySelectorAll(".option-row").forEach(o => {
 
-})
+      const nomeOp = o.children[0].value;
+      const precoOp = o.children[1].value;
 
+      opcoes.push({
+        nome: nomeOp,
+        preco: Number(precoOp) || 0
+      });
 
-function showNotify(title, message) {
-  $("notify-title").innerText = title;
-  $("notify-message").innerText = message;
-  $("notify-modal").classList.remove("hidden");
-}
+    });
 
-function closeNotify() {
-  $("notify-modal").classList.add("hidden");
-}
+    groups.push({
+      nome,
+      min: Number(min) || 0,
+      max: Number(max) || 0,
+      opcoes
+    });
 
-function closeOnOverlay(event) {
-  if (event.target.classList.contains("modal-overlay")) {
-    event.target.classList.add("hidden");
-  }
-}
+  });
+
+  console.log("SALVANDO:", groups);
+
+  await fetch(API + "/acompanhamentos", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      produto: produtoAtual,
+      groups
+    })
+  });
+
+  showNotify("Sucesso", "Acompanhamentos salvos!");
+});
 
 document.addEventListener("click", function (e) {
 
