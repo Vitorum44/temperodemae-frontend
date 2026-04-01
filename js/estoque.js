@@ -512,51 +512,56 @@ function renderProducts() {
     const sub = state.subcategories.find(s => String(s.id) === String(p.subcategory_id))?.name || "-";
 
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><img src="${p.image_url || 'https://via.placeholder.com/56'}" class="product-thumb"></td>
-      <td>
-        <div class="product-name-text">${p.name}</div>
-        ${p.description ? `<div class="product-description">${p.description}</div>` : ""}
-      </td>
-      <td>${cat}</td>
-      <td>${sub}</td>
-      <td>R$ ${Number(p.price).toFixed(2)}</td>
-      <td>${p.stock}</td>
-      <td>
-        <label class="switch">
-          <input type="checkbox" ${p.active ? "checked" : ""} 
-            onchange="toggleProductStatus('${p.id}', ${p.active})">
-          <span class="slider"></span>
-        </label>
-      </td>
-      <td style="position: relative;">
-  <div class="product-actions">
+tr.innerHTML = `
+  <td><img src="${p.image_url || 'https://via.placeholder.com/56'}" class="product-thumb"></td>
+  <td>
+    <div class="product-name-text">${p.name}</div>
+    ${p.description ? `<div class="product-description">${p.description}</div>` : ""}
+  </td>
+  <td>${cat}</td>
+  <td>${sub}</td>
+  <td>R$ ${Number(p.price).toFixed(2)}</td>
+  <td>${p.stock}</td>
+  <td>
+    <label class="switch">
+      <input type="checkbox" ${p.active ? "checked" : ""} 
+        onchange="toggleProductStatus('${p.id}', ${p.active})">
+      <span class="slider"></span>
+    </label>
+  </td>
 
-    <!-- DESKTOP -->
-    <div class="product-buttons">
-      <button onclick="editProduct('${p.id}')">Editar</button>
-      <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
+  <td style="position: relative;">
+    <div class="product-actions">
+
+      <!-- DESKTOP -->
+      <div class="product-buttons">
+        <button onclick="editProduct('${p.id}')">Editar</button>
+
+        <button class="btn-acomp" data-id="${p.id}">
+          ⚙️ Acomp
+        </button>
+
+        <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
+      </div>
+
+      <!-- MOBILE -->
+      <div class="product-dots">⋮</div>
+
+      <div class="product-menu">
+        <button onclick="editProduct('${p.id}')">Editar</button>
+
+        <button class="btn-acomp" data-id="${p.id}">
+          🔥 TESTE ACOMP
+        </button>
+
+        <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
+      </div>
+
     </div>
-
-    <!-- MOBILE -->
-    <div class="product-dots">⋮</div>
-
-    <div class="product-menu">
-      <button onclick="editProduct('${p.id}')">Editar</button>
-      <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
-    </div>
-
-  </div>
-</td>
-
-
-
-
-
-    `;
-    tbody.appendChild(tr);
-  });
-
+  </td>
+`;
+tbody.appendChild(tr);
+});
 
   function sortProductsBySearch(products, term) {
     if (!term) return products;
@@ -612,6 +617,148 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+// =======================================
+// CONTROLE DE ACOMPANHAMENTOS
+// =======================================
+
+let produtoAtual = null;
+
+document.addEventListener("click", e => {
+
+  const btn = e.target.closest(".btn-acomp");
+
+  if (btn) {
+
+    console.log("clicou", btn); // ✅ AQUI pode
+
+    produtoAtual = btn.dataset.id;
+
+    document
+      .getElementById("modal-acomp")
+      .classList
+      .remove("hidden");
+
+    carregarAcompanhamentos(produtoAtual);
+  }
+
+});
+
+
+function carregarAcompanhamentos(produtoId){
+
+  const box = document.getElementById("acomp-groups")
+
+  if(!box) return
+
+  box.innerHTML = `
+    <p style="color:#6b7280; margin-bottom:10px;">
+      Configure os acompanhamentos deste produto
+    </p>
+  `
+}
+// =======================================
+// CRIAR GRUPO DE ACOMPANHAMENTO
+// =======================================
+
+const btnAddGroup = document.getElementById("btn-add-group")
+
+if(btnAddGroup){
+
+btnAddGroup.addEventListener("click", ()=>{
+
+const box = document.createElement("div")
+
+box.className="group-box"
+
+box.innerHTML=`
+
+<input placeholder="Nome do grupo">
+
+<input type="number" placeholder="mín">
+
+<input type="number" placeholder="máx">
+
+<div class="options"></div>
+
+<button class="add-option">
++ opção
+</button>
+
+`
+
+document
+.getElementById("acomp-groups")
+.appendChild(box)
+
+})
+
+}
+
+// =======================================
+// ADICIONAR OPÇÕES DENTRO DO GRUPO
+// =======================================
+
+document.addEventListener("click",e=>{
+
+if(e.target.classList.contains("add-option")){
+
+const row=document.createElement("div")
+
+row.className="option-row"
+
+row.innerHTML=`
+
+<input placeholder="Nome opção">
+
+<input placeholder="Preço extra">
+
+<button class="del">X</button>
+
+`
+
+e.target
+.previousElementSibling
+.appendChild(row)
+
+}
+
+})
+
+// =======================================
+// SALVAR ACOMPANHAMENTOS
+// =======================================
+
+document
+.getElementById("save-acomp")
+.addEventListener("click",async ()=>{
+
+const groups = []
+
+document
+.querySelectorAll(".group-box")
+.forEach(g=>{
+
+const nome = g.querySelector("input").value
+
+groups.push({
+nome
+})
+
+})
+
+await fetch(API + "/produtos/acompanhamentos",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+produto:produtoAtual,
+groups
+})
+})
+
+})
+
 
 function showNotify(title, message) {
   $("notify-title").innerText = title;
@@ -663,6 +810,16 @@ document.addEventListener("click", function (e) {
   });
 
 });
+
+function fecharAcomp(){
+  document.getElementById("modal-acomp").classList.add("hidden")
+}
+
+document.getElementById("modal-acomp").addEventListener("click", (e)=>{
+  if(e.target.id === "modal-acomp"){
+    fecharAcomp()
+  }
+})
 
 
 
