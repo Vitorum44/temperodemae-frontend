@@ -3910,6 +3910,111 @@ margin-top:10px;
 }
 
 
+/* ===== MODAL ACOMPANHAMENTOS ===== */
+
+.modal-acomp {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-acomp.hidden {
+  display: none;
+}
+
+.modal-acomp-content {
+  background: #ffffff;
+  width: 600px;
+  max-width: 95%;
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* HEADER */
+.modal-acomp-content h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #111827;
+}
+
+/* BOTÕES PRINCIPAIS */
+.modal-acomp-content button {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+#btn-add-group {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+#save-acomp {
+  background: #22c55e;
+  color: white;
+}
+
+.modal-acomp-content button:hover {
+  opacity: 0.85;
+}
+
+/* GRUPOS */
+.group-box {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 12px;
+  background: #f9fafb;
+}
+
+/* INPUTS */
+.group-box input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  outline: none;
+}
+
+.group-box input:focus {
+  border-color: #3b82f6;
+}
+
+/* OPÇÕES */
+.option-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.option-row input {
+  flex: 1;
+}
+
+.option-row .del {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 
 
 
