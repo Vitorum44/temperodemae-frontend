@@ -1,843 +1,887 @@
-/* ================= DEBUG ================= */
-console.log("SCRIPT ESTOQUE.JS: VERSÃO FINAL - MODAL DE EXCLUSÃO ROBUSTO");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
+import multer from "multer";
+import nodemailer from "nodemailer";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import pkg from "pg";
+const { Pool } = pkg;
+import { MercadoPagoConfig, Payment } from 'mercadopago';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { Resend } from "resend";
 
-// Use o link do seu servidor no Render
-const API = "https://api-temperodemae.onrender.com";
-const PRODUCTS_ENDPOINT = "/items";
-
-let isFirstLoad = true;
-let productSearchTerm = "";
-
-let state = {
-  categories: [],
-  subcategories: [],
-  products: []
-};
-
-let editingProductId = null;
-let selectedImageFile = null;
-
-const $ = id => document.getElementById(id);
-
-/* ================= API ================= */
-async function api(url, method = "GET", body) {
-  try {
-    const res = await fetch(API + url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`
-      },
-      body: body ? JSON.stringify(body) : null
-    });
-
-    if (!res.ok) {
-      console.error("Erro na requisição:", res.status);
-      const errorText = await res.text();
-      console.error("Resposta servidor:", errorText);
-      return null;
-    }
-
-    // 🔥 TRATAMENTO SE NÃO TIVER JSON
-    const text = await res.text();
-    if (!text) return true;
-
-    return JSON.parse(text);
-
-  } catch (error) {
-    console.error("Erro API:", error);
-    return null;
-  }
-}
+dotenv.config();
 
 
-/* ================= LOAD ================= */
-async function loadData() {
-  let openIds = getOpenCategories();
 
-  state.categories = await api("/categories") || [];
-  state.subcategories = await api("/subcategories") || [];
-  state.products = await api(PRODUCTS_ENDPOINT) || [];
+// --- CONFIGURAÇÃO DE DIRETÓRIO (ES Modules) ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const APPEARANCE_FILE = path.join(__dirname, 'appearance_settings.json');
 
-  if (isFirstLoad) {
-    openIds = state.categories.map(c => String(c.id));
-    isFirstLoad = false;
-  }
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-  renderCategories(openIds);
-  renderProducts();
-}
+const app = express();
 
-function getOpenCategories() {
-  const openIds = [];
-  document.querySelectorAll(".ns-subs:not(.hidden)").forEach(el => {
-    openIds.push(el.id.replace("subs-", ""));
-  });
-  return openIds;
-}
-
-/* ================= RENDERIZAR CATEGORIAS ================= */
-function renderCategories(openIds = []) {
-  const root = $("category-list");
-  if (!root) return;
-
-  root.innerHTML = "";
-
-  state.categories.forEach(cat => {
-    const catWrapper = document.createElement("div");
-    catWrapper.className = "ns-category";
-
-    const isOpen = openIds.includes(String(cat.id));
-    const hiddenClass = isOpen ? "" : "hidden";
-    const arrowClass = isOpen ? "ns-arrow open" : "ns-arrow";
-
-    catWrapper.innerHTML = `
-      <div class="ns-category-row">
-        <div class="ns-left action-toggle" data-id="${cat.id}">
-          <span class="${arrowClass}" id="arrow-${cat.id}">▼</span>
-          <span class="ns-name">${cat.name}</span>
-        </div>
-        <button class="ns-dots btn-menu-cat" data-id="${cat.id}">⋮</button>
-      </div>
-
-      <div class="ns-subs ${hiddenClass}" id="subs-${cat.id}">
-        <div id="subs-list-${cat.id}">
-            ${renderSubRows(cat.id)}
-        </div>
-        
-        <div class="ns-sub-new hidden" id="new-sub-${cat.id}">
-          <input type="text" id="sub-input-${cat.id}" placeholder="Nome da subcategoria..." autocomplete="off">
-          <button class="action-save-sub" data-id="${cat.id}" title="Salvar">✔</button>
-          <button class="action-cancel-sub" data-id="${cat.id}" title="Cancelar">✖</button>
-        </div>
-      </div>
-    `;
-
-    root.appendChild(catWrapper);
-  });
-}
-
-function renderSubRows(categoryId) {
-  const subs = state.subcategories.filter(s => {
-    const pai = s.category_id || s.categoryId || s.parent_id;
-    return String(pai) === String(categoryId);
-  });
-
-  if (subs.length === 0) return "";
-
-  return subs.map(s => `
-      <div class="ns-sub-row">
-        <span>${s.name}</span>
-        <button class="ns-dots btn-menu-sub" data-id="${s.id}">⋮</button>
-      </div>
-    `).join("");
-}
-
-/* ================= GERENCIADOR DE CLIQUES ================= */
-document.addEventListener("click", (e) => {
-  const target = e.target;
-
-  const toggle = target.closest(".action-toggle");
-  if (toggle) { e.preventDefault(); toggleSubs(toggle.dataset.id); return; }
-
-  const btnCat = target.closest(".btn-menu-cat");
-  if (btnCat) { e.preventDefault(); e.stopPropagation(); openMenuReal(btnCat, "category", btnCat.dataset.id); return; }
-
-  const btnSub = target.closest(".btn-menu-sub");
-  if (btnSub) { e.preventDefault(); e.stopPropagation(); openMenuReal(btnSub, "subcategory", btnSub.dataset.id); return; }
-
-  const btnSave = target.closest(".action-save-sub");
-  if (btnSave) { saveSub(btnSave.dataset.id); return; }
-
-  const btnCancel = target.closest(".action-cancel-sub");
-  if (btnCancel) { cancelSub(btnCancel.dataset.id); return; }
-
-  if (!target.closest(".ns-menu")) { closeMenus(); }
+// ================= BANCO DE DADOS (NEON / POSTGRES) =================
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
-function toggleSubs(id) {
-  const el = document.getElementById(`subs-${id}`);
-  const arrow = document.getElementById(`arrow-${id}`);
-  if (el) {
-    const isHidden = el.classList.toggle("hidden");
-    if (arrow) {
-      if (isHidden) arrow.classList.remove("open");
-      else arrow.classList.add("open");
-    }
-  }
-}
+// ================= CONFIGURAÇÃO CLOUDINARY =================
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-/* ================= MENU FLUTUANTE ================= */
-function closeMenus() { document.querySelectorAll(".ns-menu").forEach(el => el.remove()); }
-
-function openMenuReal(button, type, id) {
-  closeMenus();
-  const menu = document.createElement("div");
-  menu.className = "ns-menu";
-
-  if (type === "category") {
-    const btnNew = document.createElement("button"); btnNew.innerHTML = "➕ Criar subcategoria"; btnNew.onclick = () => actionNewSub(id); menu.appendChild(btnNew);
-    const btnEdit = document.createElement("button"); btnEdit.innerHTML = "✏️ Editar"; btnEdit.onclick = () => actionEditCat(id); menu.appendChild(btnEdit);
-    const btnDel = document.createElement("button"); btnDel.className = "danger"; btnDel.innerHTML = "🗑️ Excluir"; btnDel.onclick = () => actionDelCat(id); menu.appendChild(btnDel);
-  } else {
-    const btnEdit = document.createElement("button"); btnEdit.innerHTML = "✏️ Editar"; btnEdit.onclick = () => actionEditSub(id); menu.appendChild(btnEdit);
-    const btnDel = document.createElement("button"); btnDel.className = "danger"; btnDel.innerHTML = "🗑️ Excluir"; btnDel.onclick = () => actionDelSub(id); menu.appendChild(btnDel);
-  }
-
-  const rect = button.getBoundingClientRect();
-  const top = rect.bottom + window.scrollY + 5;
-  const left = rect.left + window.scrollX - 140;
-  menu.style.position = "absolute"; menu.style.top = top + "px"; menu.style.left = left + "px";
-  document.body.appendChild(menu);
-}
-
-/* ================= AÇÕES (SALVAR / EDITAR / EXCLUIR) ================= */
-
-function actionNewSub(id) {
-  closeMenus();
-  const subsDiv = document.getElementById(`subs-${id}`);
-  const arrow = document.getElementById(`arrow-${id}`);
-
-  if (subsDiv) {
-    subsDiv.classList.remove("hidden");
-    if (arrow) arrow.classList.add("open");
-  }
-
-  const box = document.getElementById(`new-sub-${id}`);
-  const input = document.getElementById(`sub-input-${id}`);
-  if (box && input) {
-    box.classList.remove("hidden");
-    input.focus();
-    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    input.onkeydown = (ev) => {
-      if (ev.key === "Enter") saveSub(id);
-      if (ev.key === "Escape") cancelSub(id);
-    };
-  }
-}
-
-async function saveSub(catId) {
-  const input = document.getElementById(`sub-input-${catId}`);
-  const name = input.value.trim();
-  if (!name) return alert("Digite um nome!");
-
-  const payload = { name: name, categoryId: catId };
-  const result = await api("/subcategories", "POST", payload);
-
-  if (result) {
-    state.subcategories.push({ id: Date.now(), name: name, category_id: catId });
-    cancelSub(catId);
-
-    const openIds = getOpenCategories();
-    if (!openIds.includes(String(catId))) openIds.push(String(catId));
-    renderCategories(openIds);
-
-    setTimeout(loadData, 1000);
-  } else {
-    alert("Erro ao salvar.");
-  }
-}
-
-function cancelSub(catId) {
-  const box = document.getElementById(`new-sub-${catId}`);
-  const input = document.getElementById(`sub-input-${catId}`);
-  if (box) box.classList.add("hidden");
-  if (input) input.value = "";
-}
-
-/* --- EDITAR (MODAL) --- */
-function actionEditCat(id) {
-  closeMenus();
-  const cat = state.categories.find(c => String(c.id) === String(id));
-  if (!cat) return;
-  $("edit-modal-title").innerText = "Editar Categoria";
-  $("edit-input").value = cat.name;
-  $("edit-id").value = id;
-  $("edit-type").value = "category";
-  openEditModal();
-}
-
-function actionEditSub(id) {
-  closeMenus();
-  const sub = state.subcategories.find(s => String(s.id) === String(id));
-  if (!sub) return;
-  $("edit-modal-title").innerText = "Editar Subcategoria";
-  $("edit-input").value = sub.name;
-  $("edit-id").value = id;
-  $("edit-type").value = "subcategory";
-  openEditModal();
-}
-
-function openEditModal() {
-  const modal = $("edit-modal");
-  const input = $("edit-input");
-  modal.classList.remove("hidden");
-  setTimeout(() => input.focus(), 100);
-  input.onkeydown = (e) => {
-    if (e.key === "Enter") saveEdit();
-    if (e.key === "Escape") closeEditModal();
+// ================= FUNÇÕES AUXILIARES SQL =================
+const buildInsert = (table, data) => {
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const placeholders = keys.map((_, i) => `$${i + 1}`).join(", ");
+  return {
+    text: `INSERT INTO ${table} (${keys.join(", ")}) VALUES (${placeholders}) RETURNING *`,
+    values
   };
-}
-
-function closeEditModal() { $("edit-modal").classList.add("hidden"); }
-
-async function saveEdit() {
-  const id = $("edit-id").value;
-  const type = $("edit-type").value;
-  const name = $("edit-input").value.trim();
-  if (!name) return alert("O nome não pode ser vazio.");
-  const endpoint = type === "category" ? `/categories/${id}` : `/subcategories/${id}`;
-  const result = await api(endpoint, "PATCH", { name });
-  if (result) { closeEditModal(); loadData(); }
-  else { alert("Erro ao salvar a edição."); }
-}
-
-
-/* --- EXCLUSÃO (MODAL NOVO ROBUSTO) --- */
-function actionDelCat(id) {
-  closeMenus();
-  const cat = state.categories.find(c => String(c.id) === String(id));
-  if (!cat) return;
-  openDeleteModal(id, "category", cat.name);
-}
-
-function actionDelSub(id) {
-  closeMenus();
-  const sub = state.subcategories.find(s => String(s.id) === String(id));
-  if (!sub) return;
-  openDeleteModal(id, "subcategory", sub.name);
-}
-
-function openDeleteModal(id, type, name) {
-  const modal = $("delete-modal");
-  const msg = $("delete-message");
-
-  // Configura o texto
-  if (type === "category") {
-    msg.innerText = `Você tem certeza que deseja excluir a categoria "${name}"? Todas as subcategorias serão apagadas.`;
-  } else if (type === "subcategory") {
-    msg.innerText = `Você tem certeza que deseja excluir a subcategoria "${name}"?`;
-  } else if (type === "product") {
-    msg.innerText = `Você tem certeza que deseja excluir o produto "${name}"?`;
-  }
-
-
-  // Configura os IDs ocultos
-  $("delete-id").value = id;
-  $("delete-type").value = type;
-
-  modal.classList.remove("hidden");
-}
-
-function closeDeleteModal() {
-  $("delete-modal").classList.add("hidden");
-}
-
-async function confirmDelete() {
-  const id = $("delete-id").value;
-  const type = $("delete-type").value;
-
-  let endpoint = "";
-
-  if (type === "category") {
-    endpoint = `/categories/${id}`;
-  } else if (type === "subcategory") {
-    endpoint = `/subcategories/${id}`;
-  } else if (type === "product") {
-    endpoint = `/items/${id}`;
-  }
-
-  if (!endpoint) return;
-
-  await api(endpoint, "DELETE");
-
-  closeDeleteModal();
-  await loadData();
-}
-
-
-
-/* ================= MODAL PRODUTO ================= */
-window.openNewProduct = () => {
-  editingProductId = null; selectedImageFile = null; removeImage();
-  $("product-modal-title").innerText = "Novo Produto";
-  $("prod-id").value = ""; $("prod-name").value = ""; $("prod-description").value = ""; $("prod-price").value = ""; $("prod-stock").value = "";
-  fillCategorySelects();
-  openProductModal();
 };
 
-window.editProduct = (id) => {
-  const p = state.products.find(x => x.id === id); if (!p) return;
-  editingProductId = id;
-  $("product-modal-title").innerText = "Editar Produto";
-  $("prod-id").value = p.id; $("prod-name").value = p.name; $("prod-description").value = p.description || ""; $("prod-price").value = p.price; $("prod-stock").value = p.stock;
-  fillCategorySelects(p.category_id, p.subcategory_id);
-  if (p.image_url) { $("image-preview").src = p.image_url; $("image-preview").classList.remove("hidden"); $("upload-placeholder").classList.add("hidden"); showImageActions(); } else { removeImage(); }
-  openProductModal();
+const buildUpdate = (table, data, idCol, idVal) => {
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const setString = keys.map((k, i) => `${k} = $${i + 1}`).join(", ");
+  return {
+    text: `UPDATE ${table} SET ${setString} WHERE ${idCol} = $${keys.length + 1} RETURNING *`,
+    values: [...values, idVal]
+  };
 };
 
-window.openProductModal = () => $("product-modal").classList.remove("hidden");
-window.closeProductModal = () => { $("product-modal").classList.add("hidden"); editingProductId = null; selectedImageFile = null; removeImage(); };
-window.openImagePicker = () => $("prod-image").click();
-window.previewImage = (e) => { const f = e.target.files[0]; if (!f) return; selectedImageFile = f; const r = new FileReader(); r.onload = () => { $("image-preview").src = r.result; $("image-preview").classList.remove("hidden"); $("upload-placeholder").classList.add("hidden"); showImageActions(); }; r.readAsDataURL(f); };
-window.removeImage = () => { selectedImageFile = null; $("image-preview").src = ""; $("image-preview").classList.add("hidden"); $("upload-placeholder").classList.remove("hidden"); hideImageActions(); };
-function showImageActions() { hideImageActions(); const a = document.createElement("div"); a.id = "image-actions"; a.className = "image-actions"; a.innerHTML = `<button type="button" onclick="openImagePicker()">✏️</button><button type="button" onclick="removeImage()">✖️</button>`; $("image-preview").parentElement.appendChild(a); }
-function hideImageActions() { const a = $("image-actions"); if (a) a.remove(); }
-async function uploadImage(file) { const fd = new FormData(); fd.append("file", file); const res = await fetch(`${API}/upload`, { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }, body: fd }); if (!res.ok) throw new Error("Erro"); return (await res.json()).url; }
+// ================= CORS DEFINITIVO =================
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://temperodemae-frontend.vercel.app"
+];
 
-window.saveProduct = async () => {
-  const btn = document.querySelector('#product-modal .btn-confirm');
-  const originalText = btn.innerText;
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-  // 1. Avisa que está salvando
-  btn.innerText = "Salvando...";
-  btn.disabled = true;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
 
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// --- CONFIGURAÇÕES DE ENV ---
+const JWT_SECRET = process.env.JWT_SECRET || "segredo_padrao";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASS = process.env.ADMIN_PASSWORD;
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
+
+// --- CONFIGURAÇÃO DE E-MAIL ---
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 100,
+  rateLimit: 10,
+  socketTimeout: 10000 // 10 segundos
+});
+
+
+const mpClient = MP_ACCESS_TOKEN ? new MercadoPagoConfig({ accessToken: MP_ACCESS_TOKEN }) : null;
+
+// --- CONFIGURAÇÃO DE UPLOAD (CLOUDINARY) ---
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'cardapio_imagens', 
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp']
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 15 * 1024 * 1024 }
+});
+
+// --- FUNÇÃO AUXILIAR: GERADOR DE CPF (Para testes do Pix) ---
+function geraCPF() {
+  const rnd = (n) => Math.round(Math.random() * n);
+  const mod = (base, div) => Math.round(base - Math.floor(base / div) * div);
+  const n = Array(9).fill(0).map(() => rnd(9));
+  let d1 = n.reduce((total, num, i) => total + (num * (10 - i)), 0);
+  d1 = 11 - mod(d1, 11); if (d1 >= 10) d1 = 0;
+  let d2 = n.reduce((total, num, i) => total + (num * (11 - i)), 0) + (d1 * 2);
+  d2 = 11 - mod(d2, 11); if (d2 >= 10) d2 = 0;
+  return `${n.join('')}${d1}${d2}`;
+}
+
+// --- MIDDLEWARES ---
+function authMiddleware(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith("Bearer ")) return res.status(401).json({ error: "Token ausente" });
+  const token = auth.split(" ")[1];
   try {
-    const id = $("prod-id").value;
-    let imageUrl = null;
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Token inválido" });
+  }
+}
 
-    // Upload de imagem (se tiver)
-    if (selectedImageFile) {
-      imageUrl = await uploadImage(selectedImageFile);
-    }
+function adminMiddleware(req, res, next) {
+  authMiddleware(req, res, () => {
+    if (req.user.role !== "admin") return res.status(403).json({ error: "Acesso restrito a admin" });
+    next();
+  });
+}
 
-    const data = {
-      name: $("prod-name").value,
-      description: $("prod-description").value,
-      price: Number($("prod-price").value.replace(',', '.')),
-      stock: Number($("prod-stock").value),
-      category_id: $("prod-category").value,
-      subcategory_id: $("prod-subcategory").value || null,
-      active: true
-    };
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
+// ==================================================================
+// ROTAS DE APARÊNCIA (SALVAS NO NEON / POSTGRES)
+// ==================================================================
 
-    if (!data.name.trim()) {
-      alert("Informe o nome do produto.");
-      btn.innerText = originalText;
-      btn.disabled = false;
-      return;
-    }
-
-    if (isNaN(data.price)) {
-      alert("Informe um preço válido.");
-      btn.innerText = originalText;
-      btn.disabled = false;
-      return;
-    }
-
-    if (isNaN(data.stock)) {
-      alert("Informe o estoque.");
-      btn.innerText = originalText;
-      btn.disabled = false;
-      return;
-    }
-
-    if (!data.category_id) {
-      alert("Selecione uma categoria.");
-      btn.innerText = originalText;
-      btn.disabled = false;
-      return;
-    }
-
-
-
-
-    if (imageUrl) data.image_url = imageUrl;
-
-    // 2. Envia para o servidor e ESPERA a resposta
-    const result = await api(id ? `/items/${id}` : "/items", id ? "PATCH" : "POST", data);
-
-    // 3. Só fecha se deu certo (se result não for null)
-    if (result !== null && result !== undefined) {
-
-
-      showNotify("Sucesso 🎉", "Produto salvo com sucesso!");
-      // Feedback visual
-      closeProductModal();
-      await loadData(); // <--- ISSO AQUI ATUALIZA A LISTA SOZINHO
+app.get('/store/appearance', async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT settings FROM appearance_settings WHERE id = 1");
+    
+    if (rows.length > 0) {
+      res.json(rows[0].settings);
     } else {
-      alert("Erro ao salvar. Verifique se você está logado como Admin.");
-    }
-
-  } catch (error) {
-    console.error(error);
-    alert("Erro técnico ao salvar.");
-  } finally {
-    // Restaura o botão
-    btn.innerText = originalText;
-    btn.disabled = false;
-  }
-};
-
-
-/* ================= MODAL CATEGORIA (CRIAR) ================= */
-window.openCategoryModal = () => {
-  const modal = $("category-modal");
-  const input = $("category-name-input");
-
-  modal.classList.remove("hidden");
-  input.value = "";
-  setTimeout(() => input.focus(), 100);
-
-  input.onkeydown = (e) => {
-    if (e.key === "Enter") saveCategory();
-    if (e.key === "Escape") closeCategoryModal();
-  };
-};
-
-window.closeCategoryModal = () => $("category-modal").classList.add("hidden");
-
-window.saveCategory = async () => {
-  const name = $("category-name-input").value.trim();
-  if (!name) return alert("Informe o nome da categoria");
-  await api("/categories", "POST", { name });
-  closeCategoryModal();
-  loadData();
-};
-
-
-/* ================= LISTA E SELECTS ================= */
-function renderProducts() {
-  const tbody = $("inventory-list");
-  if (!tbody) return;
-  tbody.innerHTML = "";
-
-  // 🔍 Ordena trazendo o buscado para o topo
-  const orderedProducts = sortProductsBySearch(state.products, productSearchTerm);
-
-  orderedProducts.forEach(p => {
-    const cat = state.categories.find(c => String(c.id) === String(p.category_id))?.name || "-";
-    const sub = state.subcategories.find(s => String(s.id) === String(p.subcategory_id))?.name || "-";
-
-    const tr = document.createElement("tr");
-tr.innerHTML = `
-  <td><img src="${p.image_url || 'https://via.placeholder.com/56'}" class="product-thumb"></td>
-  <td>
-    <div class="product-name-text">${p.name}</div>
-    ${p.description ? `<div class="product-description">${p.description}</div>` : ""}
-  </td>
-  <td>${cat}</td>
-  <td>${sub}</td>
-  <td>R$ ${Number(p.price).toFixed(2)}</td>
-  <td>${p.stock}</td>
-  <td>
-    <label class="switch">
-      <input type="checkbox" ${p.active ? "checked" : ""} 
-        onchange="toggleProductStatus('${p.id}', ${p.active})">
-      <span class="slider"></span>
-    </label>
-  </td>
-
-  <td style="position: relative;">
-    <div class="product-actions">
-
-      <!-- DESKTOP -->
-      <div class="product-buttons">
-        <button onclick="editProduct('${p.id}')">Editar</button>
-
-        <button class="btn-acomp" data-id="${p.id}">
-          ⚙️ Acomp
-        </button>
-
-        <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
-      </div>
-
-      <!-- MOBILE -->
-      <div class="product-dots">⋮</div>
-
-      <div class="product-menu">
-        <button onclick="editProduct('${p.id}')">Editar</button>
-
-        <button class="btn-acomp" data-id="${p.id}">
-          🔥 TESTE ACOMP
-        </button>
-
-        <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
-      </div>
-
-    </div>
-  </td>
-`;
-tbody.appendChild(tr);
-});
-
-  function sortProductsBySearch(products, term) {
-    if (!term) return products;
-
-    const t = term.toLowerCase();
-
-    return products.slice().sort((a, b) => {
-      const aMatch = a.name.toLowerCase().includes(t);
-      const bMatch = b.name.toLowerCase().includes(t);
-
-      if (aMatch && !bMatch) return -1;
-      if (!aMatch && bMatch) return 1;
-      return 0;
-    });
-  }
-
-
-}
-
-function fillCategorySelects(catId = null, subId = null) {
-  const catSelect = $("prod-category");
-  const subSelect = $("prod-subcategory");
-  catSelect.innerHTML = `<option value="">Selecione a categoria</option>`;
-  subSelect.innerHTML = `<option value="">Selecione a subcategoria</option>`;
-  state.categories.forEach(c => { const o = document.createElement("option"); o.value = c.id; o.textContent = c.name; if (String(c.id) === String(catId)) o.selected = true; catSelect.appendChild(o); });
-  if (catId) {
-    const subsFiltradas = state.subcategories.filter(s => { const pai = s.category_id || s.categoryId; return String(pai) === String(catId); });
-    subsFiltradas.forEach(s => { const o = document.createElement("option"); o.value = s.id; o.textContent = s.name; if (String(s.id) === String(subId)) o.selected = true; subSelect.appendChild(o); });
-  }
-}
-$("prod-category")?.addEventListener("change", e => { fillCategorySelects(e.target.value, null); });
-
-window.toggleProductStatus = async (id, current) => { await api(`/items/${id}`, "PATCH", { active: !current }); const p = state.products.find(x => x.id === id); if (p) p.active = !current; renderProducts(); };
-window.deleteProduct = (id) => {
-  const product = state.products.find(p => String(p.id) === String(id));
-  if (!product) return;
-
-  openDeleteModal(id, "product", product.name);
-};
-
-
-loadData();
-
-
-document.addEventListener("DOMContentLoaded", () => {
-  const searchInput = document.getElementById("search-product");
-
-  if (searchInput) {
-    searchInput.addEventListener("input", (e) => {
-      productSearchTerm = e.target.value.trim();
-      renderProducts();
-    });
-  }
-});
-
-// =======================================
-// CONTROLE DE ACOMPANHAMENTOS
-// =======================================
-
-let produtoAtual = null;
-
-document.addEventListener("click", e => {
-
-  const btn = e.target.closest(".btn-acomp");
-
-  if (btn) {
-
-    console.log("clicou", btn); // ✅ AQUI pode
-
-    produtoAtual = btn.dataset.id;
-
-    document
-      .getElementById("modal-acomp")
-      .classList
-      .remove("hidden");
-
-    carregarAcompanhamentos(produtoAtual);
-  }
-
-});
-
-
-function carregarAcompanhamentos(produtoId){
-
-  const box = document.getElementById("acomp-groups")
-
-  if(!box) return
-
-  box.innerHTML = `
-    <p style="color:#6b7280; margin-bottom:10px;">
-      Configure os acompanhamentos deste produto
-    </p>
-  `
-}
-// =======================================
-// CRIAR GRUPO DE ACOMPANHAMENTO
-// =======================================
-
-const btnAddGroup = document.getElementById("btn-add-group")
-
-if(btnAddGroup){
-
-btnAddGroup.addEventListener("click", ()=>{
-
-const box = document.createElement("div")
-
-box.className="group-box"
-
-box.innerHTML=`
-
-<input placeholder="Nome do grupo">
-
-<input type="number" placeholder="mín">
-
-<input type="number" placeholder="máx">
-
-<div class="options"></div>
-
-<button class="add-option">
-+ opção
-</button>
-
-`
-
-document
-.getElementById("acomp-groups")
-.appendChild(box)
-
-})
-
-}
-
-// =======================================
-// ADICIONAR OPÇÕES DENTRO DO GRUPO
-// =======================================
-
-document.addEventListener("click",e=>{
-
-if(e.target.classList.contains("add-option")){
-
-const row=document.createElement("div")
-
-row.className="option-row"
-
-row.innerHTML=`
-
-<input placeholder="Nome opção">
-
-<input placeholder="Preço extra">
-
-<button class="del">X</button>
-
-`
-
-e.target
-.previousElementSibling
-.appendChild(row)
-
-}
-
-})
-
-// =======================================
-// SALVAR ACOMPANHAMENTOS (VERSÃO COMPLETA)
-// =======================================
-
-document
-.getElementById("save-acomp")
-.addEventListener("click", async () => {
-
-  const groups = [];
-
-  document.querySelectorAll(".group-box").forEach(g => {
-
-    const inputs = g.querySelectorAll("input");
-
-    const nome = inputs[0]?.value;
-    const min = inputs[1]?.value;
-    const max = inputs[2]?.value;
-
-    const opcoes = [];
-
-    g.querySelectorAll(".option-row").forEach(o => {
-
-      const nomeOp = o.children[0].value;
-      const precoOp = o.children[1].value;
-
-      opcoes.push({
-        nome: nomeOp,
-        preco: Number(precoOp) || 0
+      res.json({
+        colors: { header: "#0F172A", primary: "#d62300", "background": "#F3F4F6" },
+        logo_url: "",
+        banners: []
       });
-
-    });
-
-    groups.push({
-      nome,
-      min: Number(min) || 0,
-      max: Number(max) || 0,
-      opcoes
-    });
-
-  });
-
-  console.log("SALVANDO:", groups);
-
-  await fetch(API + "/acompanhamentos", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      produto: produtoAtual,
-      groups
-    })
-  });
-
-  showNotify("Sucesso", "Acompanhamentos salvos!");
+    }
+  } catch (error) {
+    console.error("Erro ao ler aparência do banco:", error);
+    res.status(500).json({ error: "Erro interno" });
+  }
 });
 
-document.addEventListener("click", function (e) {
+app.post('/store/appearance', adminMiddleware, async (req, res) => {
+  try {
+    const settings = req.body;
+    if (!settings.colors) return res.status(400).json({ error: "Dados inválidos" });
 
-  const dots = e.target.closest(".product-dots");
-  const menuClicked = e.target.closest(".product-menu");
+    // Salva direto no Neon! Atualiza as informações onde o ID é 1
+    await pool.query(
+      `INSERT INTO appearance_settings (id, settings) 
+       VALUES (1, $1) 
+       ON CONFLICT (id) DO UPDATE SET settings = EXCLUDED.settings`,
+      [JSON.stringify(settings)]
+    );
 
-  // 🔴 Se clicou nos 3 pontinhos
-  if (dots) {
-    e.stopPropagation();
+    res.json({ success: true, message: "Configurações salvas no Banco de Dados!" });
+  } catch (error) {
+    console.error("Erro ao salvar aparência no banco:", error);
+    res.status(500).json({ error: "Erro ao salvar" });
+  }
+});
 
-    const menu = dots.parentElement.querySelector(".product-menu");
-    const isOpen = menu.classList.contains("active");
+// ==================================================================
+// OUTRAS ROTAS (AUTH, PEDIDOS, ETC)
+// ==================================================================
 
-    // Fecha todos primeiro
-    document.querySelectorAll(".product-menu").forEach(m => {
-      m.classList.remove("active");
-    });
+app.post("/auth/login", async (req, res) => {
+  const { email, phone, password } = req.body;
 
-    // Se NÃO estava aberto, abre
-    if (!isOpen) {
-      menu.classList.add("active");
+  // Login Admin
+  if (email) {
+    if (email === ADMIN_EMAIL && password === ADMIN_PASS) {
+      const token = jwt.sign({ role: "admin", name: "Administrador" }, JWT_SECRET, { expiresIn: "1d" });
+      return res.json({ token, user: { name: "Admin", role: "admin" } });
+    }
+    return res.status(401).json({ error: "Credenciais de admin inválidas" });
+  }
+
+  // Login Cliente
+  if (phone) {
+    try {
+      const { rows } = await pool.query(
+        "SELECT * FROM customers WHERE phone = $1 LIMIT 1",
+        [phone]
+      );
+
+      const user = rows[0];
+      if (!user) return res.status(400).json({ error: "Usuário não encontrado" });
+
+      const match = await bcrypt.compare(password, user.password_hash);
+      if (!match) return res.status(400).json({ error: "Senha incorreta" });
+
+      const token = jwt.sign(
+        { id: user.id, phone: user.phone, name: user.name, role: "customer" },
+        JWT_SECRET,
+        { expiresIn: "30d" }
+      );
+
+      return res.json({ token, user: { id: user.id, phone: user.phone, name: user.name } });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Erro no servidor" });
+    }
+  }
+  return res.status(400).json({ error: "Informe login" });
+});
+
+app.post("/auth/register", async (req, res) => {
+  const { name, phone, password, email } = req.body;
+  try {
+    const { rows: existingRows } = await pool.query(
+      "SELECT id FROM customers WHERE phone = $1 LIMIT 1",
+      [phone]
+    );
+
+    if (existingRows.length) {
+      return res.status(400).json({ error: "Telefone já cadastrado" });
     }
 
-    return;
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const { rows } = await pool.query(
+      "INSERT INTO customers (name, phone, password_hash, email) VALUES ($1,$2,$3,$4) RETURNING *",
+      [name, phone, password_hash, email || null]
+    );
+
+    const data = rows[0];
+    const token = jwt.sign({ id: data.id, role: "customer" }, JWT_SECRET, { expiresIn: "30d" });
+    return res.json({ token, user: { id: data.id, name: data.name, phone: data.phone } });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
-
-  // 🟢 Se clicou dentro do menu, não fecha
-  if (menuClicked) return;
-
-  // 🔵 Se clicou fora, fecha tudo
-  document.querySelectorAll(".product-menu").forEach(menu => {
-    menu.classList.remove("active");
-  });
-
 });
 
-function fecharAcomp(){
-  document.getElementById("modal-acomp").classList.add("hidden")
+
+app.get("/settings", async (req, res) => { 
+  try {
+    const { rows } = await pool.query("SELECT * FROM store_settings ORDER BY id ASC");
+    res.json(rows); 
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 🔥 COLE AQUI EMBAIXO 🔥
+app.get("/auth/me", authMiddleware, async (req, res) => {
+  try {
+    res.json({
+      id: req.user.id || null,
+      name: req.user.name || "Admin",
+      role: req.user.role
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao validar usuário" });
+  }
+});
+
+
+// ================= ATUALIZAR DADOS DO USUÁRIO =================
+app.patch("/auth/update", authMiddleware, async (req, res) => {
+  const { name, phone, email, password } = req.body;
+
+  try {
+
+    let password_hash = null;
+
+    if (password && password.trim().length >= 6) {
+      password_hash = await bcrypt.hash(password, 10);
+    }
+
+    if (password_hash) {
+      await pool.query(
+        `UPDATE customers 
+         SET name=$1, phone=$2, email=$3, password_hash=$4 
+         WHERE id=$5`,
+        [name, phone, email, password_hash, req.user.id]
+      );
+    } else {
+      await pool.query(
+        `UPDATE customers 
+         SET name=$1, phone=$2, email=$3
+         WHERE id=$4`,
+        [name, phone, email, req.user.id]
+      );
+    }
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Erro ao atualizar usuário:", err);
+    res.status(500).json({ error: "Erro ao atualizar dados" });
+  }
+});
+
+// ================= RECUPERAÇÃO DE SENHA (GRÁTIS POR E-MAIL) =================
+app.post("/auth/request-reset", async (req, res) => {
+  const identifier = req.body.phone || req.body.email || req.body.login;
+
+  if (!identifier) {
+    return res.status(400).json({ error: "Informe o número do WhatsApp cadastrado." });
+  }
+
+  try {
+
+    // 1️⃣ Procura usuário no banco
+    const { rows } = await pool.query(
+      "SELECT id, name, email FROM customers WHERE phone = $1 OR email = $1 LIMIT 1",
+      [identifier]
+    );
+
+    const user = rows[0];
+
+    if (!user) {
+      return res.status(400).json({ error: "Nenhuma conta encontrada com este número." });
+    }
+
+    // 2️⃣ Verifica se tem email cadastrado
+    if (!user.email) {
+      return res.status(400).json({
+        error: "Esta conta não possui e-mail cadastrado. Fale com o suporte."
+      });
+    }
+
+    // 3️⃣ Gera nova senha provisória
+    const novaSenha = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const password_hash = await bcrypt.hash(novaSenha, 10);
+
+    // 4️⃣ Atualiza senha no banco
+    await pool.query(
+      "UPDATE customers SET password_hash = $1 WHERE id = $2",
+      [password_hash, user.id]
+    );
+
+    // 5️⃣ Envia e-mail usando RESEND
+    await resend.emails.send({
+      from: "Tempero de Mãe <onboarding@resend.dev>",
+      to: user.email,
+      subject: "Recuperação de Senha - Tempero de Mãe",
+      html: `
+        <div style="font-family:sans-serif;padding:20px;color:#111">
+          <h2>Olá, ${user.name}! 🍔</h2>
+
+          <p>Você solicitou recuperação de senha no nosso site.</p>
+
+          <p>Sua nova senha provisória é:</p>
+
+          <h1 style="color:#d62300;font-size:32px">${novaSenha}</h1>
+
+          <p>
+            Faça login usando essa senha e depois altere no seu perfil se quiser.
+          </p>
+
+          <hr style="margin:20px 0">
+
+          <small style="color:#777">
+            Tempero de Mãe Delivery
+          </small>
+        </div>
+      `
+    });
+
+    return res.json({
+      success: true,
+      message: "Enviamos uma nova senha para o seu e-mail cadastrado!"
+    });
+
+  } catch (err) {
+    console.error("❌ ERRO AO RECUPERAR SENHA:", err);
+    return res.status(500).json({
+      error: "Erro interno. Tente novamente mais tarde."
+    });
+  }
+});
+
+// ================= ROTAS DE LEITURA (CARDÁPIO PARA O CLIENTE) =================
+
+app.get("/categories", async (req, res) => { 
+  try {
+    const { rows } = await pool.query("SELECT * FROM categories ORDER BY position ASC, id ASC");
+    res.json(rows || []); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get("/subcategories", async (req, res) => { 
+  try {
+    const { rows } = await pool.query("SELECT * FROM subcategories ORDER BY position ASC, id ASC");
+    res.json(rows || []); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 👉 Rota que o painel Admin (estoque.js) costuma chamar:
+app.get("/items", async (req, res) => { 
+  try {
+    const { rows } = await pool.query("SELECT * FROM menu_items WHERE active = true ORDER BY name ASC");
+    res.json(rows || []); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 👉 Rota extra caso o frontend do cliente (cliente.js) esteja chamando com outro nome:
+app.get("/menu_items", async (req, res) => { 
+  try {
+    const { rows } = await pool.query("SELECT * FROM menu_items WHERE active = true ORDER BY name ASC");
+    res.json(rows || []); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+
+// ================= ROTAS ADMIN (Migradas para pg e Cloudinary) =================
+
+app.post("/upload", adminMiddleware, (req, res) => {
+  upload.single("file")(req, res, (err) => {
+    // Se der erro no Multer/Cloudinary, ele cai aqui e imprime o erro real!
+    if (err) {
+      console.error("❌ ERRO NO CLOUDINARY:", err.message);
+      console.error("🔍 DETALHES DO ERRO:", JSON.stringify(err, null, 2));
+      return res.status(500).json({ error: "Erro ao subir imagem", detalhes: err.message });
+    }
+    
+    if (!req.file) return res.status(400).json({ error: "Arquivo obrigatório" });
+    return res.json({ url: req.file.path });
+  });
+});
+
+app.post("/items", adminMiddleware, async (req, res) => { 
+  try {
+    const query = buildInsert("menu_items", req.body);
+    await pool.query(query);
+    res.json({ success: true }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch("/items/:id", adminMiddleware, async (req, res) => { 
+  try {
+    const query = buildUpdate("menu_items", req.body, "id", req.params.id);
+    await pool.query(query);
+    res.json({ success: true }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete("/items/:id", adminMiddleware, async (req, res) => { 
+  try {
+    await pool.query("DELETE FROM menu_items WHERE id = $1", [req.params.id]);
+    res.json({ success: true }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post("/categories", adminMiddleware, async (req, res) => { 
+  try {
+    const query = buildInsert("categories", req.body);
+    await pool.query(query);
+    res.json({ success: true }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete("/categories/:id", adminMiddleware, async (req, res) => { 
+  try {
+    await pool.query("DELETE FROM categories WHERE id = $1", [req.params.id]);
+    res.json({ success: true }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post("/subcategories", adminMiddleware, async (req, res) => { 
+  try {
+    await pool.query("INSERT INTO subcategories (name, category_id) VALUES ($1, $2)", [req.body.name, req.body.categoryId]);
+    res.json({ success: true }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete("/subcategories/:id", adminMiddleware, async (req, res) => { 
+  try {
+    await pool.query("DELETE FROM subcategories WHERE id = $1", [req.params.id]);
+    res.json({ success: true }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch("/settings", adminMiddleware, async (req, res) => { 
+  try {
+    const query = buildUpdate("store_settings", req.body, "id", 1);
+    await pool.query(query);
+    res.json({ success: true }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get("/orders", adminMiddleware, async (req, res) => { 
+  try {
+    const { rows } = await pool.query("SELECT * FROM orders ORDER BY created_at DESC LIMIT 100");
+    res.json(rows || []); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch("/orders/:id/status", adminMiddleware, async (req, res) => { 
+  try {
+    await pool.query("UPDATE orders SET status = $1 WHERE id = $2", [req.body.status, req.params.id]);
+    res.json({ success: true }); 
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ================= ACOMPANHAMENTOS 🔥 =================
+
+// SALVAR
+app.post("/acompanhamentos", adminMiddleware, async (req, res) => {
+  try {
+    const { produto, groups } = req.body;
+
+    if (!produto || !groups) {
+      return res.status(400).json({ error: "Dados inválidos" });
+    }
+
+    await pool.query(
+      `
+      INSERT INTO product_acompanhamentos (product_id, groups)
+      VALUES ($1, $2)
+      ON CONFLICT (product_id)
+      DO UPDATE SET groups = EXCLUDED.groups
+      `,
+      [produto, JSON.stringify(groups)]
+    );
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error("Erro ao salvar acompanhamentos:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// BUSCAR
+app.get("/acompanhamentos/:id", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      "SELECT groups FROM product_acompanhamentos WHERE product_id = $1 LIMIT 1",
+      [req.params.id]
+    );
+
+    res.json(rows[0]?.groups || []);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ================= PEDIDOS (Migrados para pg) =================
+
+app.get("/orders/me", authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC", [req.user.id]);
+    res.json(rows || []);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get("/orders/:id", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM orders WHERE id = $1", [req.params.id]);
+    res.json(rows[0] || null);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.patch("/orders/:id/cancel", authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT user_id, status FROM orders WHERE id = $1", [req.params.id]);
+    const order = rows[0];
+
+    if (!order) return res.status(404).json({ error: "Pedido não encontrado" });
+    if (order.user_id !== req.user.id) return res.status(403).json({ error: "Proibido" });
+    if (order.status !== 'novo' && order.status !== 'agendado' && order.status !== 'aguardando_pagamento') return res.status(400).json({ error: "Já em preparo." });
+    
+    await pool.query("UPDATE orders SET status = 'cancelado' WHERE id = $1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post("/orders", async (req, res) => {
+  try {
+    const order = req.body;
+    const isPickup = (order.fulfillment === "pickup");
+    if (isPickup) order.deliveryFee = 0;
+    const initialStatus = order.paymentMethod === 'Pix' ? 'aguardando_pagamento' : 'novo';
+
+    const customerData = {
+      ...order.customer,
+      paymentMethod: order.paymentMethod,
+      change: order.change,
+      scheduledTo: order.scheduledTo
+    };
+
+    const { rows } = await pool.query(
+      `INSERT INTO orders 
+       (items, subtotal, delivery_fee, discount, total, coupon_used, neighborhood, customer, status, fulfillment, user_id, distance_km) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [
+        JSON.stringify(order.items),
+        order.subtotal,
+        order.deliveryFee,
+        order.discount,
+        order.total,
+        order.couponUsed,
+        order.neighborhood,
+        JSON.stringify(customerData),
+        initialStatus,
+        order.fulfillment || "delivery",
+        order.user_id,
+        order.distance_km || 0
+      ]
+    );
+
+    let savedOrder = rows[0];
+
+
+    // ================= BAIXAR ESTOQUE =================
+try {
+  const items = order.items;
+
+  for (const item of items) {
+
+    // verifica estoque atual
+    const { rows } = await pool.query(
+      "SELECT stock FROM menu_items WHERE id = $1",
+      [item.itemId]
+    );
+
+    const product = rows[0];
+
+    if (!product) {
+      return res.status(400).json({ error: "Produto não encontrado" });
+    }
+
+    if (product.stock < item.qty) {
+      return res.status(400).json({
+        error: `Estoque insuficiente para ${item.name}`
+      });
+    }
+
+    // diminui estoque
+    await pool.query(
+      "UPDATE menu_items SET stock = stock - $1 WHERE id = $2",
+      [item.qty, item.itemId]
+    );
+  }
+
+} catch (stockError) {
+  console.error("Erro ao atualizar estoque:", stockError);
 }
 
-document.getElementById("modal-acomp").addEventListener("click", (e)=>{
-  if(e.target.id === "modal-acomp"){
-    fecharAcomp()
+    if (order.paymentMethod === 'Pix' && mpClient) {
+      try {
+        console.log(`🤖 Gerando Pix para Pedido #${savedOrder.id}...`);
+        const payment = new Payment(mpClient);
+        const randomPart = Math.floor(Math.random() * 10000);
+        const cpfGerado = geraCPF();
+
+        const bodyPayment = {
+          transaction_amount: Number(savedOrder.total),
+          description: `Pedido ${savedOrder.id} - Tempero`,
+          payment_method_id: 'pix',
+          payer: {
+            email: `cliente_teste_${randomPart}@gmail.com`,
+            first_name: order.customer.name.split(' ')[0] || 'Cliente',
+            identification: { type: 'CPF', number: cpfGerado }
+          },
+          notification_url: 'https://api-temperodemae.onrender.com/webhook/mercadopago'
+        };
+
+        const requestOptions = { idempotencyKey: `order_${savedOrder.id}_${Date.now()}` };
+        const pixData = await payment.create({ body: bodyPayment, requestOptions });
+
+        console.log("✅ Pix Gerado com Sucesso!");
+        
+        const pixDataToSave = {
+          qr_code: pixData.point_of_interaction.transaction_data.qr_code,
+          qr_base64: pixData.point_of_interaction.transaction_data.qr_code_base64,
+          id: pixData.id
+        };
+        savedOrder.pixData = pixDataToSave;
+
+        await pool.query(
+          "UPDATE orders SET pix_payment_id = $1 WHERE id = $2",
+          [pixData.id, savedOrder.id]
+        );
+
+      } catch (mpError) {
+        console.error("❌ ERRO MP:", mpError);
+        savedOrder.pixError = "Erro no Pix.";
+      }
+    }
+    res.json(savedOrder);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
   }
-})
+});
 
-document.addEventListener("click", e => {
+// ================= RESETAR SENHA =================
+app.post("/auth/reset-password", async (req, res) => {
 
-  // 🔥 DELETAR OPÇÃO
-  if (e.target.classList.contains("del")) {
-    e.target.parentElement.remove();
+  const { token, password } = req.body;
+
+  try {
+
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+
+    const hash = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      "UPDATE customers SET password_hash=$1 WHERE id=$2",
+      [hash, decoded.id]
+    );
+
+    res.json({ success: true });
+
+  } catch {
+
+    res.status(400).json({
+      error: "Token inválido ou expirado"
+    });
+
+  }
+
+});
+
+
+// ================= ESQUECI MINHA SENHA (LINK MÁGICO) =================
+app.post("/auth/forgot-password", async (req, res) => {
+
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: "Informe seu e-mail." });
+  }
+
+  try {
+
+    const { rows } = await pool.query(
+      "SELECT id, name, email FROM customers WHERE email = $1 LIMIT 1",
+      [email]
+    );
+
+    const user = rows[0];
+
+    if (!user) {
+      return res.json({ success: true }); 
+      // não revela se existe ou não
+    }
+
+    const token = jwt.sign(
+      { id: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const resetLink = `https://temperodemae.vercel.app/reset-password.html?token=${token}`;
+
+    await resend.emails.send({
+      from: "Tempero de Mãe <onboarding@resend.dev>",
+      to: user.email,
+      subject: "Redefinir senha",
+      html: `
+        <h2>Olá ${user.name}</h2>
+
+        <p>Clique no botão abaixo para redefinir sua senha:</p>
+
+        <a href="${resetLink}" style="
+          background:#d62300;
+          color:white;
+          padding:12px 20px;
+          border-radius:8px;
+          text-decoration:none;
+          font-weight:bold;
+        ">
+        Redefinir senha
+        </a>
+
+        <p>Este link expira em 15 minutos.</p>
+      `
+    });
+
+    res.json({ success: true });
+
+  } catch (err) {
+
+    console.error("Erro forgot password:", err);
+
+    res.status(500).json({
+      error: "Erro ao enviar recuperação."
+    });
+
   }
 
 });
 
 
 
+// ================= WEBHOOK MERCADO PAGO =================
+app.post("/webhook/mercadopago", express.json(), async (req, res) => {
+  console.log("🔔 Webhook recebido:", req.body);
+  const { type, data } = req.body;
+
+  res.sendStatus(200);
+
+  if (type !== "payment" || !data?.id || !mpClient) return;
+
+  try {
+    const payment = new Payment(mpClient);
+    const payInfo = await payment.get({ id: data.id });
+
+    console.log("📥 Status do Pix:", payInfo.status, "ID:", data.id);
+
+    if (payInfo.status === "approved") {
+      const { rows } = await pool.query(
+        "SELECT id FROM orders WHERE pix_payment_id = $1 LIMIT 1",
+        [data.id]
+      );
+      
+      const order = rows[0];
+
+      if (!order) {
+        console.warn("⚠️ Pedido não encontrado para este Pix:", data.id);
+        return;
+      }
+
+      await pool.query(
+        "UPDATE orders SET status = 'em_preparo' WHERE id = $1",
+        [order.id]
+      );
+
+      console.log(`✅ Pedido #${order.id} marcado como PAGO.`);
+    }
+
+  } catch (err) {
+    console.error("❌ Erro no webhook:", err);
+  }
+});
 
 
 
-
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`✅ Servidor ON na porta ${PORT}`);
+});
