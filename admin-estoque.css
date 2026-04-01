@@ -3272,8 +3272,17 @@ margin-top:10px;
 /* ===== BOTÕES PRODUTO DESKTOP ===== */
 .product-buttons {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   justify-content: flex-end;
+  align-items: center; /* 🔥 ESSENCIAL */
+}
+
+.product-buttons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px; /* 🔥 padroniza altura */
+  min-width: 60px;
 }
 
 .product-buttons button {
