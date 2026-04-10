@@ -4016,6 +4016,147 @@ margin-top:10px;
 }
 
 
+/* OVERLAY */
+.modal-acomp {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* CARD */
+.modal-acomp-content {
+  width: 95%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* HEADER */
+.acomp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.acomp-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.close-btn {
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+/* SUBTITLE */
+.acomp-subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 15px;
+}
+
+/* GROUP */
+.group-box {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #fafafa;
+}
+
+/* INPUTS */
+.group-box input {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+/* OPTIONS */
+.option-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.option-row input {
+  flex: 1;
+}
+
+/* DELETE BTN */
+.option-row .del {
+  background: #fee2e2;
+  border: none;
+  color: #dc2626;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+/* ADD OPTION */
+.add-option {
+  background: #e5e7eb;
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+}
+
+/* FOOTER */
+.acomp-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 15px;
+}
+
+/* BOTÕES */
+.btn-success {
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background: #e5e7eb;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #dbeafe;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* ANIMAÇÃO */
+@keyframes fadeIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 
 
 
