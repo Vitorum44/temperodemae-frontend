@@ -655,17 +655,76 @@ function renderFilters() {
   });
 }
 
-function openProductModal(item) {
+async function openProductModal(item) {
   state.selectedItem = item;
   state.selectedQty = 1;
+
   pdImage.src = item.image_url || 'https://placehold.co/300x200?text=Sem+Foto';
   pdName.textContent = item.name;
   pdDesc.textContent = item.description || "";
   pdPrice.textContent = brl(Number(item.price));
   pdQty.textContent = "1";
   pdObs.value = "";
+
   updateModalTotal();
+
+  // 🔥 BUSCAR ACOMPANHAMENTOS
+  try {
+    const grupos = await apiGet(`/acompanhamentos/${item.id}`);
+    renderAcompanhamentos(grupos);
+  } catch (err) {
+    console.error("Erro ao buscar acompanhamentos:", err);
+  }
+
   pdModal.setAttribute("aria-hidden", "false");
+}
+
+function renderAcompanhamentos(grupos) {
+
+  const container = document.getElementById("pd-acompanhamentos");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (!grupos || grupos.length === 0) return;
+
+  grupos.forEach((g, index) => {
+
+    const div = document.createElement("div");
+
+    div.style.marginBottom = "15px";
+
+    div.innerHTML = `
+      <strong style="display:block; margin-bottom:8px; font-size:16px;">
+        ${g.nome}
+      </strong>
+
+      ${(g.opcoes || []).map(opt => `
+        <label style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:10px;
+          border:1px solid #eee;
+          border-radius:10px;
+          margin-bottom:6px;
+          cursor:pointer;
+        ">
+          <span>${opt.nome}</span>
+
+          <div style="display:flex; gap:10px; align-items:center;">
+            ${opt.preco ? `<span style="color:green; font-weight:bold;">+R$ ${opt.preco}</span>` : ""}
+            <input type="checkbox"
+              data-nome="${opt.nome}"
+              data-preco="${opt.preco || 0}">
+          </div>
+        </label>
+      `).join("")}
+    `;
+
+    container.appendChild(div);
+  });
 }
 
 function updateModalTotal() {
