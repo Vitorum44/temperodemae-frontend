@@ -118,104 +118,106 @@
     <div id="orders-list"></div>
   </section>
 
- <aside id="carrinho" aria-hidden="true">
-  <div class="modal-dialog">
+  <aside id="carrinho" aria-hidden="true">
+    <div class="modal-dialog">
 
-    <div class="modal-header row between center">
-      <strong>Seu Pedido</strong>
-      <button id="close-cart" class="btn text">✖</button>
-    </div>
-
-    <div class="modal-body">
-
-      <div id="cart-items" class="list"></div>
-
-      <div class="totals">
-        <div class="row between">
-          <span>Subtotal</span>
-          <strong id="cart-subtotal">R$ 0,00</strong>
-        </div>
-        <div class="row between">
-          <span>Frete</span>
-          <strong id="cart-fee">R$ 0,00</strong>
-        </div>
-        <div class="row between total">
-          <span>Total</span>
-          <strong id="cart-grandtotal">R$ 0,00</strong>
-        </div>
+      <div class="modal-header row between center">
+        <strong>Seu Pedido</strong>
+        <button id="close-cart" class="btn text">✖</button>
       </div>
 
-      <form id="order-form" class="form">
+      <div class="modal-body">
 
-        <div id="schedule-box" style="display:none; background:#fceded; padding:10px; border:2px solid #d62300; border-radius:12px; margin-bottom:15px;">
-          <p style="color:#d62300; font-weight:900; margin:0 0 5px 0;">🔴 LOJA FECHADA</p>
-          <label style="font-size:13px; color:#502314; font-weight:bold;">Agendar entrega para:</label>
-          <input type="datetime-local" id="order-schedule" class="input">
-        </div>
+        <div id="cart-items" class="list"></div>
 
-        <label class="title">Como deseja receber?</label>
-        <div class="field-row">
-          <label class="radio">
-            <input type="radio" name="fulfillment" id="fulfill-delivery" value="delivery" checked>
-            <span>Entrega 🛵</span>
-          </label>
-          <label class="radio">
-            <input type="radio" name="fulfillment" id="fulfill-pickup" value="pickup">
-            <span>Retirar 🏃</span>
-          </label>
-        </div>
-
-        <label class="title">Seus dados</label>
-        <input id="cust-name" class="input" placeholder="Seu nome" required>
-        <input id="cust-phone" class="input" placeholder="WhatsApp" required>
-
-        <div class="address-wrapper">
-          <input id="cust-address" class="input" placeholder="Rua e Número..." autocomplete="off">
-        </div>
-
-        <input id="cust-neighborhood" class="input" placeholder="Bairro">
-        <input id="cust-reference" class="input" placeholder="Ponto de referência">
-
-        <input id="coupon-code" class="input" placeholder="Tem cupom?">
-
-        <label class="title">Pagamento</label>
-        <div class="payment-stack">
-          <label class="radio-box">
-            <input type="radio" name="payment" value="Pix" checked>
-            <span>Pix</span>
-          </label>
-
-          <label class="radio-box">
-            <input type="radio" name="payment" value="Cartão">
-            <span>Cartão</span>
-          </label>
-
-          <label class="radio-box">
-            <input type="radio" name="payment" value="Dinheiro" id="pay-cash">
-            <span>Dinheiro</span>
-          </label>
-
-          <div id="cash-change-box" class="change-box" style="display:none;">
-            <label class="radio-box" style="border:none; padding:0; background:transparent;">
-              <input type="checkbox" id="need-change">
-              <span>Precisa de troco?</span>
-            </label>
-
-            <input id="change-amount" type="number" class="input" placeholder="Troco para quanto?" style="display:none;">
+        <div class="totals">
+          <div class="row between">
+            <span>Subtotal</span>
+            <strong id="cart-subtotal">R$ 0,00</strong>
+          </div>
+          <div class="row between">
+            <span>Frete</span>
+            <strong id="cart-fee">R$ 0,00</strong>
+          </div>
+          <div class="row between total">
+            <span>Total</span>
+            <strong id="cart-grandtotal">R$ 0,00</strong>
           </div>
         </div>
 
-        <button id="btn-finalize" class="btn primary block" type="submit">
-          Finalizar Pedido
-        </button>
+        <form id="order-form" class="form">
 
-        <div id="order-feedback" class="muted" style="margin-top:8px; font-weight:bold; color:#d62300;"></div>
+          <div id="schedule-box"
+            style="display:none; background:#fceded; padding:10px; border:2px solid #d62300; border-radius:12px; margin-bottom:15px;">
+            <p style="color:#d62300; font-weight:900; margin:0 0 5px 0;">🔴 LOJA FECHADA</p>
+            <label style="font-size:13px; color:#502314; font-weight:bold;">Agendar entrega para:</label>
+            <input type="datetime-local" id="order-schedule" class="input">
+          </div>
 
-      </form>
+          <label class="title">Como deseja receber?</label>
+          <div class="field-row">
+            <label class="radio">
+              <input type="radio" name="fulfillment" id="fulfill-delivery" value="delivery" checked>
+              <span>Entrega 🛵</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="fulfillment" id="fulfill-pickup" value="pickup">
+              <span>Retirar 🏃</span>
+            </label>
+          </div>
 
+          <label class="title">Seus dados</label>
+          <input id="cust-name" class="input" placeholder="Seu nome" required>
+          <input id="cust-phone" class="input" placeholder="WhatsApp" required>
+
+          <div class="address-wrapper">
+            <input id="cust-address" class="input" placeholder="Rua e Número..." autocomplete="off">
+          </div>
+
+          <input id="cust-neighborhood" class="input" placeholder="Bairro">
+          <input id="cust-reference" class="input" placeholder="Ponto de referência">
+
+          <input id="coupon-code" class="input" placeholder="Tem cupom?">
+
+          <label class="title">Pagamento</label>
+          <div class="payment-stack">
+            <label class="radio-box">
+              <input type="radio" name="payment" value="Pix" checked>
+              <span>Pix</span>
+            </label>
+
+            <label class="radio-box">
+              <input type="radio" name="payment" value="Cartão">
+              <span>Cartão</span>
+            </label>
+
+            <label class="radio-box">
+              <input type="radio" name="payment" value="Dinheiro" id="pay-cash">
+              <span>Dinheiro</span>
+            </label>
+
+            <div id="cash-change-box" class="change-box" style="display:none;">
+              <label class="radio-box" style="border:none; padding:0; background:transparent;">
+                <input type="checkbox" id="need-change">
+                <span>Precisa de troco?</span>
+              </label>
+
+              <input id="change-amount" type="number" class="input" placeholder="Troco para quanto?"
+                style="display:none;">
+            </div>
+          </div>
+
+          <button id="btn-finalize" class="btn primary block" type="submit">
+            Finalizar Pedido
+          </button>
+
+          <div id="order-feedback" class="muted" style="margin-top:8px; font-weight:bold; color:#d62300;"></div>
+
+        </form>
+
+      </div>
     </div>
-  </div>
-</aside>
+  </aside>
 
 
 
@@ -290,7 +292,7 @@
 
           <input id="rec-phone-input" class="input" placeholder="Seu WhatsApp" />
 
-          <button id="btn-send-code" class="btn primary block" style="margin-top:10px;">
+          <button id="btn-send-code" type="button" class="btn primary block" style="margin-top:10px;">
             ENVIAR CÓDIGO
           </button>
         </div>
@@ -314,10 +316,7 @@
           </label>
 
           <input id="rec-newpass-input" type="password" class="input" placeholder="Nova senha" />
-
-          <button id="btn-verify-code" class="btn primary block" style="margin-top:15px;">
-            ALTERAR SENHA
-          </button>
+          <button id="btn-verify-code" type="button" class="btn primary block" style="margin-top:15px;">
         </div>
 
         <button id="btn-back-auth" class="btn block"
@@ -355,25 +354,37 @@
       </div>
 
       <form id="form-settings" class="form">
+
         <label>Nome Completo</label>
-        <input id="set-name" class="input" placeholder="Seu nome" required />
+        <div class="input-edit">
+          <input id="set-name" class="input" readonly />
+          <button type="button" class="edit-btn" onclick="toggleEdit('set-name',this)">✏️</button>
+        </div>
 
         <label style="margin-top:10px;">WhatsApp</label>
-        <input id="set-phone" class="input" placeholder="Seu número" required />
+        <div class="input-edit">
+          <input id="set-phone" class="input" readonly />
+          <button type="button" class="edit-btn" onclick="toggleEdit('set-phone',this)">✏️</button>
+        </div>
 
         <label style="margin-top:10px;">E-mail</label>
-        <input id="set-email" class="input" type="email" placeholder="seu@email.com" />
+        <div class="input-edit">
+          <input id="set-email" class="input" readonly />
+          <button type="button" class="edit-btn" onclick="toggleEdit('set-email',this)">✏️</button>
+        </div>
 
-        <label style="margin-top:10px;">Nova senha (opcional)</label>
-        <input id="set-pass" type="password" class="input" placeholder="Nova senha" />
+        <label style="margin-top:10px;">Nova senha</label>
+        <div class="input-edit">
+          <input id="set-pass" type="password" class="input" readonly />
+          <button type="button" class="edit-btn" onclick="toggleEdit('set-pass',this)">✏️</button>
+        </div>
 
         <button class="btn primary block" type="submit" style="margin-top:15px;">
           Salvar Alterações
         </button>
 
-        <div id="settings-feedback" class="muted"
-          style="margin-top:8px;color:#d62300; text-align:center; font-weight:bold;">
-        </div>
+        <div id="settings-feedback" class="muted"></div>
+
       </form>
     </div>
   </div>
@@ -441,8 +452,9 @@
           Descrição...</p>
         <h3 id="pd-price" style="color: var(--primary); margin-bottom: 20px; font-size: 28px; font-weight: 900;">R$
           0,00
-        </h3><label
-          style="font-size: 14px; font-weight: bold; color: #502314; margin-bottom: 8px; display: block;">Alguma
+        </h3> <!-- 🔥 ACOMPANHAMENTOS -->
+        <div id="pd-acompanhamentos" style="margin-bottom:20px;"></div>
+        <label style="font-size: 14px; font-weight: bold; color: #502314; margin-bottom: 8px; display: block;">Alguma
           observação?</label><textarea id="pd-obs" class="input" placeholder="Ex: Tirar a cebola, maionese à parte..."
           rows="3"
           style="width: 100%; margin-bottom: 20px; background: #f9f9f9; border-color: #ddd; resize: none;"></textarea>
@@ -688,70 +700,70 @@
 
 
   <script>
-document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
 
-  const profileMobileModal = document.getElementById("profile-mobile-modal");
-  const searchInput = document.getElementById("search");
-  const menuPage = document.getElementById("menu-page");
-  const ordersPage = document.getElementById("orders-page");
+      const profileMobileModal = document.getElementById("profile-mobile-modal");
+      const searchInput = document.getElementById("search");
+      const menuPage = document.getElementById("menu-page");
+      const ordersPage = document.getElementById("orders-page");
 
-  /* =========================
-     🍔 CARDÁPIO
-  ========================= */
-  document.getElementById("btn-cardapio")?.addEventListener("click", (e) => {
-    e.preventDefault();
+      /* =========================
+         🍔 CARDÁPIO
+      ========================= */
+      document.getElementById("btn-cardapio")?.addEventListener("click", (e) => {
+        e.preventDefault();
 
-    ordersPage.style.display = "none";
-    menuPage.style.display = "block";
+        ordersPage.style.display = "none";
+        menuPage.style.display = "block";
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
 
-  /* =========================
-     🔍 BUSCAR
-  ========================= */
-  document.getElementById("btn-buscar")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    searchInput?.scrollIntoView({ behavior: "smooth" });
-    searchInput?.focus();
-  });
+      /* =========================
+         🔍 BUSCAR
+      ========================= */
+      document.getElementById("btn-buscar")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        searchInput?.scrollIntoView({ behavior: "smooth" });
+        searchInput?.focus();
+      });
 
-  /* =========================
-     📦 PEDIDOS (HISTÓRICO)
-  ========================= */
-  document.getElementById("btn-pedidos")?.addEventListener("click", async (e) => {
-    e.preventDefault();
+      /* =========================
+         📦 PEDIDOS (HISTÓRICO)
+      ========================= */
+      document.getElementById("btn-pedidos")?.addEventListener("click", async (e) => {
+        e.preventDefault();
 
-    if (!window.state?.user) {
-      window.openAuthModal("login");
-      return;
-    }
+        if (!window.state?.user) {
+          window.openAuthModal("login");
+          return;
+        }
 
-    menuPage.style.display = "none";
-    ordersPage.style.display = "block";
+        menuPage.style.display = "none";
+        ordersPage.style.display = "block";
 
-    const ordersList = document.getElementById("orders-list");
-    ordersList.innerHTML = "Carregando...";
+        const ordersList = document.getElementById("orders-list");
+        ordersList.innerHTML = "Carregando...";
 
-    try {
-    
-      const orders = await window.apiGet('/orders/me');
+        try {
+
+          const orders = await window.apiGet('/orders/me');
 
 
-      if (!orders.length) {
-        ordersList.innerHTML = "<p style='color:#666'>Você ainda não fez pedidos.</p>";
-        return;
-      }
+          if (!orders.length) {
+            ordersList.innerHTML = "<p style='color:#666'>Você ainda não fez pedidos.</p>";
+            return;
+          }
 
-      ordersList.innerHTML = "";
+          ordersList.innerHTML = "";
 
-      orders.forEach(order => {
-        const date = new Date(order.created_at).toLocaleDateString('pt-BR');
+          orders.forEach(order => {
+            const date = new Date(order.created_at).toLocaleDateString('pt-BR');
 
-        const div = document.createElement("div");
-        div.className = "order-card";
+            const div = document.createElement("div");
+            div.className = "order-card";
 
-        div.innerHTML = `
+            div.innerHTML = `
           <div class="order-header">
             <strong>Pedido #${order.id}</strong>
             <span>${date}</span>
@@ -762,69 +774,85 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
 
           <div class="order-footer">
-            <strong>${(order.total || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</strong>
+            <strong>${(order.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
           </div>
         `;
 
-        ordersList.appendChild(div);
+            ordersList.appendChild(div);
+          });
+
+        } catch (err) {
+          ordersList.innerHTML = "Erro ao carregar pedidos.";
+        }
       });
 
-    } catch (err) {
-      ordersList.innerHTML = "Erro ao carregar pedidos.";
+      /* =========================
+         👤 PERFIL (MOBILE)
+      ========================= */
+      document.getElementById("btn-perfil")?.addEventListener("click", (e) => {
+        e.preventDefault();
+
+        if (!window.state?.user) {
+          window.openAuthModal("login");
+          return;
+        }
+
+        profileMobileModal?.setAttribute("aria-hidden", "false");
+      });
+
+      /* =========================
+         ❌ FECHAR MODAL PERFIL
+      ========================= */
+      document.getElementById("pm-mobile-close")?.addEventListener("click", () => {
+        profileMobileModal?.setAttribute("aria-hidden", "true");
+      });
+
+      /* =========================
+         ⚙️ ABRIR CONFIGURAÇÕES
+      ========================= */
+      document.getElementById("pm-mobile-settings")?.addEventListener("click", () => {
+        profileMobileModal?.setAttribute("aria-hidden", "true");
+        document.getElementById("settings-modal")?.setAttribute("aria-hidden", "false");
+      });
+
+      /* =========================
+         🚪 LOGOUT MOBILE
+      ========================= */
+      document.getElementById("pm-mobile-logout")?.addEventListener("click", () => {
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("cart");
+
+        if (window.state) {
+          window.state.token = "";
+          window.state.user = null;
+          window.state.cart = [];
+        }
+
+        profileMobileModal?.setAttribute("aria-hidden", "true");
+
+        window.location.reload();
+      });
+
+    });
+  </script>
+
+  <script>
+    function toggleEdit(id, btn) {
+
+      const input = document.getElementById(id)
+
+      if (input.hasAttribute("readonly")) {
+        input.removeAttribute("readonly")
+        input.focus()
+        btn.innerText = "✔"
+      } else {
+        input.setAttribute("readonly", true)
+        btn.innerText = "✏️"
+      }
+
     }
-  });
-
-  /* =========================
-     👤 PERFIL (MOBILE)
-  ========================= */
-  document.getElementById("btn-perfil")?.addEventListener("click", (e) => {
-    e.preventDefault();
-
-    if (!window.state?.user) {
-      window.openAuthModal("login");
-      return;
-    }
-
-    profileMobileModal?.setAttribute("aria-hidden", "false");
-  });
-
-  /* =========================
-     ❌ FECHAR MODAL PERFIL
-  ========================= */
-  document.getElementById("pm-mobile-close")?.addEventListener("click", () => {
-    profileMobileModal?.setAttribute("aria-hidden", "true");
-  });
-
-  /* =========================
-     ⚙️ ABRIR CONFIGURAÇÕES
-  ========================= */
-  document.getElementById("pm-mobile-settings")?.addEventListener("click", () => {
-    profileMobileModal?.setAttribute("aria-hidden", "true");
-    document.getElementById("settings-modal")?.setAttribute("aria-hidden", "false");
-  });
-
-  /* =========================
-     🚪 LOGOUT MOBILE
-  ========================= */
-  document.getElementById("pm-mobile-logout")?.addEventListener("click", () => {
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("cart");
-
-    if (window.state) {
-      window.state.token = "";
-      window.state.user = null;
-      window.state.cart = [];
-    }
-
-    profileMobileModal?.setAttribute("aria-hidden", "true");
-
-    window.location.reload();
-  });
-
-});
-</script>
-
+  </script>
 
 
 
