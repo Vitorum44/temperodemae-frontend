@@ -644,17 +644,71 @@ document.addEventListener("click", e => {
 });
 
 
-function carregarAcompanhamentos(produtoId){
+async function carregarAcompanhamentos(produtoId){
 
   const box = document.getElementById("acomp-groups")
-
   if(!box) return
 
-  box.innerHTML = `
-    <p style="color:#6b7280; margin-bottom:10px;">
-      Configure os acompanhamentos deste produto
-    </p>
-  `
+  box.innerHTML = "Carregando..."
+
+  try{
+
+    const res = await fetch(API + "/acompanhamentos/" + produtoId, {
+      headers:{
+        Authorization: `Bearer ${localStorage.getItem("token")}`
+      }
+    })
+
+    const data = await res.json()
+
+    box.innerHTML = ""
+
+    // 🔥 SE NÃO TEM NADA SALVO
+    if(!data || data.length === 0){
+      box.innerHTML = "<p>Nenhum acompanhamento ainda</p>"
+      return
+    }
+
+    // 🔥 MONTA OS GRUPOS
+    data.forEach(g=>{
+
+      const group = document.createElement("div")
+      group.className = "group-box"
+
+      group.innerHTML = `
+        <input value="${g.nome || ""}" placeholder="Nome do grupo">
+        <input type="number" value="${g.min || 0}" placeholder="mín">
+        <input type="number" value="${g.max || 0}" placeholder="máx">
+
+        <div class="options"></div>
+
+        <button class="add-option">+ opção</button>
+      `
+
+      const optionsBox = group.querySelector(".options")
+
+      // 🔥 AQUI ESTÁ O QUE VOCÊ PROCURAVA
+      ;(g.opcoes || []).forEach(opt => {
+
+        const row = document.createElement("div")
+        row.className = "option-row"
+
+        row.innerHTML = `
+          <input value="${opt.nome}">
+          <input value="${opt.preco}">
+          <button class="del">X</button>
+        `
+
+        optionsBox.appendChild(row)
+      })
+
+      box.appendChild(group)
+    })
+
+  }catch(err){
+    console.error("Erro ao carregar acompanhamentos", err)
+    box.innerHTML = "Erro ao carregar"
+  }
 }
 // =======================================
 // CRIAR GRUPO DE ACOMPANHAMENTO
