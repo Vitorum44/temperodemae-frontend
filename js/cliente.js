@@ -27,27 +27,27 @@ function waitForGoogleMaps(callback, tries = 0) {
 const state = {
   pixModalOpen: false,
   pixManuallyClosed: false,
-  categories: [], 
-  subcategories: [], 
+  categories: [],
+  subcategories: [],
   items: [],
   cart: JSON.parse(localStorage.getItem('cart') || '[]'),
   filters: { cat: null, sub: null, q: '' },
   token: localStorage.getItem('token') || '',
   user: null,
-  calculatedFee: 0, 
+  calculatedFee: 0,
   distanceKm: 0,
   currentOrderId: localStorage.getItem('lastOrderId') || null,
-  isStoreOpen: true, 
+  isStoreOpen: true,
   storeConfig: null,
-  trackingInterval: null, 
+  trackingInterval: null,
   pixTimerInterval: null,
-  selectedItem: null, 
-  selectedQty: 1, 
+  selectedItem: null,
+  selectedQty: 1,
   activeOrderData: null
 };
 
 // Estado para controle de alteração de endereço
-let addressDirty = false; 
+let addressDirty = false;
 
 // ================= HELPERS =================
 const $ = (s) => document.querySelector(s);
@@ -130,7 +130,7 @@ inputNeighborhood?.addEventListener('input', debounce(async () => {
 inputNeighborhood?.addEventListener('blur', async () => {
   const street = inputAddress.value.trim();
   if (street && state.calculatedFee === null) {
-      await tryCalculateByText();
+    await tryCalculateByText();
   }
 });
 
@@ -200,12 +200,8 @@ const suFb = $('#signup-feedback');
 const btnBackAuth = $('#btn-back-auth');
 const recFlow = $('#recovery-flow');
 const recStep1 = $('#rec-step-1');
-const recStep2 = $('#rec-step-2');
 const recPhoneInput = $('#rec-phone-input');
 const btnSendCode = $('#btn-send-code');
-const recTokenInput = $('#rec-token-input');
-const recNewPassInput = $('#rec-newpass-input');
-const btnVerifyCode = $('#btn-verify-code');
 const recFb = $('#rec-feedback');
 
 const btnProfile = $('#edit-profile');
@@ -584,52 +580,91 @@ function renderItems() {
 }
 
 function setupScrollSpy() {
-  const sections = document.querySelectorAll('.category-section'); 
-  const navChips = document.querySelectorAll('#category-chips .chip');
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => { 
-      if (entry.isIntersecting) { 
-        navChips.forEach(chip => { 
-          chip.classList.toggle('active', chip.dataset.target === entry.target.id); 
-        }); 
-      } 
+  const sections = document.querySelectorAll('.category-section');
+  const chipsContainer = document.getElementById('category-chips');
+  const chips = document.querySelectorAll('#category-chips .chip');
+
+  if (!sections.length || !chipsContainer || !chips.length) return;
+
+  // Removemos qualquer listener anterior para evitar duplicação
+  window.removeEventListener('scroll', window._handleScrollSpy);
+
+  // Criamos a função matemática atrelada ao objeto window
+  window._handleScrollSpy = function () {
+    // requestAnimationFrame garante que o cálculo não vai travar o celular do usuário
+    window.requestAnimationFrame(() => {
+      let idAtual = '';
+
+      // Criamos uma "linha de corte" invisível, 150px abaixo do topo (para ignorar o cabeçalho)
+      const linhaDeCorte = window.scrollY + 150;
+
+      // Verifica matematicamente em qual categoria a linha de corte está encostando
+      sections.forEach(section => {
+        const topo = section.offsetTop;
+        const altura = section.offsetHeight;
+
+        if (linhaDeCorte >= topo && linhaDeCorte < (topo + altura)) {
+          idAtual = section.getAttribute('id');
+        }
+      });
+
+      // Se encontrou a categoria visível, pinta o botão
+      if (idAtual) {
+        chips.forEach(chip => {
+          if (chip.dataset.target === idAtual) {
+            // Só faz a animação se o botão já não estiver ativo (economiza bateria/processamento)
+            if (!chip.classList.contains('active')) {
+              chips.forEach(c => c.classList.remove('active')); // Limpa os outros
+              chip.classList.add('active'); // Pinta o atual
+
+              // Centraliza o menu horizontal
+              const scrollParaCentro = chip.offsetLeft - (chipsContainer.offsetWidth / 2) + (chip.offsetWidth / 2);
+              chipsContainer.scrollTo({ left: scrollParaCentro, behavior: 'smooth' });
+            }
+          }
+        });
+      }
     });
-  }, { rootMargin: '-100px 0px -60% 0px' });
-  sections.forEach(s => observer.observe(s));
+  };
+
+  // Escuta a rolagem nativa de forma passiva (não bloqueia a UI)
+  window.addEventListener('scroll', window._handleScrollSpy, { passive: true });
+
+  // Chama a função uma vez só para marcar a primeira categoria assim que carregar
+  window._handleScrollSpy();
 }
 
 function renderFilters() {
-  chipsCat.innerHTML = ''; 
+  chipsCat.innerHTML = '';
   const activeCats = state.categories.filter(c => state.items.some(i => i.category_id === c.id));
-  
+
   activeCats.forEach((c, idx) => {
-    const btn = document.createElement('button'); 
-    btn.className = idx === 0 ? 'chip active' : 'chip'; 
-    btn.textContent = c.name; 
+    const btn = document.createElement('button');
+    btn.className = idx === 0 ? 'chip active' : 'chip';
+    btn.textContent = c.name;
     btn.dataset.target = `cat-${c.id}`;
-    
-    btn.onclick = () => { 
-      const section = document.getElementById(`cat-${c.id}`); 
-      if (section) { 
-        const y = section.getBoundingClientRect().top + window.scrollY - 80; 
-        window.scrollTo({ top: y, behavior: 'smooth' }); 
-      } 
+
+    btn.onclick = () => {
+      const section = document.getElementById(`cat-${c.id}`);
+      if (section) {
+        const y = section.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
     };
     chipsCat.appendChild(btn);
   });
 }
 
 function openProductModal(item) {
-  state.selectedItem = item; 
-  state.selectedQty = 1; 
+  state.selectedItem = item;
+  state.selectedQty = 1;
   pdImage.src = item.image_url || 'https://placehold.co/300x200?text=Sem+Foto';
-  pdName.textContent = item.name; 
-  pdDesc.textContent = item.description || ""; 
+  pdName.textContent = item.name;
+  pdDesc.textContent = item.description || "";
   pdPrice.textContent = brl(Number(item.price));
-  pdQty.textContent = "1"; 
-  pdObs.value = ""; 
-  updateModalTotal(); 
+  pdQty.textContent = "1";
+  pdObs.value = "";
+  updateModalTotal();
   pdModal.setAttribute("aria-hidden", "false");
 }
 
@@ -645,14 +680,35 @@ if (pdClose && pdModal) {
 
 pdPlus?.addEventListener('click', () => { state.selectedQty++; pdQty.textContent = state.selectedQty; updateModalTotal(); });
 pdMinus?.addEventListener('click', () => { if (state.selectedQty > 1) { state.selectedQty--; pdQty.textContent = state.selectedQty; updateModalTotal(); } });
-pdAddBtn?.addEventListener('click', () => { addToCart(state.selectedItem, state.selectedQty, pdObs.value); pdModal.setAttribute("aria-hidden", "true"); });
+pdAddBtn?.addEventListener('click', () => {
+
+  // 🔥 PEGAR ACOMPANHAMENTOS
+  const selecionados = [];
+
+  document.querySelectorAll('#pd-acompanhamentos input:checked')
+    .forEach(input => {
+      selecionados.push({
+        nome: input.dataset.nome,
+        preco: Number(input.dataset.preco)
+      });
+    });
+
+  addToCart(
+    state.selectedItem,
+    state.selectedQty,
+    pdObs.value,
+    selecionados // 🔥 NOVO
+  );
+
+  pdModal.setAttribute("aria-hidden", "true");
+});
 
 // ================= CARRINHO =================
 function saveCart() {
   localStorage.setItem('cart', JSON.stringify(state.cart));
 }
 
-function addToCart(item, qty = 1, obs = "") {
+function addToCart(item, qty = 1, obs = "", acompanhamentos = []) {
 
   // 🔒 BLOQUEIO SE ESTIVER ESGOTADO
   if (Number(item.stock) <= 0) {
@@ -678,7 +734,8 @@ function addToCart(item, qty = 1, obs = "") {
       price: Number(item.price),
       image: item.image_url || item.imageUrl,
       qty: qty,
-      obs: obs
+      obs: obs,
+      acompanhamentos // 🔥 AQUI
     });
   }
 
@@ -714,11 +771,11 @@ function updateCartUI() {
     const totalQty = state.cart.reduce((s, i) => s + i.qty, 0);
 
     if (floatCartBtn && floatCartCount) {
-      if (totalQty > 0) { 
-        floatCartBtn.hidden = false; 
-        floatCartCount.textContent = totalQty; 
-      } else { 
-        floatCartBtn.hidden = true; 
+      if (totalQty > 0) {
+        floatCartBtn.hidden = false;
+        floatCartCount.textContent = totalQty;
+      } else {
+        floatCartBtn.hidden = true;
       }
     }
 
@@ -812,44 +869,44 @@ orderForm?.addEventListener('submit', async (e) => {
   if (fulfillment === 'delivery') {
     // 1. Validação básica de input
     if (!inputAddress.value.trim()) {
-        fb.textContent = "Preencha o endereço.";
-        inputAddress.focus();
-        return;
+      fb.textContent = "Preencha o endereço.";
+      inputAddress.focus();
+      return;
     }
 
     // 2. Trava de Segurança: Se não calculou (null) ou deu erro (-1), forçamos agora!
     if (state.calculatedFee === null || state.calculatedFee === -1) {
       const btnSubmit = orderForm.querySelector('button[type="submit"]');
       const originalText = btnSubmit ? btnSubmit.innerText : 'Finalizar';
-      
+
       if (btnSubmit) {
-          btnSubmit.innerText = "Calculando frete...";
-          btnSubmit.disabled = true;
+        btnSubmit.innerText = "Calculando frete...";
+        btnSubmit.disabled = true;
       }
 
       try {
         console.log("🛡️ Checkout: Forçando cálculo de frete...");
         // AWAIT IMPORTANTE: Espera o cálculo terminar antes de seguir
-        await tryCalculateByText(); 
-        
+        await tryCalculateByText();
+
         // Verifica se o cálculo funcionou (state deve ter mudado)
         if (state.calculatedFee === null || state.calculatedFee === -1) {
-           throw new Error("Não foi possível calcular a rota para este endereço.");
+          throw new Error("Não foi possível calcular a rota para este endereço.");
         }
       } catch (err) {
         console.error("Erro fatal no checkout:", err);
         fb.textContent = "Não conseguimos calcular a entrega. Verifique o número e o bairro.";
         if (btnSubmit) {
-            btnSubmit.innerText = originalText;
-            btnSubmit.disabled = false;
+          btnSubmit.innerText = originalText;
+          btnSubmit.disabled = false;
         }
         return; // ⛔ PARA TUDO: Não deixa enviar o pedido
       }
 
       // Restaura o botão
       if (btnSubmit) {
-          btnSubmit.innerText = originalText;
-          btnSubmit.disabled = false;
+        btnSubmit.innerText = originalText;
+        btnSubmit.disabled = false;
       }
     }
   }
@@ -970,16 +1027,16 @@ function updateTrackUI(order) {
   const s = order.status;
   let m = '...', i = '🕒', pw = "0%";
   if (stepNovo) $$('.step').forEach(e => e.classList.remove('active'));
-  
+
   if (s === 'novo') { if (stepNovo) stepNovo.classList.add('active'); m = 'Recebido'; i = '✅'; pw = "10%"; }
   else if (s === 'em_preparo') { if (stepNovo) stepNovo.classList.add('active'); if (stepPreparo) stepPreparo.classList.add('active'); m = 'Preparando'; i = '🔥'; pw = "40%"; }
   else if (s === 'saiu_entrega') { if (stepNovo) stepNovo.classList.add('active'); if (stepPreparo) stepPreparo.classList.add('active'); if (stepSaiu) stepSaiu.classList.add('active'); m = 'Saiu!'; i = '🛵'; pw = "70%"; }
   else if (s === 'entregue') { if (stepNovo) $$('.step').forEach(e => e.classList.add('active')); m = 'Entregue'; i = '🏠'; pw = "100%"; }
-  else if (s === 'cancelado') { m = 'Cancelado'; i = '❌'; pw = "0%"; trackingBubble.style.background = '#EF4444'; } 
+  else if (s === 'cancelado') { m = 'Cancelado'; i = '❌'; pw = "0%"; trackingBubble.style.background = '#EF4444'; }
   else { trackingBubble.style.background = '#10B981'; }
-  
+
   trackingBubble.innerHTML = `<span style="font-size:20px;">${i}</span>`;
-  if (trackId) trackId.textContent = order.id; 
+  if (trackId) trackId.textContent = order.id;
   if (trackMsg) trackMsg.textContent = m;
   if (timelineProgress) timelineProgress.style.width = pw;
 
@@ -1006,9 +1063,9 @@ function updateTrackUI(order) {
 
   if (trackTotalEl) trackTotalEl.textContent = brl(order.total);
   if (btnTrackWa) btnTrackWa.href = `https://wa.me/5584996065229?text=${encodeURIComponent(`Olá, sobre meu pedido #${order.id}...`)}`;
-  if (btnCancelOrder) { 
-    btnCancelOrder.style.display = (s === 'novo' || s === 'agendado') ? 'block' : 'none'; 
-    btnCancelOrder.onclick = () => cancelMyOrder(order.id); 
+  if (btnCancelOrder) {
+    btnCancelOrder.style.display = (s === 'novo' || s === 'agendado') ? 'block' : 'none';
+    btnCancelOrder.onclick = () => cancelMyOrder(order.id);
   }
 }
 
@@ -1042,9 +1099,9 @@ function updatePixTick(deadline, orderId) {
   if (remaining <= 0) { clearInterval(state.pixTimerInterval); state.pixTimerInterval = null; stopTracking(); alert("Pix expirou."); }
   else {
     if (trackingBubble) {
-      trackingBubble.style.setProperty('display', 'flex', 'important'); 
+      trackingBubble.style.setProperty('display', 'flex', 'important');
       trackingBubble.style.background = '#EF4444';
-      const min = Math.floor(remaining / 60000); 
+      const min = Math.floor(remaining / 60000);
       const sec = Math.floor((remaining % 60000) / 1000);
       trackingBubble.innerHTML = `<div style="text-align:center;line-height:1.1"><small style="color:white;font-weight:bold;">Pagar Pix</small><br><strong style="color:white;">${min}:${sec < 10 ? '0' : ''}${sec}</strong></div>`;
     }
@@ -1108,7 +1165,7 @@ function showPixModal(pixData) {
     state.pixModalOpen = false;
     state.pixManuallyClosed = true;
     overlay.style.opacity = '0'; // Efeito visual de sumir
-    setTimeout(() => overlay.remove(), 300); 
+    setTimeout(() => overlay.remove(), 300);
   };
 
   // B. Copiar Código
@@ -1116,12 +1173,12 @@ function showPixModal(pixData) {
   copyBtn.onclick = () => {
     const hiddenInput = overlay.querySelector('#pix-hidden-input');
     hiddenInput.select();
-    
+
     // Tenta copiar de forma moderna, se falhar usa o método antigo
     navigator.clipboard.writeText(pixData.qr_code)
       .then(() => feedbackCopy())
       .catch(() => {
-        document.execCommand('copy'); 
+        document.execCommand('copy');
         feedbackCopy();
       });
 
@@ -1130,7 +1187,7 @@ function showPixModal(pixData) {
       const originalText = copyBtn.innerText;
       copyBtn.innerText = "CÓDIGO COPIADO! ✅";
       copyBtn.style.backgroundColor = "#059669"; // Verde mais escuro
-      
+
       setTimeout(() => {
         copyBtn.innerText = originalText;
         copyBtn.style.backgroundColor = "#10b981"; // Volta ao normal
@@ -1166,74 +1223,40 @@ function stopTracking() {
 
 
 
-// ================= RECUPERAÇÃO DE SENHA =================
+// ================= RECUPERAÇÃO DE SENHA (LINK MÁGICO) =================
 
-// 1️⃣ ENVIAR CÓDIGO
 btnSendCode?.addEventListener('click', async () => {
-  const phone = recPhoneInput.value.replace(/\D/g, '');
 
-  if (!phone) {
+  const email = recPhoneInput.value.trim();
+
+  if (!email) {
     recFb.style.color = 'red';
-    recFb.textContent = "Informe um WhatsApp válido.";
+    recFb.textContent = "Informe seu e-mail cadastrado.";
     return;
   }
 
   recFb.style.color = '#666';
-  recFb.textContent = "Enviando código...";
+  recFb.textContent = "Enviando link de recuperação...";
 
   try {
-    await apiSend('/auth/request-reset', 'POST', { phone });
 
-    recFb.style.color = 'green';
-    recFb.textContent = "Nova senha enviada para seu e-mail.";
-
-  } catch (err) {
-    recFb.style.color = 'red';
-    recFb.textContent = err.message || "Erro ao enviar código.";
-  }
-});
-
-// 2️⃣ CONFIRMAR CÓDIGO + NOVA SENHA
-btnVerifyCode?.addEventListener('click', async () => {
-  const phone = recPhoneInput.value.replace(/\D/g, '');
-  const token = recTokenInput.value.trim();
-  const newPass = recNewPassInput.value.trim();
-
-  if (token.length !== 6) {
-    recFb.style.color = 'red';
-    recFb.textContent = "Digite o código de 6 dígitos.";
-    return;
-  }
-
-  if (!newPass || newPass.length < 6) {
-    recFb.style.color = 'red';
-    recFb.textContent = "A nova senha precisa ter pelo menos 6 caracteres.";
-    return;
-  }
-
-  recFb.style.color = '#666';
-  recFb.textContent = "Validando código...";
-
-  try {
-    await apiSend('/auth/confirm-reset', 'POST', {
-      phone,
-      token,
-      newPassword: newPass
+    await apiSend('/auth/forgot-password', 'POST', {
+      email
     });
 
     recFb.style.color = 'green';
-    recFb.textContent = "Senha alterada com sucesso! Faça login.";
-
-    // Volta para login após 2s
-    setTimeout(() => {
-      setAuthMode('login');
-    }, 2000);
+    recFb.textContent = "Enviamos um link de redefinição para seu e-mail.";
 
   } catch (err) {
+
     recFb.style.color = 'red';
-    recFb.textContent = err.message || "Código inválido ou expirado.";
+    recFb.textContent = err.message || "Erro ao enviar recuperação.";
+
   }
+
 });
+
+
 
 
 
@@ -1247,10 +1270,10 @@ function setAuthMode(mode) {
 
 function openAuthModal(t = 'login') { authModal.setAttribute('aria-hidden', 'false'); setAuthMode(t); }
 
-$('#tab-login')?.addEventListener('click', () => setAuthMode('login')); 
-$('#tab-signup')?.addEventListener('click', () => setAuthMode('signup')); 
-btnForgot?.addEventListener('click', () => setAuthMode('recovery')); 
-btnBackAuth?.addEventListener('click', () => setAuthMode('login')); 
+$('#tab-login')?.addEventListener('click', () => setAuthMode('login'));
+$('#tab-signup')?.addEventListener('click', () => setAuthMode('signup'));
+btnForgot?.addEventListener('click', () => setAuthMode('recovery'));
+btnBackAuth?.addEventListener('click', () => setAuthMode('login'));
 amClose?.addEventListener('click', () => authModal.setAttribute('aria-hidden', 'true'));
 
 formLogin?.addEventListener('submit', async (e) => { e.preventDefault(); loginFb.textContent = 'Entrando...'; try { const cleanPhone = loginPhone.value.replace(/\D/g, ''); const r = await apiSend('/auth/login', 'POST', { phone: cleanPhone, password: loginPass.value }); setToken(r.token); setUser(r.user); authModal.setAttribute('aria-hidden', 'true'); loadData(); } catch (err) { loginFb.textContent = err.message; } });
@@ -1260,14 +1283,14 @@ formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.t
 async function loadData() {
   await tryLoadMe();
   if (localStorage.getItem('lastOrderId')) startTracking(localStorage.getItem('lastOrderId'));
-  
-  try { 
-    const s = await apiGet("/settings"); 
-    state.storeConfig = s; 
-    if (s.mode === 'force_closed') { 
-      state.isStoreOpen = false; 
-      if (fb) fb.textContent = "Fechado temporariamente."; 
-    } 
+
+  try {
+    const s = await apiGet("/settings");
+    state.storeConfig = s;
+    if (s.mode === 'force_closed') {
+      state.isStoreOpen = false;
+      if (fb) fb.textContent = "Fechado temporariamente.";
+    }
   } catch (e) { }
 
   try {
@@ -1307,9 +1330,9 @@ async function loadData() {
   } catch (err) {
     console.error("Erro menu", err);
   }
-  
-  updateCartUI(); 
-  loadSavedUserData(); 
+
+  updateCartUI();
+  loadSavedUserData();
   initCarousel();
 }
 
@@ -1317,23 +1340,23 @@ function loadSavedUserData() { if (state.user) return; const savedAddress = loca
 async function tryLoadMe() { if (!state.token) return; try { const me = await apiGet('/auth/me'); setUser(me); } catch { setToken(''); setUser(null); } }
 
 // 📍 CORREÇÃO UX: SE O USUÁRIO JÁ TEM ENDEREÇO, CALCULA LOGO
-function setUser(u) { 
-  state.user = u || null; 
-  if (u) { 
-    if (btnProfile) btnProfile.textContent = `Olá, ${u.name.split(' ')[0]}`; 
-    if (inputName) inputName.value = u.name || ''; 
-    if (inputPhone) inputPhone.value = u.phone || ''; 
-    if (inputEmail) inputEmail.value = u.email || ''; 
+function setUser(u) {
+  state.user = u || null;
+  if (u) {
+    if (btnProfile) btnProfile.textContent = `Olá, ${u.name.split(' ')[0]}`;
+    if (inputName) inputName.value = u.name || '';
+    if (inputPhone) inputPhone.value = u.phone || '';
+    if (inputEmail) inputEmail.value = u.email || '';
 
     // 👉 AQUI A MÁGICA: Se veio endereço do banco ou cache, calcula AGORA.
     if (inputAddress.value) {
-       console.log("📍 Usuário logado: Forçando cálculo inicial de frete...");
-       waitForGoogleMaps(() => tryCalculateByText());
+      console.log("📍 Usuário logado: Forçando cálculo inicial de frete...");
+      waitForGoogleMaps(() => tryCalculateByText());
     }
 
-  } else { 
-    if (btnProfile) btnProfile.textContent = '👤 Perfil'; 
-  } 
+  } else {
+    if (btnProfile) btnProfile.textContent = '👤 Perfil';
+  }
 }
 
 function setToken(t) { state.token = t || ''; if (t) localStorage.setItem('token', t); else localStorage.removeItem('token'); }
@@ -1359,16 +1382,16 @@ document.addEventListener('click', (e) => {
 
 pmLogout?.addEventListener('click', () => { setToken(''); setUser(null); window.location.reload(); });
 
-function initCarousel() { 
-  if (!carouselTrack || slides.length === 0) return; 
-  let currentSlide = 0; 
-  const totalSlides = slides.length; 
-  const updateSlide = () => { carouselTrack.style.transform = `translateX(-${currentSlide * 100}%)`; dots.forEach((dot, index) => { dot.classList.toggle('active', index === currentSlide); }); }; 
-  const nextSlide = () => { currentSlide = (currentSlide + 1) % totalSlides; updateSlide(); }; 
-  const prevSlide = () => { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; updateSlide(); }; 
-  nextBtn?.addEventListener('click', nextSlide); 
-  prevBtn?.addEventListener('click', prevSlide); 
-  setInterval(nextSlide, 5000); 
+function initCarousel() {
+  if (!carouselTrack || slides.length === 0) return;
+  let currentSlide = 0;
+  const totalSlides = slides.length;
+  const updateSlide = () => { carouselTrack.style.transform = `translateX(-${currentSlide * 100}%)`; dots.forEach((dot, index) => { dot.classList.toggle('active', index === currentSlide); }); };
+  const nextSlide = () => { currentSlide = (currentSlide + 1) % totalSlides; updateSlide(); };
+  const prevSlide = () => { currentSlide = (currentSlide - 1 + totalSlides) % totalSlides; updateSlide(); };
+  nextBtn?.addEventListener('click', nextSlide);
+  prevBtn?.addEventListener('click', prevSlide);
+  setInterval(nextSlide, 5000);
 }
 
 // ================= MEUS PEDIDOS (HISTÓRICO) =================
@@ -1548,25 +1571,6 @@ searchInput?.addEventListener('input', debounce(() => {
 }, 300));
 
 window.addEventListener('DOMContentLoaded', loadData);
-
-// === ATUALIZAÇÃO AUTOMÁTICA DA CATEGORIA NO SCROLL ===
-document.addEventListener('DOMContentLoaded', () => {
-  const sections = document.querySelectorAll('.category-section');
-  const navButtons = document.querySelectorAll('.chip');
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const currentId = entry.target.getAttribute('id');
-        navButtons.forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.target === currentId);
-          if (btn.classList.contains('active')) btn.scrollIntoView({ behavior: 'smooth', inline: 'center' });
-        });
-      }
-    });
-  }, { rootMargin: '-20% 0px -70% 0px' });
-  sections.forEach(s => observer.observe(s));
-});
 
 /* =====================================
    LOGOUT MOBILE CORRIGIDO DEFINITIVO
