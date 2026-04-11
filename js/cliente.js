@@ -725,56 +725,61 @@ function renderAcompanhamentos(grupos) {
       `).join("")}
     `;
 
-    // ✅ forEach interno — SEM } extra depois dele
-    div.querySelectorAll(".acomp-item").forEach(item => {
-      const plus  = item.querySelector(".plus");
-      const minus = item.querySelector(".minus");
-      const qtdEl = item.querySelector(".qtd");
-      const nome  = item.dataset.nome.trim();
-      const preco = Number(item.dataset.preco);
-      const id    = nome + "_" + div.dataset.tipo;
+ div.querySelectorAll(".acomp-item").forEach(item => {
+  const plus  = item.querySelector(".plus");
+  const minus = item.querySelector(".minus");
+  const qtdEl = item.querySelector(".qtd");
+  const nome  = item.dataset.nome.trim();
+  const preco = Number(item.dataset.preco);
+  
+  // 🔥 CAPTURA O TIPO AQUI, FORA DO EVENTO (evita problema de closure)
+  const tipoGrupo = div.dataset.tipo;
+  const id = nome + "_" + tipoGrupo;
 
-      plus.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const totalGrupo = acompanhamentosSelecionados
-          .filter(a => a.grupo === div.dataset.tipo)
-          .reduce((s, a) => s + a.qtd, 0);
+  plus.addEventListener("click", (e) => {
+    e.stopPropagation();
 
-        if (g.max && totalGrupo >= g.max) {
-          alert(`Máximo de ${g.max} opções`);
-          return;
-        }
+    // ✅ usa tipoGrupo (valor fixo) em vez de div.dataset.tipo (referência)
+    const totalGrupo = acompanhamentosSelecionados
+      .filter(a => a.grupo === tipoGrupo)
+      .reduce((s, a) => s + a.qtd, 0);
 
-        let existente = acompanhamentosSelecionados.find(a => a.id === id);
-        if (existente) {
-          existente.qtd++;
-        } else {
-          existente = { id, nome, preco, qtd: 1, grupo: div.dataset.tipo };
-          acompanhamentosSelecionados.push(existente);
-        }
-        qtdEl.innerText = existente.qtd;
-        updateModalTotal();
-      });
+    if (g.max && totalGrupo >= g.max) {
+      alert(`Máximo de ${g.max} opções`);
+      return;
+    }
 
-      minus.addEventListener("click", (e) => {
-        e.stopPropagation();
-        let existente = acompanhamentosSelecionados.find(a => a.id === id);
-        if (!existente) return;
+    let existente = acompanhamentosSelecionados.find(a => a.id === id);
+    if (existente) {
+      existente.qtd++;
+    } else {
+      existente = { id, nome, preco, qtd: 1, grupo: tipoGrupo };
+      acompanhamentosSelecionados.push(existente);
+    }
+    qtdEl.innerText = existente.qtd;
+    updateModalTotal();
+  });
 
-        existente.qtd--;
-        if (existente.qtd <= 0) {
-          acompanhamentosSelecionados = acompanhamentosSelecionados.filter(a => a.id !== id);
-          qtdEl.innerText = 0;
-        } else {
-          qtdEl.innerText = existente.qtd;
-        }
-        updateModalTotal();
-      });
-    }); // ✅ fecha o forEach interno
+  minus.addEventListener("click", (e) => {
+    e.stopPropagation();
+    let existente = acompanhamentosSelecionados.find(a => a.id === id);
+    if (!existente) return;
+
+    existente.qtd--;
+    if (existente.qtd <= 0) {
+      acompanhamentosSelecionados = acompanhamentosSelecionados.filter(a => a.id !== id);
+      qtdEl.innerText = 0;
+    } else {
+      qtdEl.innerText = existente.qtd;
+    }
+    updateModalTotal();
+  });
+}); // ✅ fecha forEach interno
 
     container.appendChild(div);
-  }); // ✅ fecha o grupos.forEach — único fechamento
-}
+  }); // ✅ fecha grupos.forEach
+
+} // ✅ fecha renderAcompanhamentos
 
 function updateModalTotal() {
 
