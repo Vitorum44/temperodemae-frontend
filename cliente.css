@@ -1966,7 +1966,6 @@ opacity:1;
 /* 🔥 FIX REAL DO MODAL (SEM BUG) */
 
 #product-details-modal {
-  display: flex;
   align-items: center;
   justify-content: center;
 }
