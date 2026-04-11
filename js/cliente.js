@@ -741,9 +741,10 @@ function renderAcompanhamentos(grupos) {
       const maxGrupo = Number(div.dataset.max);
       const id = nome + "_" + tipoGrupo;
 
-      // ✅ mostra 1 visualmente no primeiro item do primeiro grupo, sem somar no preço
+      // ✅ pré-seleciona o primeiro item do primeiro grupo no estado E visualmente
       if (index === 0 && item === primeiroItem) {
         qtdEl.innerText = 1;
+        acompanhamentosSelecionados.push({ id, nome, preco, qtd: 1, grupo: tipoGrupo });
       }
 
       plus.addEventListener("click", (e) => {
