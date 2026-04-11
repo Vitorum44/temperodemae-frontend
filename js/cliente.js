@@ -738,8 +738,8 @@ function renderAcompanhamentos(grupos) {
       const maxGrupo = Number(div.dataset.max);
       const id = nome + "_" + tipoGrupo;
 
-      // ✅ pré-seleciona só o PRIMEIRO item de grupos obrigatórios
-      if (g.min > 0 && item === primeiroItem) {
+      // ✅ pré-seleciona só o PRIMEIRO item do PRIMEIRO grupo (índice 0)
+      if (index === 0 && item === primeiroItem) {
         qtdEl.innerText = 1;
         acompanhamentosSelecionados.push({ id, nome, preco, qtd: 1, grupo: tipoGrupo });
         updateModalTotal();
