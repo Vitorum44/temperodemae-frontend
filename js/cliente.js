@@ -935,6 +935,17 @@ function updateCartUI() {
         const r = document.createElement('div');
         r.className = 'cart-item-row';
 
+        // ✅ lista de acompanhamentos para exibir
+        const acompList = (i.acompanhamentos && i.acompanhamentos.length > 0)
+          ? i.acompanhamentos.map(a =>
+              `<div style="font-size:11px; color:#6b7280;">• ${a.qtd}x ${a.nome}${a.preco ? ` (+${brl(a.preco * a.qtd)})` : ''}</div>`
+            ).join('')
+          : '';
+
+        // ✅ preço unitário já com acompanhamentos incluídos
+        const precoAcomp = (i.acompanhamentos || []).reduce((s, a) => s + (a.preco * a.qtd), 0);
+        const precoUnitario = Number(i.price) + precoAcomp;
+
         r.innerHTML = `
           <div class="cart-thumb">
             <img src="${i.image}" onerror="this.src='https://placehold.co/100?text=Foto'">
@@ -942,7 +953,8 @@ function updateCartUI() {
 
           <div class="cart-info">
             <div class="cart-name">${i.name}</div>
-            <div class="cart-price-unit">${brl(i.price)}</div>
+            <div class="cart-price-unit">${brl(precoUnitario)} cada</div>
+            ${acompList}
             ${i.obs ? `<div style="font-size:11px; color:#fbbf24;">📝 ${i.obs}</div>` : ''}
           </div>
 
@@ -994,7 +1006,6 @@ function updateCartUI() {
     console.error("Erro no updateCartUI:", err);
   }
 }
-
 
 if (floatCartBtn) floatCartBtn.addEventListener('click', () => { drawer.setAttribute('aria-hidden', 'false'); loadSavedUserData(); });
 document.addEventListener('click', function (e) {
