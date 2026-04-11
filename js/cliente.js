@@ -760,11 +760,14 @@ function renderAcompanhamentos(grupos) {
           return;
         }
 
+        // preço real do produto (vem do state, não do dataset zerado)
+        const precoReal = Number(state.selectedItem.price);
+
         let existente = acompanhamentosSelecionados.find(a => a.id === id);
         if (existente) {
           existente.qtd++;
-          // ✅ só cobra a partir do 2º — o 1º já está no preço do produto
-          existente.preco = existente.qtd > 1 ? preco : 0;
+          // ✅ a partir do 2º cobra o preço do produto
+          existente.preco = existente.qtd > 1 ? precoReal : 0;
         } else {
           existente = { id, nome, preco: 0, qtd: 1, grupo: tipoGrupo };
           acompanhamentosSelecionados.push(existente);
