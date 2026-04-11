@@ -686,122 +686,121 @@ async function openProductModal(item) {
 function renderAcompanhamentos(grupos) {
 
   const container = document.getElementById("pd-acompanhamentos");
-
   if (!container) return;
 
   container.innerHTML = "";
-
   if (!grupos || grupos.length === 0) return;
 
   grupos.forEach((g, index) => {
 
     const div = document.createElement("div");
 
-    div.style.marginBottom = "15px";
+    const obrigatorio = (g.min || 0) > 0;
 
-   div.innerHTML = `
-  <strong style="display:block; margin-bottom:8px; font-size:16px;">
-    ${g.nome}
-  </strong>
+    div.classList.add("acomp-group");
+    div.dataset.min = g.min || 0;
+    div.dataset.max = g.max || 999;
 
-  ${(g.opcoes || []).map(opt => `
-    <div class="acomp-item"
-      data-nome="${opt.nome}"
-      data-preco="${opt.preco || 0}"
-      style="
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        padding:12px;
-        border-bottom:1px solid #eee;
-      "
-    >
+    div.innerHTML = `
+      <div class="acomp-header">
+        <div>
+          <div class="acomp-title">${g.nome}</div>
+          <div class="acomp-rules">
+            Escolha de ${g.min || 0} a ${g.max || "∞"}
+          </div>
+        </div>
 
-      <div>
-        <div style="font-weight:600;">${opt.nome}</div>
-        ${opt.preco ? `<div style="color:green; font-size:13px;">+R$ ${opt.preco}</div>` : ""}
-      </div>
-
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button class="minus" style="
-          width:28px;
-          height:28px;
-          border-radius:50%;
-          border:1px solid #ddd;
-          background:#fff;
-          font-size:18px;
-          cursor:pointer;
-        ">−</button>
-
-        <span class="qtd" style="min-width:20px; text-align:center;">0</span>
-
-        <button class="plus" style="
-          width:28px;
-          height:28px;
-          border-radius:50%;
-          border:none;
-          background:#e53935;
+        ${obrigatorio ? `<span style="
+          background:#000;
           color:#fff;
-          font-size:18px;
-          cursor:pointer;
-        ">+</button>
+          font-size:11px;
+          padding:3px 8px;
+          border-radius:6px;
+        ">OBRIGATÓRIO</span>` : ""}
       </div>
 
-    </div>
-  `).join("")}
-`;
+      ${(g.opcoes || []).map(opt => `
+        <div class="acomp-item"
+          data-nome="${opt.nome}"
+          data-preco="${opt.preco || 0}"
+        >
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            
+            <div>
+              <div style="font-weight:600;">${opt.nome}</div>
+              ${opt.preco ? `<div style="color:green; font-size:13px;">+R$ ${opt.preco}</div>` : ""}
+            </div>
 
-// 🔥 PRIMEIRO adiciona no DOM
-container.appendChild(div);
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="minus">−</button>
+              <span class="qtd">0</span>
+              <button class="plus">+</button>
+            </div>
 
-// 🔥 DEPOIS adiciona eventos
-div.querySelectorAll(".acomp-item").forEach(item => {
+          </div>
+        </div>
+      `).join("")}
+    `;
 
-  const plus = item.querySelector(".plus")
-  const minus = item.querySelector(".minus")
-  const qtdEl = item.querySelector(".qtd")
+    // 🔥 EVENTOS
+    div.querySelectorAll(".acomp-item").forEach(item => {
 
-  let qtd = 0
-  const nome = item.dataset.nome
-  const preco = Number(item.dataset.preco)
+      const plus = item.querySelector(".plus");
+      const minus = item.querySelector(".minus");
+      const qtdEl = item.querySelector(".qtd");
 
-  plus.onclick = () => {
-    qtd++
-    qtdEl.innerText = qtd
+      let qtd = 0;
+      const nome = item.dataset.nome;
+      const preco = Number(item.dataset.preco);
 
-    const existente = acompanhamentosSelecionados.find(a => a.nome === nome)
+      plus.onclick = () => {
 
-    if (existente) {
-      existente.qtd = qtd
-    } else {
-      acompanhamentosSelecionados.push({ nome, preco, qtd })
-    }
-  }
+        // 🔥 valida MAX
+        const totalGrupo = Array.from(div.querySelectorAll(".qtd"))
+          .reduce((s, el) => s + Number(el.innerText), 0);
 
-  minus.onclick = () => {
-    if (qtd > 0) {
-      qtd--
-      qtdEl.innerText = qtd
-
-      const existente = acompanhamentosSelecionados.find(a => a.nome === nome)
-
-      if (existente) {
-        existente.qtd = qtd
-
-        if (qtd === 0) {
-          acompanhamentosSelecionados =
-            acompanhamentosSelecionados.filter(a => a.nome !== nome)
+        if (g.max && totalGrupo >= g.max) {
+          alert(`Máximo de ${g.max} opções`);
+          return;
         }
-      }
-    }
-  }
 
-}); // 🔵 fecha loop dos itens
+        qtd++;
+        qtdEl.innerText = qtd;
 
-}); // 🔴 fecha grupos.forEach
+        const existente = acompanhamentosSelecionados.find(a => a.nome === nome);
 
-} // 🔥 fecha renderAcompanhamentos
+        if (existente) {
+          existente.qtd = qtd;
+        } else {
+          acompanhamentosSelecionados.push({ nome, preco, qtd });
+        }
+      };
 
+      minus.onclick = () => {
+        if (qtd > 0) {
+          qtd--;
+          qtdEl.innerText = qtd;
+
+          const existente = acompanhamentosSelecionados.find(a => a.nome === nome);
+
+          if (existente) {
+            existente.qtd = qtd;
+
+            if (qtd === 0) {
+              acompanhamentosSelecionados =
+                acompanhamentosSelecionados.filter(a => a.nome !== nome);
+            }
+          }
+        }
+      };
+
+    });
+
+    container.appendChild(div);
+
+  });
+
+}
 
 function updateModalTotal() {
   pdTotalBtn.textContent = brl(Number(state.selectedItem.price) * state.selectedQty);
@@ -817,23 +816,16 @@ pdPlus?.addEventListener('click', () => { state.selectedQty++; pdQty.textContent
 pdMinus?.addEventListener('click', () => { if (state.selectedQty > 1) { state.selectedQty--; pdQty.textContent = state.selectedQty; updateModalTotal(); } });
 pdAddBtn?.addEventListener('click', () => {
 
-  // 🔥 PEGAR ACOMPANHAMENTOS
-  const selecionados = [];
-
-  document.querySelectorAll('#pd-acompanhamentos input:checked')
-    .forEach(input => {
-      selecionados.push({
-        nome: input.dataset.nome,
-        preco: Number(input.dataset.preco)
-      });
-    });
+  const selecionados = acompanhamentosSelecionados;
 
   addToCart(
     state.selectedItem,
     state.selectedQty,
     pdObs.value,
-    selecionados // 🔥 NOVO
+    selecionados
   );
+
+  acompanhamentosSelecionados = []; // 🔥 limpa
 
   pdModal.setAttribute("aria-hidden", "true");
 });
