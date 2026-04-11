@@ -800,12 +800,17 @@ function renderAcompanhamentos(grupos) {
 function updateModalTotal() {
   if (!state.selectedItem) return;
 
-  // ✅ preço base do produto sempre entra
   let total = Number(state.selectedItem.price) * state.selectedQty;
 
-  // ✅ soma todos os acompanhamentos com preço (principais sem preço = 0, extras com preço)
   acompanhamentosSelecionados.forEach(a => {
-    total += a.preco * a.qtd * state.selectedQty;
+    if (a.grupo === "principal") {
+      // ✅ grupo principal: só cobra a partir do 2º (qtd - 1)
+      const qtdExtra = Math.max(0, a.qtd - 1);
+      total += a.preco * qtdExtra * state.selectedQty;
+    } else {
+      // extras normais: cobra tudo
+      total += a.preco * a.qtd * state.selectedQty;
+    }
   });
 
   pdPrice.textContent = brl(total);
