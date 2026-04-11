@@ -1749,3 +1749,9 @@ window.openAuthModal = openAuthModal;
 window.state = state;
 window.apiGet = apiGet;
 
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("product-details-modal");
+  if (modal) {
+    modal.setAttribute("aria-hidden", "true");
+  }
+});
