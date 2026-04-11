@@ -660,6 +660,7 @@ function renderFilters() {
 }
 
 async function openProductModal(item) {
+  acompanhamentosSelecionados = [];
   state.selectedItem = item;
   state.selectedQty = 1;
 
