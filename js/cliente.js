@@ -744,7 +744,8 @@ function renderAcompanhamentos(grupos) {
       // ✅ pré-seleciona o primeiro item do primeiro grupo no estado E visualmente
       if (index === 0 && item === primeiroItem) {
         qtdEl.innerText = 1;
-        acompanhamentosSelecionados.push({ id, nome, preco, qtd: 1, grupo: tipoGrupo });
+        // ✅ força preço 0 no pré-select — o preço do produto já cobre o tamanho base
+        acompanhamentosSelecionados.push({ id, nome, preco: 0, qtd: 1, grupo: tipoGrupo });
       }
 
       plus.addEventListener("click", (e) => {
