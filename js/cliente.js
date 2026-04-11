@@ -717,7 +717,7 @@ function renderAcompanhamentos(grupos) {
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <button class="minus">−</button>
-              <span class="qtd">0</span>
+              <span class="qtd">${g.min > 0 ? 1 : 0}</span>
               <button class="plus">+</button>
             </div>
           </div>
@@ -725,56 +725,56 @@ function renderAcompanhamentos(grupos) {
       `).join("")}
     `;
 
-div.querySelectorAll(".acomp-item").forEach(item => {
-  const plus  = item.querySelector(".plus");
-  const minus = item.querySelector(".minus");
-  const qtdEl = item.querySelector(".qtd");
-  const nome  = item.dataset.nome.trim();
-  const preco = Number(item.dataset.preco);
+    div.querySelectorAll(".acomp-item").forEach(item => {
+      const plus = item.querySelector(".plus");
+      const minus = item.querySelector(".minus");
+      const qtdEl = item.querySelector(".qtd");
+      const nome = item.dataset.nome.trim();
+      const preco = Number(item.dataset.preco);
 
-  const tipoGrupo = div.dataset.tipo;
-  const maxGrupo  = Number(div.dataset.max); // 🔥 captura o max do grupo aqui
-  const id = nome + "_" + tipoGrupo;
+      const tipoGrupo = div.dataset.tipo;
+      const maxGrupo = Number(div.dataset.max); // 🔥 captura o max do grupo aqui
+      const id = nome + "_" + tipoGrupo;
 
-  plus.addEventListener("click", (e) => {
-    e.stopPropagation();
+      plus.addEventListener("click", (e) => {
+        e.stopPropagation();
 
-    const totalGrupo = acompanhamentosSelecionados
-      .filter(a => a.grupo === tipoGrupo)
-      .reduce((s, a) => s + a.qtd, 0);
+        const totalGrupo = acompanhamentosSelecionados
+          .filter(a => a.grupo === tipoGrupo)
+          .reduce((s, a) => s + a.qtd, 0);
 
-    // ✅ usa maxGrupo (fixo) em vez de g.max (closure do forEach externo)
-    if (maxGrupo && totalGrupo >= maxGrupo) {
-      alert(`Máximo de ${maxGrupo} opções`);
-      return;
-    }
+        // ✅ usa maxGrupo (fixo) em vez de g.max (closure do forEach externo)
+        if (maxGrupo && totalGrupo >= maxGrupo) {
+          alert(`Máximo de ${maxGrupo} opções`);
+          return;
+        }
 
-    let existente = acompanhamentosSelecionados.find(a => a.id === id);
-    if (existente) {
-      existente.qtd++;
-    } else {
-      existente = { id, nome, preco, qtd: 1, grupo: tipoGrupo };
-      acompanhamentosSelecionados.push(existente);
-    }
-    qtdEl.innerText = existente.qtd;
-    updateModalTotal();
-  });
+        let existente = acompanhamentosSelecionados.find(a => a.id === id);
+        if (existente) {
+          existente.qtd++;
+        } else {
+          existente = { id, nome, preco, qtd: 1, grupo: tipoGrupo };
+          acompanhamentosSelecionados.push(existente);
+        }
+        qtdEl.innerText = existente.qtd;
+        updateModalTotal();
+      });
 
-  minus.addEventListener("click", (e) => {
-    e.stopPropagation();
-    let existente = acompanhamentosSelecionados.find(a => a.id === id);
-    if (!existente) return;
+      minus.addEventListener("click", (e) => {
+        e.stopPropagation();
+        let existente = acompanhamentosSelecionados.find(a => a.id === id);
+        if (!existente) return;
 
-    existente.qtd--;
-    if (existente.qtd <= 0) {
-      acompanhamentosSelecionados = acompanhamentosSelecionados.filter(a => a.id !== id);
-      qtdEl.innerText = 0;
-    } else {
-      qtdEl.innerText = existente.qtd;
-    }
-    updateModalTotal();
-  });
-}); // ✅ fecha forEach interno
+        existente.qtd--;
+        if (existente.qtd <= 0) {
+          acompanhamentosSelecionados = acompanhamentosSelecionados.filter(a => a.id !== id);
+          qtdEl.innerText = 0;
+        } else {
+          qtdEl.innerText = existente.qtd;
+        }
+        updateModalTotal();
+      });
+    }); // ✅ fecha forEach interno
 
     container.appendChild(div);
   }); // ✅ fecha grupos.forEach
@@ -806,7 +806,7 @@ pdPlus?.addEventListener('click', () => { state.selectedQty++; pdQty.textContent
 pdMinus?.addEventListener('click', () => { if (state.selectedQty > 1) { state.selectedQty--; pdQty.textContent = state.selectedQty; updateModalTotal(); } });
 pdAddBtn?.addEventListener('click', () => {
 
- const selecionados = structuredClone(acompanhamentosSelecionados);
+  const selecionados = structuredClone(acompanhamentosSelecionados);
 
   addToCart(
     state.selectedItem,
@@ -923,8 +923,8 @@ function updateCartUI() {
         // ✅ lista de acompanhamentos para exibir
         const acompList = (i.acompanhamentos && i.acompanhamentos.length > 0)
           ? i.acompanhamentos.map(a =>
-              `<div style="font-size:11px; color:#6b7280;">• ${a.qtd}x ${a.nome}${a.preco ? ` (+${brl(a.preco * a.qtd)})` : ''}</div>`
-            ).join('')
+            `<div style="font-size:11px; color:#6b7280;">• ${a.qtd}x ${a.nome}${a.preco ? ` (+${brl(a.preco * a.qtd)})` : ''}</div>`
+          ).join('')
           : '';
 
         // ✅ preço unitário já com acompanhamentos incluídos
@@ -1191,8 +1191,8 @@ function updateTrackUI(order) {
 
       const acompList = (i.acompanhamentos && i.acompanhamentos.length > 0)
         ? i.acompanhamentos.map(a =>
-            `<div style="font-size:11px; color:#6b7280;">• ${a.qtd}x ${a.nome}${a.preco ? ` (+${brl(a.preco * a.qtd)})` : ''}</div>`
-          ).join('')
+          `<div style="font-size:11px; color:#6b7280;">• ${a.qtd}x ${a.nome}${a.preco ? ` (+${brl(a.preco * a.qtd)})` : ''}</div>`
+        ).join('')
         : "";
 
       const precoAcomp = (i.acompanhamentos || []).reduce((s, a) => s + (a.preco * a.qtd), 0);
