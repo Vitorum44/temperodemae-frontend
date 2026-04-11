@@ -834,6 +834,9 @@ document
 });
 
   showNotify("Sucesso", "Acompanhamentos salvos!");
+
+// 🔥 FECHA O MODAL AUTOMATICAMENTE
+fecharAcomp();
 });
 
 document.addEventListener("click", function (e) {
