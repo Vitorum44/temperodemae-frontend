@@ -1962,3 +1962,25 @@ opacity:1;
     border-radius: 0;
   }
 }
+
+/* 🔥 CORREÇÃO SCROLL MODAL PRODUTO */
+#product-details-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#product-details-modal .modal-dialog {
+  display: flex;
+  flex-direction: column;
+  height: 95vh;
+  max-height: 95vh;
+  overflow: hidden; /* trava o container */
+}
+
+/* 🔥 ÁREA QUE VAI ROLAR */
+#product-details-modal .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 120px; /* espaço botão */
+}
