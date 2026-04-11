@@ -751,11 +751,13 @@ function renderAcompanhamentos(grupos) {
       const minus = item.querySelector(".minus");
       const qtdEl = item.querySelector(".qtd");
 
-      let qtd = 0;
-      const nome = item.dataset.nome;
-      const preco = Number(item.dataset.preco);
+const nome = item.dataset.nome.trim();
+const preco = Number(item.dataset.preco);
 
-     plus.onclick = () => {
+// 🔥 ID único (SOLUÇÃO DO BUG)
+const id = nome + "_" + div.dataset.tipo;
+
+    plus.onclick = () => {
 
   const totalGrupo = Array.from(div.querySelectorAll(".qtd"))
     .reduce((s, el) => s + Number(el.innerText || 0), 0);
@@ -765,51 +767,44 @@ function renderAcompanhamentos(grupos) {
     return;
   }
 
-  qtd++;
-  qtdEl.innerText = qtd;
-
-  let existente = acompanhamentosSelecionados.find(
-  a => a.nome === nome && a.grupo === div.dataset.tipo
-);
+  let existente = acompanhamentosSelecionados.find(a => a.id === id);
 
   if (existente) {
-    existente.qtd = qtd;
+    existente.qtd++;
   } else {
-    acompanhamentosSelecionados.push({
+    existente = {
+      id,
       nome,
-      preco: Number(preco || 0),
-      qtd,
+      preco,
+      qtd: 1,
       grupo: div.dataset.tipo
-    });
+    };
+    acompanhamentosSelecionados.push(existente);
   }
 
-  updateModalTotal(); // 🔥 sempre no FINAL
+  qtdEl.innerText = existente.qtd;
+
+  updateModalTotal();
 };
 
 
 minus.onclick = () => {
 
-  if (qtd > 0) {
-    qtd--;
-    qtdEl.innerText = qtd;
+  let existente = acompanhamentosSelecionados.find(a => a.id === id);
 
-    let existente = acompanhamentosSelecionados.find(
-  a => a.nome === nome && a.grupo === div.dataset.tipo
-);
+  if (!existente) return;
 
-    if (existente) {
-      existente.qtd = qtd;
+  existente.qtd--;
 
-      if (qtd === 0) {
-         acompanhamentosSelecionados =
-  acompanhamentosSelecionados.filter(
-    a => !(a.nome === nome && a.grupo === div.dataset.tipo)
-  );
-      }
-    }
-
-    updateModalTotal(); // 🔥 sempre no FINAL
+  if (existente.qtd <= 0) {
+    acompanhamentosSelecionados =
+      acompanhamentosSelecionados.filter(a => a.id !== id);
+    qtdEl.innerText = 0;
+  } else {
+    qtdEl.innerText = existente.qtd;
   }
+
+  updateModalTotal();
 };
 
     });
