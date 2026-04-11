@@ -46,8 +46,12 @@ const state = {
   activeOrderData: null
 };
 
+let acompanhamentosSelecionados = []
+
 // Estado para controle de alteração de endereço
 let addressDirty = false;
+
+
 
 // ================= HELPERS =================
 const $ = (s) => document.querySelector(s);
@@ -695,37 +699,109 @@ function renderAcompanhamentos(grupos) {
 
     div.style.marginBottom = "15px";
 
-    div.innerHTML = `
-      <strong style="display:block; margin-bottom:8px; font-size:16px;">
-        ${g.nome}
-      </strong>
+   div.innerHTML = `
+  <strong style="display:block; margin-bottom:8px; font-size:16px;">
+    ${g.nome}
+  </strong>
 
-      ${(g.opcoes || []).map(opt => `
-        <label style="
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          padding:10px;
-          border:1px solid #eee;
-          border-radius:10px;
-          margin-bottom:6px;
+  ${(g.opcoes || []).map(opt => `
+    <div class="acomp-item"
+      data-nome="${opt.nome}"
+      data-preco="${opt.preco || 0}"
+      style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:12px;
+        border-bottom:1px solid #eee;
+      "
+    >
+
+      <div>
+        <div style="font-weight:600;">${opt.nome}</div>
+        ${opt.preco ? `<div style="color:green; font-size:13px;">+R$ ${opt.preco}</div>` : ""}
+      </div>
+
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="minus" style="
+          width:28px;
+          height:28px;
+          border-radius:50%;
+          border:1px solid #ddd;
+          background:#fff;
+          font-size:18px;
           cursor:pointer;
-        ">
-          <span>${opt.nome}</span>
+        ">−</button>
 
-          <div style="display:flex; gap:10px; align-items:center;">
-            ${opt.preco ? `<span style="color:green; font-weight:bold;">+R$ ${opt.preco}</span>` : ""}
-            <input type="checkbox"
-              data-nome="${opt.nome}"
-              data-preco="${opt.preco || 0}">
-          </div>
-        </label>
-      `).join("")}
-    `;
+        <span class="qtd" style="min-width:20px; text-align:center;">0</span>
 
-    container.appendChild(div);
-  });
-}
+        <button class="plus" style="
+          width:28px;
+          height:28px;
+          border-radius:50%;
+          border:none;
+          background:#e53935;
+          color:#fff;
+          font-size:18px;
+          cursor:pointer;
+        ">+</button>
+      </div>
+
+    </div>
+  `).join("")}
+`;
+
+// 🔥 PRIMEIRO adiciona no DOM
+container.appendChild(div);
+
+// 🔥 DEPOIS adiciona eventos
+div.querySelectorAll(".acomp-item").forEach(item => {
+
+  const plus = item.querySelector(".plus")
+  const minus = item.querySelector(".minus")
+  const qtdEl = item.querySelector(".qtd")
+
+  let qtd = 0
+  const nome = item.dataset.nome
+  const preco = Number(item.dataset.preco)
+
+  plus.onclick = () => {
+    qtd++
+    qtdEl.innerText = qtd
+
+    const existente = acompanhamentosSelecionados.find(a => a.nome === nome)
+
+    if (existente) {
+      existente.qtd = qtd
+    } else {
+      acompanhamentosSelecionados.push({ nome, preco, qtd })
+    }
+  }
+
+  minus.onclick = () => {
+    if (qtd > 0) {
+      qtd--
+      qtdEl.innerText = qtd
+
+      const existente = acompanhamentosSelecionados.find(a => a.nome === nome)
+
+      if (existente) {
+        existente.qtd = qtd
+
+        if (qtd === 0) {
+          acompanhamentosSelecionados =
+            acompanhamentosSelecionados.filter(a => a.nome !== nome)
+        }
+      }
+    }
+  }
+
+}); // 🔵 fecha loop dos itens
+
+}); // 🔴 fecha grupos.forEach
+
+} // 🔥 fecha renderAcompanhamentos
+
 
 function updateModalTotal() {
   pdTotalBtn.textContent = brl(Number(state.selectedItem.price) * state.selectedQty);
