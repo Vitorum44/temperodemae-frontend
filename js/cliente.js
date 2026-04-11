@@ -757,7 +757,11 @@ const preco = Number(item.dataset.preco);
 // 🔥 ID único (SOLUÇÃO DO BUG)
 const id = nome + "_" + div.dataset.tipo;
 
-    plus.onclick = () => {
+    plus.replaceWith(plus.cloneNode(true));
+const newPlus = div.querySelector(".plus");
+
+newPlus.addEventListener("click", (e) => {
+  e.stopPropagation();
 
   const totalGrupo = Array.from(div.querySelectorAll(".qtd"))
     .reduce((s, el) => s + Number(el.innerText || 0), 0);
@@ -785,13 +789,16 @@ const id = nome + "_" + div.dataset.tipo;
   qtdEl.innerText = existente.qtd;
 
   updateModalTotal();
-};
+});
 
 
-minus.onclick = () => {
+minus.replaceWith(minus.cloneNode(true));
+const newMinus = div.querySelector(".minus");
+
+newMinus.addEventListener("click", (e) => {
+  e.stopPropagation();
 
   let existente = acompanhamentosSelecionados.find(a => a.id === id);
-
   if (!existente) return;
 
   existente.qtd--;
@@ -805,7 +812,7 @@ minus.onclick = () => {
   }
 
   updateModalTotal();
-};
+});
 
     });
 
