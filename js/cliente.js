@@ -906,9 +906,18 @@ function changeQty(index, delta) { const item = state.cart[index]; if (!item) re
 function cartSubtotal() {
   return state.cart.reduce((total, item) => {
 
-    const precoAcomp = (item.acompanhamentos || []).reduce((s, a) => s + (a.preco * a.qtd), 0);
-    const precoUnitario = Number(item.price) + precoAcomp;
-    const itemTotal = precoUnitario * item.qty;
+    const precoAcomp = (item.acompanhamentos || []).reduce((s, a) => {
+      if (a.grupo === "principal") {
+        // ✅ principal: só cobra o excedente (qtd - 1)
+        const qtdExtra = Math.max(0, a.qtd - 1);
+        return s + (Number(item.price) * qtdExtra);
+      } else {
+        // extras: cobra tudo normalmente
+        return s + (a.preco * a.qtd);
+      }
+    }, 0);
+
+    const itemTotal = (Number(item.price) + precoAcomp) * item.qty;
 
     return total + itemTotal;
 
@@ -954,9 +963,17 @@ function updateCartUI() {
           : '';
 
         // ✅ preço unitário já com acompanhamentos incluídos
-        const precoAcomp = (i.acompanhamentos || []).reduce((s, a) => s + (a.preco * a.qtd), 0);
+        const precoAcomp = (i.acompanhamentos || []).reduce((s, a) => {
+          if (a.grupo === "principal") {
+            const qtdExtra = Math.max(0, a.qtd - 1);
+            return s + (Number(i.price) * qtdExtra);
+          } else {
+            return s + (a.preco * a.qtd);
+          }
+        }, 0);
         const precoUnitario = Number(i.price) + precoAcomp;
 
+        
         r.innerHTML = `
           <div class="cart-thumb">
             <img src="${i.image}" onerror="this.src='https://placehold.co/100?text=Foto'">
