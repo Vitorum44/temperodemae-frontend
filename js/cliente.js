@@ -1263,7 +1263,20 @@ function updateTrackUI(order) {
   }
   // 🔼 FIM RESUMO
 
-  if (trackTotalEl) trackTotalEl.textContent = brl(order.total);
+  if (trackTotalEl) {
+    const subtotal = order.total - (order.delivery_fee || 0);
+    trackTotalEl.innerHTML = `
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; margin-bottom:4px;">
+        <span>Subtotal</span><span>${brl(subtotal)}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; margin-bottom:4px;">
+        <span>Frete</span><span>${order.delivery_fee > 0 ? brl(order.delivery_fee) : 'Grátis'}</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:700; color:#d62300; margin-top:8px; border-top:1px solid #eee; padding-top:8px;">
+        <span>Total</span><span>${brl(order.total)}</span>
+      </div>
+    `;
+  }
   if (btnTrackWa) btnTrackWa.href = `https://wa.me/5584996065229?text=${encodeURIComponent(`Olá, sobre meu pedido #${order.id}...`)}`;
   if (btnCancelOrder) {
     btnCancelOrder.style.display = (s === 'novo' || s === 'agendado') ? 'block' : 'none';
