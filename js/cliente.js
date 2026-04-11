@@ -757,7 +757,6 @@ function renderAcompanhamentos(grupos) {
 
       plus.onclick = () => {
 
-  // 🔥 valida MAX
   const totalGrupo = Array.from(div.querySelectorAll(".qtd"))
     .reduce((s, el) => s + Number(el.innerText), 0);
 
@@ -775,11 +774,11 @@ function renderAcompanhamentos(grupos) {
     existente.qtd = qtd;
   } else {
     acompanhamentosSelecionados.push({
-  nome,
-  preco,
-  qtd,
-  grupo: div.dataset.tipo // 👈 ESSENCIAL
-});
+      nome,
+      preco,
+      qtd,
+      grupo: div.dataset.tipo
+    });
   }
 
   updateModalTotal(); // 🔥 ESSENCIAL
