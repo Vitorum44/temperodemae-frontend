@@ -696,7 +696,7 @@ function renderAcompanhamentos(grupos) {
     const obrigatorio = (g.min || 0) > 0;
 
     div.classList.add("acomp-group");
-    div.dataset.tipo = index === 0 ? "principal" : "extra";
+    div.dataset.tipo = index === 0 ? "principal" : `extra_${index}`;
     div.dataset.min = g.min || 0;
     div.dataset.max = g.max || 999;
 
