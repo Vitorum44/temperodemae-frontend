@@ -755,7 +755,7 @@ function renderAcompanhamentos(grupos) {
       const nome = item.dataset.nome;
       const preco = Number(item.dataset.preco);
 
-      plus.onclick = () => {
+     plus.onclick = () => {
 
   const totalGrupo = Array.from(div.querySelectorAll(".qtd"))
     .reduce((s, el) => s + Number(el.innerText), 0);
@@ -781,8 +781,9 @@ function renderAcompanhamentos(grupos) {
     });
   }
 
-  updateModalTotal(); // 🔥 ESSENCIAL
+  updateModalTotal(); // 🔥 só UMA vez aqui
 };
+
 
 minus.onclick = () => {
   if (qtd > 0) {
@@ -800,7 +801,7 @@ minus.onclick = () => {
       }
     }
 
-    updateModalTotal(); // 🔥 ESSENCIAL
+    updateModalTotal(); // 🔥 só UMA vez aqui
   }
 };
 
