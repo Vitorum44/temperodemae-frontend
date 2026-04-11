@@ -717,13 +717,15 @@ function renderAcompanhamentos(grupos) {
             </div>
             <div style="display:flex; align-items:center; gap:8px;">
               <button class="minus">−</button>
-              <span class="qtd">${g.min > 0 ? 1 : 0}</span>
+              <span class="qtd">0</span>
               <button class="plus">+</button>
             </div>
           </div>
         </div>
       `).join("")}
     `;
+
+    const primeiroItem = div.querySelector(".acomp-item");
 
     div.querySelectorAll(".acomp-item").forEach(item => {
       const plus = item.querySelector(".plus");
@@ -733,8 +735,15 @@ function renderAcompanhamentos(grupos) {
       const preco = Number(item.dataset.preco);
 
       const tipoGrupo = div.dataset.tipo;
-      const maxGrupo = Number(div.dataset.max); // 🔥 captura o max do grupo aqui
+      const maxGrupo = Number(div.dataset.max);
       const id = nome + "_" + tipoGrupo;
+
+      // ✅ pré-seleciona só o PRIMEIRO item de grupos obrigatórios
+      if (g.min > 0 && item === primeiroItem) {
+        qtdEl.innerText = 1;
+        acompanhamentosSelecionados.push({ id, nome, preco, qtd: 1, grupo: tipoGrupo });
+        updateModalTotal();
+      }
 
       plus.addEventListener("click", (e) => {
         e.stopPropagation();
