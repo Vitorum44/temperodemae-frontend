@@ -725,27 +725,27 @@ function renderAcompanhamentos(grupos) {
       `).join("")}
     `;
 
- div.querySelectorAll(".acomp-item").forEach(item => {
+div.querySelectorAll(".acomp-item").forEach(item => {
   const plus  = item.querySelector(".plus");
   const minus = item.querySelector(".minus");
   const qtdEl = item.querySelector(".qtd");
   const nome  = item.dataset.nome.trim();
   const preco = Number(item.dataset.preco);
-  
-  // 🔥 CAPTURA O TIPO AQUI, FORA DO EVENTO (evita problema de closure)
+
   const tipoGrupo = div.dataset.tipo;
+  const maxGrupo  = Number(div.dataset.max); // 🔥 captura o max do grupo aqui
   const id = nome + "_" + tipoGrupo;
 
   plus.addEventListener("click", (e) => {
     e.stopPropagation();
 
-    // ✅ usa tipoGrupo (valor fixo) em vez de div.dataset.tipo (referência)
     const totalGrupo = acompanhamentosSelecionados
       .filter(a => a.grupo === tipoGrupo)
       .reduce((s, a) => s + a.qtd, 0);
 
-    if (g.max && totalGrupo >= g.max) {
-      alert(`Máximo de ${g.max} opções`);
+    // ✅ usa maxGrupo (fixo) em vez de g.max (closure do forEach externo)
+    if (maxGrupo && totalGrupo >= maxGrupo) {
+      alert(`Máximo de ${maxGrupo} opções`);
       return;
     }
 
