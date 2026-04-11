@@ -685,7 +685,6 @@ async function openProductModal(item) {
 }
 
 function renderAcompanhamentos(grupos) {
-
   const container = document.getElementById("pd-acompanhamentos");
   if (!container) return;
 
@@ -693,9 +692,7 @@ function renderAcompanhamentos(grupos) {
   if (!grupos || grupos.length === 0) return;
 
   grupos.forEach((g, index) => {
-
     const div = document.createElement("div");
-
     const obrigatorio = (g.min || 0) > 0;
 
     div.classList.add("acomp-group");
@@ -707,119 +704,76 @@ function renderAcompanhamentos(grupos) {
       <div class="acomp-header">
         <div>
           <div class="acomp-title">${g.nome}</div>
-          <div class="acomp-rules">
-            Escolha de ${g.min || 0} a ${g.max || "∞"}
-          </div>
+          <div class="acomp-rules">Escolha de ${g.min || 0} a ${g.max || "∞"}</div>
         </div>
-
-        ${obrigatorio ? `<span style="
-          background:#000;
-          color:#fff;
-          font-size:11px;
-          padding:3px 8px;
-          border-radius:6px;
-        ">OBRIGATÓRIO</span>` : ""}
+        ${obrigatorio ? `<span style="background:#000;color:#fff;font-size:11px;padding:3px 8px;border-radius:6px;">OBRIGATÓRIO</span>` : ""}
       </div>
-
       ${(g.opcoes || []).map(opt => `
-        <div class="acomp-item"
-          data-nome="${opt.nome}"
-          data-preco="${opt.preco || 0}"
-        >
+        <div class="acomp-item" data-nome="${opt.nome}" data-preco="${opt.preco || 0}">
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            
             <div>
               <div style="font-weight:600;">${opt.nome}</div>
-              ${opt.preco ? `<div style="color:green; font-size:13px;">+R$ ${opt.preco}</div>` : ""}
+              ${opt.preco ? `<div style="color:green;font-size:13px;">+R$ ${opt.preco}</div>` : ""}
             </div>
-
             <div style="display:flex; align-items:center; gap:8px;">
               <button class="minus">−</button>
               <span class="qtd">0</span>
               <button class="plus">+</button>
             </div>
-
           </div>
         </div>
       `).join("")}
     `;
 
-    // 🔥 EVENTOS
+    // ✅ forEach interno — SEM } extra depois dele
     div.querySelectorAll(".acomp-item").forEach(item => {
-
-      const plus = item.querySelector(".plus");
+      const plus  = item.querySelector(".plus");
       const minus = item.querySelector(".minus");
       const qtdEl = item.querySelector(".qtd");
+      const nome  = item.dataset.nome.trim();
+      const preco = Number(item.dataset.preco);
+      const id    = nome + "_" + div.dataset.tipo;
 
-const nome = item.dataset.nome.trim();
-const preco = Number(item.dataset.preco);
+      plus.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const totalGrupo = acompanhamentosSelecionados
+          .filter(a => a.grupo === div.dataset.tipo)
+          .reduce((s, a) => s + a.qtd, 0);
 
-// 🔥 ID único (SOLUÇÃO DO BUG)
-const id = nome + "_" + div.dataset.tipo;
+        if (g.max && totalGrupo >= g.max) {
+          alert(`Máximo de ${g.max} opções`);
+          return;
+        }
 
-    plus.replaceWith(plus.cloneNode(true));
-const newPlus = div.querySelector(".plus");
+        let existente = acompanhamentosSelecionados.find(a => a.id === id);
+        if (existente) {
+          existente.qtd++;
+        } else {
+          existente = { id, nome, preco, qtd: 1, grupo: div.dataset.tipo };
+          acompanhamentosSelecionados.push(existente);
+        }
+        qtdEl.innerText = existente.qtd;
+        updateModalTotal();
+      });
 
-newPlus.addEventListener("click", (e) => {
-  e.stopPropagation();
+      minus.addEventListener("click", (e) => {
+        e.stopPropagation();
+        let existente = acompanhamentosSelecionados.find(a => a.id === id);
+        if (!existente) return;
 
-  const totalGrupo = Array.from(div.querySelectorAll(".qtd"))
-    .reduce((s, el) => s + Number(el.innerText || 0), 0);
-
-  if (g.max && totalGrupo >= g.max) {
-    alert(`Máximo de ${g.max} opções`);
-    return;
-  }
-
-  let existente = acompanhamentosSelecionados.find(a => a.id === id);
-
-  if (existente) {
-    existente.qtd++;
-  } else {
-    existente = {
-      id,
-      nome,
-      preco,
-      qtd: 1,
-      grupo: div.dataset.tipo
-    };
-    acompanhamentosSelecionados.push(existente);
-  }
-
-  qtdEl.innerText = existente.qtd;
-
-  updateModalTotal();
-});
-
-
-minus.replaceWith(minus.cloneNode(true));
-const newMinus = div.querySelector(".minus");
-
-newMinus.addEventListener("click", (e) => {
-  e.stopPropagation();
-
-  let existente = acompanhamentosSelecionados.find(a => a.id === id);
-  if (!existente) return;
-
-  existente.qtd--;
-
-  if (existente.qtd <= 0) {
-    acompanhamentosSelecionados =
-      acompanhamentosSelecionados.filter(a => a.id !== id);
-    qtdEl.innerText = 0;
-  } else {
-    qtdEl.innerText = existente.qtd;
-  }
-
-  updateModalTotal();
-});
-
-    });
+        existente.qtd--;
+        if (existente.qtd <= 0) {
+          acompanhamentosSelecionados = acompanhamentosSelecionados.filter(a => a.id !== id);
+          qtdEl.innerText = 0;
+        } else {
+          qtdEl.innerText = existente.qtd;
+        }
+        updateModalTotal();
+      });
+    }); // ✅ fecha o forEach interno
 
     container.appendChild(div);
-
-  });
-
+  }); // ✅ fecha o grupos.forEach — único fechamento
 }
 
 function updateModalTotal() {
