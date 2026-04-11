@@ -619,7 +619,8 @@ input[type="radio"] {
   background: var(--bg);
   border: 1px solid var(--line);
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto;
+max-height: 95vh;
 }
 
 #pd-obs {
