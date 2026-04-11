@@ -699,6 +699,7 @@ function renderAcompanhamentos(grupos) {
     const obrigatorio = (g.min || 0) > 0;
 
     div.classList.add("acomp-group");
+    div.dataset.tipo = index === 0 ? "principal" : "extra";
     div.dataset.min = g.min || 0;
     div.dataset.max = g.max || 999;
 
@@ -773,7 +774,12 @@ function renderAcompanhamentos(grupos) {
   if (existente) {
     existente.qtd = qtd;
   } else {
-    acompanhamentosSelecionados.push({ nome, preco, qtd, grupo: g.nome });
+    acompanhamentosSelecionados.push({
+  nome,
+  preco,
+  qtd,
+  grupo: div.dataset.tipo // 👈 ESSENCIAL
+});
   }
 
   updateModalTotal(); // 🔥 ESSENCIAL
@@ -811,16 +817,32 @@ function updateModalTotal() {
 
   if (!state.selectedItem) return;
 
-  let total = Number(state.selectedItem.price) * state.selectedQty;
+  // 🔥 pega TODOS os principais (tamanho)
+  const principais = acompanhamentosSelecionados.filter(a => a.grupo === "principal");
 
-  // 🔥 soma acompanhamentos
-  acompanhamentosSelecionados.forEach(a => {
-    total += (a.preco * a.qtd);
+  let total = 0;
+
+  // 🔥 soma os principais corretamente
+  principais.forEach(p => {
+    total += p.preco * p.qtd;
   });
 
-  pdPrice.textContent = brl(total);       // preço grande
-  pdTotalBtn.textContent = brl(total);    // botão
+  // 🔥 fallback se não escolher tamanho
+  if (total === 0) {
+    total = Number(state.selectedItem.price) * state.selectedQty;
+  }
+
+  // 🔥 soma extras
+  acompanhamentosSelecionados.forEach(a => {
+    if (a.grupo !== "principal") {
+      total += (a.preco * a.qtd);
+    }
+  });
+
+  pdPrice.textContent = brl(total);
+  pdTotalBtn.textContent = brl(total);
 }
+
 
 if (pdClose && pdModal) {
   pdClose.addEventListener('click', () => {
