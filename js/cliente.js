@@ -819,11 +819,13 @@ function updateModalTotal() {
 
   let total = 0;
 
-  // 🔥 usa o tamanho como base
-  const principal = acompanhamentosSelecionados.find(a => a.grupo === "principal");
+  // 🔥 soma TODOS os principais (300ml, 500ml, etc)
+  const principais = acompanhamentosSelecionados.filter(a => a.grupo === "principal");
 
-  if (principal) {
-    total = principal.preco * state.selectedQty;
+  if (principais.length > 0) {
+    total = principais.reduce((soma, p) => {
+      return soma + (p.preco * p.qtd);
+    }, 0);
   } else {
     total = Number(state.selectedItem.price) * state.selectedQty;
   }
