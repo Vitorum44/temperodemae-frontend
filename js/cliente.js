@@ -973,7 +973,7 @@ function updateCartUI() {
         }, 0);
         const precoUnitario = Number(i.price) + precoAcomp;
 
-        
+
         r.innerHTML = `
           <div class="cart-thumb">
             <img src="${i.image}" onerror="this.src='https://placehold.co/100?text=Foto'">
@@ -1239,7 +1239,14 @@ function updateTrackUI(order) {
         ).join('')
         : "";
 
-      const precoAcomp = (i.acompanhamentos || []).reduce((s, a) => s + (a.preco * a.qtd), 0);
+      const precoAcomp = (i.acompanhamentos || []).reduce((s, a) => {
+        if (a.grupo === "principal") {
+          const qtdExtra = Math.max(0, a.qtd - 1);
+          return s + (Number(i.price) * qtdExtra);
+        } else {
+          return s + (a.preco * a.qtd);
+        }
+      }, 0);
       const precoTotal = (Number(i.price) + precoAcomp) * i.qty;
 
       return `
