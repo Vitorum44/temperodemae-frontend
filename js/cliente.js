@@ -782,33 +782,19 @@ div.querySelectorAll(".acomp-item").forEach(item => {
 } // ✅ fecha renderAcompanhamentos
 
 function updateModalTotal() {
-
   if (!state.selectedItem) return;
 
-  let total = 0;
+  // ✅ preço base do produto sempre entra
+  let total = Number(state.selectedItem.price) * state.selectedQty;
 
-  // 🔥 PRINCIPAL
-  const principais = acompanhamentosSelecionados.filter(a => a.grupo === "principal");
-
-  if (principais.length > 0) {
-    total = principais.reduce((soma, p) => {
-      return soma + (p.preco * p.qtd);
-    }, 0);
-  } else {
-    total = Number(state.selectedItem.price) * state.selectedQty;
-  }
-
-  // 🔥 EXTRAS (AGORA CORRETO)
+  // ✅ soma todos os acompanhamentos com preço (principais sem preço = 0, extras com preço)
   acompanhamentosSelecionados.forEach(a => {
-    if (a.grupo !== "principal") {
-      total += (a.preco * a.qtd * state.selectedQty);
-    }
+    total += a.preco * a.qtd * state.selectedQty;
   });
 
   pdPrice.textContent = brl(total);
   pdTotalBtn.textContent = brl(total);
 }
-
 
 if (pdClose && pdModal) {
   pdClose.addEventListener('click', () => {
