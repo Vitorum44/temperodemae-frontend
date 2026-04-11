@@ -1963,24 +1963,38 @@ opacity:1;
   }
 }
 
-/* 🔥 CORREÇÃO SCROLL MODAL PRODUTO */
+/* 🔥 FIX REAL DO MODAL (SEM BUG) */
+
 #product-details-modal {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* CONTAINER */
 #product-details-modal .modal-dialog {
   display: flex;
   flex-direction: column;
-  height: 95vh;
-  max-height: 95vh;
-  overflow: hidden; /* trava o container */
+
+  height: 90vh;
+  max-height: 90vh;
+
+  width: 100%;
+  max-width: 420px;
+
+  border-radius: 20px;
+  overflow: hidden;
 }
 
-/* 🔥 ÁREA QUE VAI ROLAR */
+/* IMAGEM FIXA */
+.pd-image-header {
+  flex-shrink: 0;
+}
+
+/* 🔥 SCROLL FUNCIONANDO */
 #product-details-modal .modal-body {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 120px; /* espaço botão */
+
+  padding-bottom: 120px;
 }
