@@ -760,16 +760,21 @@ function renderAcompanhamentos(grupos) {
           return;
         }
 
-        // preço real do produto (vem do state, não do dataset zerado)
-        const precoReal = Number(state.selectedItem.price);
-
         let existente = acompanhamentosSelecionados.find(a => a.id === id);
         if (existente) {
           existente.qtd++;
-          // ✅ a partir do 2º cobra o preço do produto
-          existente.preco = existente.qtd > 1 ? precoReal : 0;
+          // ✅ só o grupo principal tem lógica especial (1º grátis)
+          // extras usam o preco do dataset normalmente
+          if (tipoGrupo === "principal") {
+            const precoReal = Number(state.selectedItem.price);
+            existente.preco = existente.qtd > 1 ? precoReal : 0;
+          } else {
+            existente.preco = preco; // extra: usa preço do dataset
+          }
         } else {
-          existente = { id, nome, preco: 0, qtd: 1, grupo: tipoGrupo };
+          // novo item: principal começa grátis, extra cobra normal
+          const precoInicial = tipoGrupo === "principal" ? 0 : preco;
+          existente = { id, nome, preco: precoInicial, qtd: 1, grupo: tipoGrupo };
           acompanhamentosSelecionados.push(existente);
         }
         qtdEl.innerText = existente.qtd;
