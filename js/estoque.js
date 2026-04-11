@@ -764,7 +764,7 @@ row.innerHTML=`
 
 <input placeholder="Nome opção">
 
-<input placeholder="Preço extra">
+<input type="number" step="0.01" placeholder="Preço extra">
 
 <button class="del">X</button>
 
@@ -805,7 +805,7 @@ document
 
       opcoes.push({
         nome: nomeOp,
-        preco: Number(precoOp) || 0
+        preco: Number(precoOp.replace(",", ".")) || 0
       });
 
     });
