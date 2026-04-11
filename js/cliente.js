@@ -758,7 +758,7 @@ function renderAcompanhamentos(grupos) {
      plus.onclick = () => {
 
   const totalGrupo = Array.from(div.querySelectorAll(".qtd"))
-    .reduce((s, el) => s + Number(el.innerText), 0);
+    .reduce((s, el) => s + Number(el.innerText || 0), 0);
 
   if (g.max && totalGrupo >= g.max) {
     alert(`Máximo de ${g.max} opções`);
@@ -768,40 +768,47 @@ function renderAcompanhamentos(grupos) {
   qtd++;
   qtdEl.innerText = qtd;
 
-  const existente = acompanhamentosSelecionados.find(a => a.nome === nome);
+  let existente = acompanhamentosSelecionados.find(
+  a => a.nome === nome && a.grupo === div.dataset.tipo
+);
 
   if (existente) {
     existente.qtd = qtd;
   } else {
     acompanhamentosSelecionados.push({
       nome,
-      preco,
+      preco: Number(preco || 0),
       qtd,
       grupo: div.dataset.tipo
     });
   }
 
-  updateModalTotal(); // 🔥 só UMA vez aqui
+  updateModalTotal(); // 🔥 sempre no FINAL
 };
 
 
 minus.onclick = () => {
+
   if (qtd > 0) {
     qtd--;
     qtdEl.innerText = qtd;
 
-    const existente = acompanhamentosSelecionados.find(a => a.nome === nome);
+    let existente = acompanhamentosSelecionados.find(
+  a => a.nome === nome && a.grupo === div.dataset.tipo
+);
 
     if (existente) {
       existente.qtd = qtd;
 
       if (qtd === 0) {
-        acompanhamentosSelecionados =
-          acompanhamentosSelecionados.filter(a => a.nome !== nome);
+         acompanhamentosSelecionados =
+  acompanhamentosSelecionados.filter(
+    a => !(a.nome === nome && a.grupo === div.dataset.tipo)
+  );
       }
     }
 
-    updateModalTotal(); // 🔥 só UMA vez aqui
+    updateModalTotal(); // 🔥 sempre no FINAL
   }
 };
 
