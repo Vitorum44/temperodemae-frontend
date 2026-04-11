@@ -854,7 +854,10 @@ function addToCart(item, qty = 1, obs = "", acompanhamentos = []) {
     return;
   }
 
-  const existingItem = state.cart.find(x => x.id === item.id && x.obs === obs);
+  const temAcomp = acompanhamentos && acompanhamentos.length > 0;
+  const existingItem = !temAcomp
+    ? state.cart.find(x => x.id === item.id && x.obs === obs && (!x.acompanhamentos || x.acompanhamentos.length === 0))
+    : null;
 
   if (existingItem) {
     existingItem.qty += qty;
@@ -866,7 +869,7 @@ function addToCart(item, qty = 1, obs = "", acompanhamentos = []) {
       image: item.image_url || item.imageUrl,
       qty: qty,
       obs: obs,
-      acompanhamentos // 🔥 AQUI
+      acompanhamentos
     });
   }
 
@@ -891,13 +894,9 @@ function changeQty(index, delta) { const item = state.cart[index]; if (!item) re
 function cartSubtotal() {
   return state.cart.reduce((total, item) => {
 
-    let itemTotal = Number(item.price) * item.qty;
-
-    if (item.acompanhamentos) {
-      item.acompanhamentos.forEach(a => {
-        itemTotal += (a.preco * a.qtd);
-      });
-    }
+    const precoAcomp = (item.acompanhamentos || []).reduce((s, a) => s + (a.preco * a.qtd), 0);
+    const precoUnitario = Number(item.price) + precoAcomp;
+    const itemTotal = precoUnitario * item.qty;
 
     return total + itemTotal;
 
