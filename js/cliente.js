@@ -528,9 +528,12 @@ if (fulfillPickup && fulfillDelivery) {
 
 // ================= RENDERIZAR MENU =================
 function renderItems() {
-  const originalScroll = window.scrollY; // 🔥 salva posição da tela
+  const originalScroll = window.scrollY;
   const existingSections = document.querySelectorAll('.category-section');
-  if (existingSections.length > 0) return;
+  if (existingSections.length > 0) {
+    setupScrollSpy(); // ✅ garante que o spy está ativo mesmo sem re-renderizar
+    return;
+  }
 
   grid.innerHTML = '';
   const term = state.filters.q ? state.filters.q.toLowerCase() : '';
@@ -600,7 +603,7 @@ function setupScrollSpy() {
       let idAtual = '';
 
       // Criamos uma "linha de corte" invisível, 150px abaixo do topo (para ignorar o cabeçalho)
-      const linhaDeCorte = window.scrollY + 150;
+      const linhaDeCorte = window.scrollY + (window.innerHeight / 3);
 
       // Verifica matematicamente em qual categoria a linha de corte está encostando
       sections.forEach(section => {
