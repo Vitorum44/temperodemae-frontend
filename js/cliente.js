@@ -1698,7 +1698,15 @@ searchInput?.addEventListener('input', debounce(() => {
   renderItems();
 }, 300));
 
-window.addEventListener('DOMContentLoaded', loadData);
+window.addEventListener('DOMContentLoaded', () => {
+  loadData();
+
+  // 🔥 GARANTE QUE COMEÇA FECHADO
+  const modal = document.getElementById("product-details-modal");
+  if (modal) {
+    modal.setAttribute("aria-hidden", "true");
+  }
+});
 
 /* =====================================
    LOGOUT MOBILE CORRIGIDO DEFINITIVO
