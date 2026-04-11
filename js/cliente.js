@@ -817,18 +817,14 @@ function updateModalTotal() {
 
   if (!state.selectedItem) return;
 
-  // 🔥 pega TODOS os principais (tamanho)
-  const principais = acompanhamentosSelecionados.filter(a => a.grupo === "principal");
-
   let total = 0;
 
-  // 🔥 soma os principais corretamente
-  principais.forEach(p => {
-    total += p.preco * p.qtd;
-  });
+  // 🔥 usa o tamanho como base
+  const principal = acompanhamentosSelecionados.find(a => a.grupo === "principal");
 
-  // 🔥 fallback se não escolher tamanho
-  if (total === 0) {
+  if (principal) {
+    total = principal.preco * state.selectedQty;
+  } else {
     total = Number(state.selectedItem.price) * state.selectedQty;
   }
 
