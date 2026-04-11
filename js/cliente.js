@@ -1203,13 +1203,23 @@ function updateTrackUI(order) {
         ? `<div style="font-size:12px; color:#d62300;">⚠️ ${i.obs}</div>`
         : "";
 
+      const acompList = (i.acompanhamentos && i.acompanhamentos.length > 0)
+        ? i.acompanhamentos.map(a =>
+            `<div style="font-size:11px; color:#6b7280;">• ${a.qtd}x ${a.nome}${a.preco ? ` (+${brl(a.preco * a.qtd)})` : ''}</div>`
+          ).join('')
+        : "";
+
+      const precoAcomp = (i.acompanhamentos || []).reduce((s, a) => s + (a.preco * a.qtd), 0);
+      const precoTotal = (Number(i.price) + precoAcomp) * i.qty;
+
       return `
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
             <strong>${i.qty}x</strong> ${i.name}
+            ${acompList}
             ${obs}
           </div>
-          <div style="white-space:nowrap;">${brl(i.price * i.qty)}</div>
+          <div style="white-space:nowrap;">${brl(precoTotal)}</div>
         </div>
       `;
     }).join("");
