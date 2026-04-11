@@ -756,44 +756,48 @@ function renderAcompanhamentos(grupos) {
 
       plus.onclick = () => {
 
-        // 🔥 valida MAX
-        const totalGrupo = Array.from(div.querySelectorAll(".qtd"))
-          .reduce((s, el) => s + Number(el.innerText), 0);
+  // 🔥 valida MAX
+  const totalGrupo = Array.from(div.querySelectorAll(".qtd"))
+    .reduce((s, el) => s + Number(el.innerText), 0);
 
-        if (g.max && totalGrupo >= g.max) {
-          alert(`Máximo de ${g.max} opções`);
-          return;
-        }
+  if (g.max && totalGrupo >= g.max) {
+    alert(`Máximo de ${g.max} opções`);
+    return;
+  }
 
-        qtd++;
-        qtdEl.innerText = qtd;
+  qtd++;
+  qtdEl.innerText = qtd;
 
-        const existente = acompanhamentosSelecionados.find(a => a.nome === nome);
+  const existente = acompanhamentosSelecionados.find(a => a.nome === nome);
 
-        if (existente) {
-          existente.qtd = qtd;
-        } else {
-          acompanhamentosSelecionados.push({ nome, preco, qtd });
-        }
-      };
+  if (existente) {
+    existente.qtd = qtd;
+  } else {
+    acompanhamentosSelecionados.push({ nome, preco, qtd, grupo: g.nome });
+  }
 
-      minus.onclick = () => {
-        if (qtd > 0) {
-          qtd--;
-          qtdEl.innerText = qtd;
+  updateModalTotal(); // 🔥 ESSENCIAL
+};
 
-          const existente = acompanhamentosSelecionados.find(a => a.nome === nome);
+minus.onclick = () => {
+  if (qtd > 0) {
+    qtd--;
+    qtdEl.innerText = qtd;
 
-          if (existente) {
-            existente.qtd = qtd;
+    const existente = acompanhamentosSelecionados.find(a => a.nome === nome);
 
-            if (qtd === 0) {
-              acompanhamentosSelecionados =
-                acompanhamentosSelecionados.filter(a => a.nome !== nome);
-            }
-          }
-        }
-      };
+    if (existente) {
+      existente.qtd = qtd;
+
+      if (qtd === 0) {
+        acompanhamentosSelecionados =
+          acompanhamentosSelecionados.filter(a => a.nome !== nome);
+      }
+    }
+
+    updateModalTotal(); // 🔥 ESSENCIAL
+  }
+};
 
     });
 
@@ -804,7 +808,18 @@ function renderAcompanhamentos(grupos) {
 }
 
 function updateModalTotal() {
-  pdTotalBtn.textContent = brl(Number(state.selectedItem.price) * state.selectedQty);
+
+  if (!state.selectedItem) return;
+
+  let total = Number(state.selectedItem.price) * state.selectedQty;
+
+  // 🔥 soma acompanhamentos
+  acompanhamentosSelecionados.forEach(a => {
+    total += (a.preco * a.qtd);
+  });
+
+  pdPrice.textContent = brl(total);       // preço grande
+  pdTotalBtn.textContent = brl(total);    // botão
 }
 
 if (pdClose && pdModal) {
@@ -817,7 +832,7 @@ pdPlus?.addEventListener('click', () => { state.selectedQty++; pdQty.textContent
 pdMinus?.addEventListener('click', () => { if (state.selectedQty > 1) { state.selectedQty--; pdQty.textContent = state.selectedQty; updateModalTotal(); } });
 pdAddBtn?.addEventListener('click', () => {
 
-  const selecionados = acompanhamentosSelecionados;
+ const selecionados = structuredClone(acompanhamentosSelecionados);
 
   addToCart(
     state.selectedItem,
@@ -885,7 +900,21 @@ function removeFromCart(index) { state.cart.splice(index, 1); saveCart(); update
 
 function changeQty(index, delta) { const item = state.cart[index]; if (!item) return; item.qty += delta; if (item.qty <= 0) state.cart.splice(index, 1); saveCart(); updateCartUI(); }
 
-function cartSubtotal() { return state.cart.reduce((s, i) => s + Number(i.price) * i.qty, 0); }
+function cartSubtotal() {
+  return state.cart.reduce((total, item) => {
+
+    let itemTotal = Number(item.price) * item.qty;
+
+    if (item.acompanhamentos) {
+      item.acompanhamentos.forEach(a => {
+        itemTotal += (a.preco * a.qtd);
+      });
+    }
+
+    return total + itemTotal;
+
+  }, 0);
+}
 
 function updateCartUI() {
   if (!viewFee || !btnFinalize || !cartList) return;
