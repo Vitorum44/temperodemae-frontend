@@ -819,7 +819,7 @@ function updateModalTotal() {
 
   let total = 0;
 
-  // 🔥 soma TODOS os principais (300ml, 500ml, etc)
+  // 🔥 PRINCIPAL
   const principais = acompanhamentosSelecionados.filter(a => a.grupo === "principal");
 
   if (principais.length > 0) {
@@ -830,10 +830,10 @@ function updateModalTotal() {
     total = Number(state.selectedItem.price) * state.selectedQty;
   }
 
-  // 🔥 soma extras
+  // 🔥 EXTRAS (AGORA CORRETO)
   acompanhamentosSelecionados.forEach(a => {
     if (a.grupo !== "principal") {
-      total += (a.preco * a.qtd);
+      total += (a.preco * a.qtd * state.selectedQty);
     }
   });
 
