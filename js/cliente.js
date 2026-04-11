@@ -749,28 +749,28 @@ function renderAcompanhamentos(grupos) {
       }
 
       plus.addEventListener("click", (e) => {
-        e.stopPropagation();
+    e.stopPropagation();
 
-        const totalGrupo = acompanhamentosSelecionados
-          .filter(a => a.grupo === tipoGrupo)
-          .reduce((s, a) => s + a.qtd, 0);
+    const totalGrupo = acompanhamentosSelecionados
+      .filter(a => a.grupo === tipoGrupo)
+      .reduce((s, a) => s + a.qtd, 0);
 
-        // ✅ usa maxGrupo (fixo) em vez de g.max (closure do forEach externo)
-        if (maxGrupo && totalGrupo >= maxGrupo) {
-          alert(`Máximo de ${maxGrupo} opções`);
-          return;
-        }
+    if (maxGrupo && totalGrupo >= maxGrupo) {
+      alert(`Máximo de ${maxGrupo} opções`);
+      return;
+    }
 
-        let existente = acompanhamentosSelecionados.find(a => a.id === id);
-        if (existente) {
-          existente.qtd++;
-        } else {
-          existente = { id, nome, preco, qtd: 1, grupo: tipoGrupo };
-          acompanhamentosSelecionados.push(existente);
-        }
-        qtdEl.innerText = existente.qtd;
-        updateModalTotal();
-      });
+    let existente = acompanhamentosSelecionados.find(a => a.id === id);
+    if (existente) {
+      existente.qtd++;
+      existente.preco = preco; // ✅ restaura o preço real ao incrementar
+    } else {
+      existente = { id, nome, preco, qtd: 1, grupo: tipoGrupo };
+      acompanhamentosSelecionados.push(existente);
+    }
+    qtdEl.innerText = existente.qtd;
+    updateModalTotal();
+  });
 
       minus.addEventListener("click", (e) => {
         e.stopPropagation();
