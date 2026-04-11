@@ -1117,7 +1117,8 @@ orderForm?.addEventListener('submit', async (e) => {
       qty: i.qty,
       price: +i.price,
       obs: i.obs,
-      image: i.image
+      image: i.image,
+      acompanhamentos: i.acompanhamentos || [] // ✅ inclui acompanhamentos no pedido
     })),
     subtotal: cartSubtotal(),
     deliveryFee: fulfillment === 'pickup' ? 0 : state.calculatedFee,
