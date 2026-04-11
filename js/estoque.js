@@ -17,6 +17,20 @@ let state = {
 let editingProductId = null;
 let selectedImageFile = null;
 
+let acompanhamentosSelecionados = []
+
+function calcularTotal(item, qtd) {
+
+  let total = Number(item.price) * qtd;
+
+  // 🔥 soma acompanhamentos
+  acompanhamentosSelecionados.forEach(a => {
+    total += (a.preco * a.qtd);
+  });
+
+  return total;
+}
+
 const $ = id => document.getElementById(id);
 
 /* ================= API ================= */
