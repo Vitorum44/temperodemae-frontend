@@ -1456,7 +1456,7 @@ btnSendCode?.addEventListener('click', async () => {
     const step2 = document.getElementById('rec-step-2');
     if (step1) step1.style.display = 'none';
     if (step2) step2.style.display = 'block';
-    
+
   } catch (err) {
     console.error("ERRO:", err); // ✅ adicione isso
     recFb.style.color = 'red';
@@ -1465,25 +1465,6 @@ btnSendCode?.addEventListener('click', async () => {
 });
 
 
-// ✅ ADICIONE AQUI EMBAIXO:
-document.getElementById('btn-confirm-code')?.addEventListener('click', async () => {
-  const phone = recPhoneInput.value.trim();
-  const codigo = document.getElementById('rec-code-input').value.trim();
-  const newPassword = document.getElementById('rec-new-password').value.trim();
-
-  if (!codigo || !newPassword) { recFb.style.color = 'red'; recFb.textContent = "Preencha todos os campos."; return; }
-  if (newPassword.length < 6) { recFb.style.color = 'red'; recFb.textContent = "Senha deve ter no mínimo 6 caracteres."; return; }
-
-  try {
-    await apiSend('/auth/verify-code', 'POST', { phone, codigo, newPassword });
-    recFb.style.color = 'green';
-    recFb.textContent = "Senha alterada com sucesso! Faça login.";
-    setTimeout(() => setAuthMode('login'), 2000);
-  } catch (err) {
-    recFb.style.color = 'red';
-    recFb.textContent = err.message || "Erro ao verificar código.";
-  }
-});
 
 // ================= AUTH =================
 function setAuthMode(mode) {
@@ -1808,16 +1789,6 @@ searchInput?.addEventListener('input', debounce(() => {
   renderItems();
 }, 300));
 
-window.addEventListener('DOMContentLoaded', () => {
-  loadData();
-
-  // 🔥 GARANTE QUE COMEÇA FECHADO
-  const modal = document.getElementById("product-details-modal");
-  if (modal) {
-    modal.setAttribute("aria-hidden", "true");
-  }
-});
-
 /* =====================================
    LOGOUT MOBILE CORRIGIDO DEFINITIVO
 ===================================== */
@@ -1859,9 +1830,45 @@ window.openAuthModal = openAuthModal;
 window.state = state;
 window.apiGet = apiGet;
 
-document.addEventListener("DOMContentLoaded", () => {
+window.addEventListener('DOMContentLoaded', () => {
+
+  // Carrega tudo
+  loadData();
+
+  // Fecha modal de produto
   const modal = document.getElementById("product-details-modal");
-  if (modal) {
-    modal.setAttribute("aria-hidden", "true");
-  }
+  if (modal) modal.setAttribute("aria-hidden", "true");
+
+  // Botão confirmar código de recuperação de senha
+  document.getElementById('btn-confirm-code')?.addEventListener('click', async () => {
+    const phone = recPhoneInput?.value?.trim();
+    const codigo = document.getElementById('rec-code-input')?.value?.trim();
+    const newPassword = document.getElementById('rec-new-password')?.value?.trim();
+
+    if (!codigo || !newPassword) {
+      if (recFb) { recFb.style.color = 'red'; recFb.textContent = "Preencha todos os campos."; }
+      return;
+    }
+    if (newPassword.length < 6) {
+      if (recFb) { recFb.style.color = 'red'; recFb.textContent = "Senha deve ter no mínimo 6 caracteres."; }
+      return;
+    }
+
+    const btn = document.getElementById('btn-confirm-code');
+    const originalText = btn.textContent;
+    btn.textContent = "Verificando...";
+    btn.disabled = true;
+
+    try {
+      await apiSend('/auth/verify-code', 'POST', { phone, codigo, newPassword });
+      if (recFb) { recFb.style.color = 'green'; recFb.textContent = "✅ Senha alterada! Faça login."; }
+      setTimeout(() => setAuthMode('login'), 2000);
+    } catch (err) {
+      if (recFb) { recFb.style.color = 'red'; recFb.textContent = err.message || "Código incorreto ou expirado."; }
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  });
+
 });
