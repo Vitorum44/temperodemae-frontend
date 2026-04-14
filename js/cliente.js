@@ -1454,7 +1454,9 @@ btnSendCode?.addEventListener('click', async () => {
 
     // ✅ mostra etapa 2 — digitar código e nova senha
     recStep1.style.display = 'none';
-    document.getElementById('rec-step-2').style.display = 'block';
+    const step2 = document.getElementById('rec-step-2');
+    if (step2) step2.style.display = 'block';
+    
   } catch (err) {
     recFb.style.color = 'red';
     recFb.textContent = err.message || "Erro ao enviar código.";
@@ -1463,11 +1465,11 @@ btnSendCode?.addEventListener('click', async () => {
 
 
 // ✅ ADICIONE AQUI EMBAIXO:
-document.getElementById('btn-verify-code')?.addEventListener('click', async () => {
+document.getElementById('btn-confirm-code')?.addEventListener('click', async () => {
   const phone = recPhoneInput.value.trim();
-  const codigo = document.getElementById('rec-token-input').value.trim();
-  const newPassword = document.getElementById('rec-newpass-input').value.trim();
-  
+  const codigo = document.getElementById('rec-code-input').value.trim();
+  const newPassword = document.getElementById('rec-new-password').value.trim();
+
   if (!codigo || !newPassword) { recFb.style.color = 'red'; recFb.textContent = "Preencha todos os campos."; return; }
   if (newPassword.length < 6) { recFb.style.color = 'red'; recFb.textContent = "Senha deve ter no mínimo 6 caracteres."; return; }
 
@@ -1487,7 +1489,15 @@ function setAuthMode(mode) {
   formLogin.style.display = 'none'; formSignup.style.display = 'none'; recFlow.style.display = 'none'; authTabs.style.display = 'flex'; authTitle.textContent = "Acesse sua conta";
   if (mode === 'login') { formLogin.style.display = 'block'; $('#tab-login').classList.add('primary'); $('#tab-signup').classList.remove('primary'); }
   else if (mode === 'signup') { formSignup.style.display = 'block'; $('#tab-signup').classList.add('primary'); $('#tab-login').classList.remove('primary'); }
-  else if (mode === 'recovery') { authTabs.style.display = 'none'; authTitle.textContent = "Recuperar Senha"; recFlow.style.display = 'block'; recStep1.style.display = 'block'; recStep2.style.display = 'none'; recFb.textContent = ''; }
+  else if (mode === 'recovery') {
+    authTabs.style.display = 'none';
+    authTitle.textContent = "Recuperar Senha";
+    recFlow.style.display = 'block';
+    recStep1.style.display = 'block';
+    const recStep2 = document.getElementById('rec-step-2');
+    if (recStep2) recStep2.style.display = 'none';
+    recFb.textContent = '';
+  }
 }
 
 function openAuthModal(t = 'login') { authModal.setAttribute('aria-hidden', 'false'); setAuthMode(t); }
