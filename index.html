@@ -753,7 +753,13 @@
 
 
           if (!orders.length) {
-            ordersList.innerHTML = "<p style='color:#666'>Você ainda não fez pedidos.</p>";
+            ordersList.innerHTML = `
+  <div class="empty-state">
+    <div class="icon">🍽️</div>
+    <p>Você ainda não fez nenhum pedido.</p>
+    <p style="font-size:13px; margin-top:4px;">Que tal pedir agora? 😋</p>
+  </div>
+`;
             return;
           }
 
