@@ -242,7 +242,7 @@ Obrigado pela preferência.`;
             // Pega o valor do troco e limpa o "Troco para" duplicado (se existir)
             let trocoValor = order.customer.change || 'Não informado';
             trocoValor = trocoValor.replace(/troco para:?/i, '').trim();
-            
+
             pagamento = `Dinheiro na entrega\nTroco para: ${trocoValor}`;
         } else if (pm === 'pix') {
             pagamento = 'PIX';
@@ -332,18 +332,30 @@ function renderOrders(orders) {
 
         const itemsHtml = (order.items || []).map(i => {
             const imgUrl = i.image || 'https://placehold.co/60x60?text=Foto';
+
+            // Acompanhamentos
+            const acompHtml = (i.acompanhamentos && i.acompanhamentos.length > 0)
+                ? i.acompanhamentos.map(a => {
+                    const precoExtra = a.grupo === 'principal'
+                        ? (a.qtd > 1 ? ` (+R$ ${(Number(i.price) * (a.qtd - 1)).toFixed(2)})` : '')
+                        : (a.preco ? ` (+R$ ${(a.preco * a.qtd).toFixed(2)})` : '');
+                    return `<div class="item-acomp">• ${a.qtd}x ${a.nome}${precoExtra}</div>`;
+                }).join('')
+                : '';
+
             return `
-            <div class="order-item-line">
-                <img src="${imgUrl}" class="item-thumb" alt="foto">
-                <div class="item-details">
-                    <div class="item-header">
-                        <span class="item-qty">${i.qty}x</span>
-                        <span class="item-name">${i.name}</span>
-                    </div>
-                    ${i.obs ? `<div class="item-obs">\u{26A0} ${i.obs}</div>` : ''}
-                </div>
-                <strong class="item-price">R$ ${(i.price * i.qty).toFixed(2)}</strong>
-            </div>`;
+    <div class="order-item-line">
+        <img src="${imgUrl}" class="item-thumb" alt="foto">
+        <div class="item-details">
+            <div class="item-header">
+                <span class="item-qty">${i.qty}x</span>
+                <span class="item-name">${i.name}</span>
+            </div>
+            ${acompHtml}
+            ${i.obs ? `<div class="item-obs">⚠️ ${i.obs}</div>` : ''}
+        </div>
+        <strong class="item-price">R$ ${(i.price * i.qty).toFixed(2)}</strong>
+    </div>`;
         }).join('');
 
         const statusMap = {
@@ -406,10 +418,10 @@ function renderOrders(orders) {
             }
 
         } else if (order.status === 'cancelado') {
-  buttons += `<button class="btn btn-reactivate" onclick="updateStatus(${order.id}, 'novo')">
+            buttons += `<button class="btn btn-reactivate" onclick="updateStatus(${order.id}, 'novo')">
     ⚡ REATIVAR PEDIDO
   </button>`;
-}
+        }
 
 
 
