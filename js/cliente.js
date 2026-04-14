@@ -1441,39 +1441,46 @@ function stopTracking() {
 // ================= RECUPERAÇÃO DE SENHA (LINK MÁGICO) =================
 
 btnSendCode?.addEventListener('click', async () => {
-
-  const email = recPhoneInput.value.trim();
-
-  if (!email) {
-    recFb.style.color = 'red';
-    recFb.textContent = "Informe seu e-mail cadastrado.";
-    return;
-  }
+  const phone = recPhoneInput.value.trim();
+  if (!phone) { recFb.style.color = 'red'; recFb.textContent = "Informe seu WhatsApp."; return; }
 
   recFb.style.color = '#666';
-  recFb.textContent = "Enviando link de recuperação...";
+  recFb.textContent = "Enviando código...";
 
   try {
-
-    await apiSend('/auth/forgot-password', 'POST', {
-      email
-    });
-
+    await apiSend('/auth/send-code', 'POST', { phone });
     recFb.style.color = 'green';
-    recFb.textContent = "Enviamos um link de redefinição para seu e-mail.";
+    recFb.textContent = "Código enviado para seu e-mail!";
 
+    // ✅ mostra etapa 2 — digitar código e nova senha
+    recStep1.style.display = 'none';
+    document.getElementById('rec-step-2').style.display = 'block';
   } catch (err) {
-
     recFb.style.color = 'red';
-    recFb.textContent = err.message || "Erro ao enviar recuperação.";
-
+    recFb.textContent = err.message || "Erro ao enviar código.";
   }
-
 });
 
 
+// ✅ ADICIONE AQUI EMBAIXO:
+document.getElementById('btn-confirm-code')?.addEventListener('click', async () => {
+  const phone = recPhoneInput.value.trim();
+  const codigo = document.getElementById('rec-code-input').value.trim();
+  const newPassword = document.getElementById('rec-new-password').value.trim();
 
+  if (!codigo || !newPassword) { recFb.style.color = 'red'; recFb.textContent = "Preencha todos os campos."; return; }
+  if (newPassword.length < 6) { recFb.style.color = 'red'; recFb.textContent = "Senha deve ter no mínimo 6 caracteres."; return; }
 
+  try {
+    await apiSend('/auth/verify-code', 'POST', { phone, codigo, newPassword });
+    recFb.style.color = 'green';
+    recFb.textContent = "Senha alterada com sucesso! Faça login.";
+    setTimeout(() => setAuthMode('login'), 2000);
+  } catch (err) {
+    recFb.style.color = 'red';
+    recFb.textContent = err.message || "Erro ao verificar código.";
+  }
+});
 
 // ================= AUTH =================
 function setAuthMode(mode) {
@@ -1567,7 +1574,7 @@ function setUser(u) {
     if (setName) setName.value = u.name || '';
     if (setPhone) setPhone.value = u.phone || '';
     if (setEmail) setEmail.value = u.email || '';
-    
+
     // 👉 AQUI A MÁGICA: Se veio endereço do banco ou cache, calcula AGORA.
     if (inputAddress.value) {
       console.log("📍 Usuário logado: Forçando cálculo inicial de frete...");
