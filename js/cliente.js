@@ -1463,11 +1463,11 @@ btnSendCode?.addEventListener('click', async () => {
 
 
 // ✅ ADICIONE AQUI EMBAIXO:
-document.getElementById('btn-confirm-code')?.addEventListener('click', async () => {
+document.getElementById('btn-verify-code')?.addEventListener('click', async () => {
   const phone = recPhoneInput.value.trim();
-  const codigo = document.getElementById('rec-code-input').value.trim();
-  const newPassword = document.getElementById('rec-new-password').value.trim();
-
+  const codigo = document.getElementById('rec-token-input').value.trim();
+  const newPassword = document.getElementById('rec-newpass-input').value.trim();
+  
   if (!codigo || !newPassword) { recFb.style.color = 'red'; recFb.textContent = "Preencha todos os campos."; return; }
   if (newPassword.length < 6) { recFb.style.color = 'red'; recFb.textContent = "Senha deve ter no mínimo 6 caracteres."; return; }
 
