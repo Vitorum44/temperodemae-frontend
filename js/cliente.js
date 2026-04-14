@@ -1829,6 +1829,7 @@ pmMobileLogout?.addEventListener('click', () => {
 window.openAuthModal = openAuthModal;
 window.state = state;
 window.apiGet = apiGet;
+window.updateCartUI = updateCartUI;
 
 window.addEventListener('DOMContentLoaded', () => {
 
