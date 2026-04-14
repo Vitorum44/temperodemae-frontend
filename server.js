@@ -387,29 +387,19 @@ app.post("/auth/request-reset", async (req, res) => {
     );
 
     // 5️⃣ Envia e-mail usando RESEND
-    await resend.emails.send({
-      from: "Tempero de Mãe <onboarding@resend.dev>",
+    await transporter.sendMail({
+      from: `"Tempero de Mãe" <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: "Recuperação de Senha - Tempero de Mãe",
       html: `
         <div style="font-family:sans-serif;padding:20px;color:#111">
           <h2>Olá, ${user.name}! 🍔</h2>
-
           <p>Você solicitou recuperação de senha no nosso site.</p>
-
           <p>Sua nova senha provisória é:</p>
-
           <h1 style="color:#d62300;font-size:32px">${novaSenha}</h1>
-
-          <p>
-            Faça login usando essa senha e depois altere no seu perfil se quiser.
-          </p>
-
+          <p>Faça login usando essa senha e depois altere no seu perfil se quiser.</p>
           <hr style="margin:20px 0">
-
-          <small style="color:#777">
-            Tempero de Mãe Delivery
-          </small>
+          <small style="color:#777">Tempero de Mãe Delivery</small>
         </div>
       `
     });
