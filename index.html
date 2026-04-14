@@ -113,10 +113,10 @@
   </main>
 
   <!-- PÁGINA PEDIDOS (fora do menu) -->
-<section id="orders-page" style="display:none; padding:20px 16px 100px;">
-  <h2 style="margin-bottom:4px; font-size:22px;">Histórico</h2>
-  <div id="orders-list"></div>
-</section>
+  <section id="orders-page" style="display:none; padding:20px 16px 100px;">
+    <h2 style="margin-bottom:4px; font-size:22px;">Histórico</h2>
+    <div id="orders-list"></div>
+  </section>
 
   <aside id="carrinho" aria-hidden="true">
     <div class="modal-dialog">
@@ -530,8 +530,16 @@
     </div>
   </footer>
 
-  <div id="float-cart-btn" class="floating-bubble cart-mode" hidden><span class="bubble-icon">🛍️</span><span
-      id="float-cart-count" class="bubble-counter">0</span></div>
+  <div id="float-cart-btn" class="floating-bubble cart-mode" hidden>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"
+      stroke-linejoin="round">
+      <circle cx="9" cy="21" r="1" />
+      <circle cx="20" cy="21" r="1" />
+      <path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61H19a2 2 0 001.99-1.72l1.5-9.28H5.72" />
+    </svg>
+    <span id="float-cart-count" class="bubble-counter">0</span>
+  </div>
+
 
   <div id="tracking-bubble" class="floating-bubble" hidden><span class="bubble-icon">🛵</span></div>
 
@@ -764,38 +772,38 @@
           }
 
           const grupos = {};
-orders.forEach(order => {
-  const data = new Date(order.created_at);
-  const chave = data.toLocaleDateString('pt-BR', {
-    weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric'
-  });
-  if (!grupos[chave]) grupos[chave] = [];
-  grupos[chave].push(order);
-});
+          orders.forEach(order => {
+            const data = new Date(order.created_at);
+            const chave = data.toLocaleDateString('pt-BR', {
+              weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric'
+            });
+            if (!grupos[chave]) grupos[chave] = [];
+            grupos[chave].push(order);
+          });
 
-ordersList.innerHTML = "";
+          ordersList.innerHTML = "";
 
-const statusMap = {
-  'novo': { label: 'Recebido', color: '#f59e0b', icon: '🟡' },
-  'aguardando_pagamento': { label: 'Aguardando Pix', color: '#f59e0b', icon: '⏳' },
-  'em_preparo': { label: 'Preparando', color: '#3b82f6', icon: '🔥' },
-  'saiu_entrega': { label: 'Saiu para entrega', color: '#8b5cf6', icon: '🛵' },
-  'entregue': { label: 'Pedido concluído', color: '#10b981', icon: '✅' },
-  'cancelado': { label: 'Cancelado', color: '#ef4444', icon: '❌' }
-};
+          const statusMap = {
+            'novo': { label: 'Recebido', color: '#f59e0b', icon: '🟡' },
+            'aguardando_pagamento': { label: 'Aguardando Pix', color: '#f59e0b', icon: '⏳' },
+            'em_preparo': { label: 'Preparando', color: '#3b82f6', icon: '🔥' },
+            'saiu_entrega': { label: 'Saiu para entrega', color: '#8b5cf6', icon: '🛵' },
+            'entregue': { label: 'Pedido concluído', color: '#10b981', icon: '✅' },
+            'cancelado': { label: 'Cancelado', color: '#ef4444', icon: '❌' }
+          };
 
-Object.entries(grupos).forEach(([data, pedidos]) => {
-  const dataLabel = document.createElement('p');
-  dataLabel.style.cssText = 'font-size:13px; color:#888; margin:16px 0 8px; font-weight:600; text-transform:capitalize;';
-  dataLabel.textContent = data;
-  ordersList.appendChild(dataLabel);
+          Object.entries(grupos).forEach(([data, pedidos]) => {
+            const dataLabel = document.createElement('p');
+            dataLabel.style.cssText = 'font-size:13px; color:#888; margin:16px 0 8px; font-weight:600; text-transform:capitalize;';
+            dataLabel.textContent = data;
+            ordersList.appendChild(dataLabel);
 
-  pedidos.forEach(order => {
-    const st = statusMap[order.status] || { label: order.status, color: '#888', icon: '•' };
-    const total = (order.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            pedidos.forEach(order => {
+              const st = statusMap[order.status] || { label: order.status, color: '#888', icon: '•' };
+              const total = (order.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    const card = document.createElement('div');
-    card.style.cssText = `
+              const card = document.createElement('div');
+              card.style.cssText = `
       background: #fff;
       border-radius: 16px;
       padding: 16px;
@@ -804,7 +812,7 @@ Object.entries(grupos).forEach(([data, pedidos]) => {
       border: 1px solid #f0f0f0;
     `;
 
-    card.innerHTML = `
+              card.innerHTML = `
   <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #f5f5f5;">
     <div style="width:44px; height:44px; border-radius:50%; background:#1f1f1f; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
       🍔
@@ -824,11 +832,11 @@ Object.entries(grupos).forEach(([data, pedidos]) => {
       ${order.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join('')}
     </div>
     ${order.items[0]?.image
-      ? `<img src="${order.items[0].image}"
+                  ? `<img src="${order.items[0].image}"
             onerror="this.src='https://placehold.co/60x60?text=🍔'"
             style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;">`
-      : `<div style="font-size:22px; opacity:0.3;">🍽️</div>`
-    }
+                  : `<div style="font-size:22px; opacity:0.3;">🍽️</div>`
+                }
   </div>
 
   <div style="display:flex; justify-content:flex-end; margin-top:14px; padding-top:12px; border-top:1px solid #f5f5f5;">
@@ -840,44 +848,44 @@ Object.entries(grupos).forEach(([data, pedidos]) => {
   </div>
 `;
 
-// Funcionalidade do botão "Pedir novamente"
-card.querySelector('.btn-pedir-novamente').addEventListener('click', () => {
-  order.items.forEach(item => {
-    window.state.cart.push({
-      id: item.itemId || item.id,
-      name: item.name,
-      price: Number(item.price),
-      image: item.image || '',
-      qty: item.qty,
-      obs: item.obs || '',
-      acompanhamentos: item.acompanhamentos || []
-    });
-  });
+              // Funcionalidade do botão "Pedir novamente"
+              card.querySelector('.btn-pedir-novamente').addEventListener('click', () => {
+                order.items.forEach(item => {
+                  window.state.cart.push({
+                    id: item.itemId || item.id,
+                    name: item.name,
+                    price: Number(item.price),
+                    image: item.image || '',
+                    qty: item.qty,
+                    obs: item.obs || '',
+                    acompanhamentos: item.acompanhamentos || []
+                  });
+                });
 
-  localStorage.setItem('cart', JSON.stringify(window.state.cart));
+                localStorage.setItem('cart', JSON.stringify(window.state.cart));
 
-// Atualiza visual do carrinho
-if (typeof window.updateCartUI === 'function') window.updateCartUI();
+                // Atualiza visual do carrinho
+                if (typeof window.updateCartUI === 'function') window.updateCartUI();
 
-// Fecha histórico e abre carrinho
-ordersPage.style.display = 'none';
+                // Fecha histórico e abre carrinho
+                ordersPage.style.display = 'none';
 
-  // Fecha histórico e abre carrinho
-  ordersPage.style.display = 'none';
-  menuPage.style.display = 'block';
-  document.getElementById('carrinho').setAttribute('aria-hidden', 'false');
+                // Fecha histórico e abre carrinho
+                ordersPage.style.display = 'none';
+                menuPage.style.display = 'block';
+                document.getElementById('carrinho').setAttribute('aria-hidden', 'false');
 
-  // Atualiza o contador do carrinho
-  if (window.state) {
-    const totalQty = window.state.cart.reduce((s, i) => s + i.qty, 0);
-    const cartCount = document.getElementById('cart-count');
-    if (cartCount) cartCount.textContent = totalQty;
-  }
-});
+                // Atualiza o contador do carrinho
+                if (window.state) {
+                  const totalQty = window.state.cart.reduce((s, i) => s + i.qty, 0);
+                  const cartCount = document.getElementById('cart-count');
+                  if (cartCount) cartCount.textContent = totalQty;
+                }
+              });
 
-    ordersList.appendChild(card);
-  });
-});
+              ordersList.appendChild(card);
+            });
+          });
 
         } catch (err) {
           ordersList.innerHTML = "Erro ao carregar pedidos.";
