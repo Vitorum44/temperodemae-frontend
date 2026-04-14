@@ -1121,11 +1121,13 @@ max-height: 95vh;
 .floating-bubble.cart-mode {
   background: #d62300;
   color: #fff;
-  border: 2px solid #fff;
+  border: none;
   bottom: 20px;
   right: 20px;
   z-index: 9990;
   display: flex;
+  border-radius: 18px;
+  box-shadow: 0 6px 20px rgba(214, 35, 0, 0.4);
 }
 
 .bubble-counter {
