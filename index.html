@@ -113,10 +113,10 @@
   </main>
 
   <!-- PÁGINA PEDIDOS (fora do menu) -->
-  <section id="orders-page" style="display:none; padding:20px;">
-    <h2 style="margin-bottom:20px;">Histórico</h2>
-    <div id="orders-list"></div>
-  </section>
+<section id="orders-page" style="display:none; padding:20px 16px 100px;">
+  <h2 style="margin-bottom:4px; font-size:22px;">Histórico</h2>
+  <div id="orders-list"></div>
+</section>
 
   <aside id="carrinho" aria-hidden="true">
     <div class="modal-dialog">
@@ -757,31 +757,82 @@
             return;
           }
 
-          ordersList.innerHTML = "";
+          const grupos = {};
+orders.forEach(order => {
+  const data = new Date(order.created_at);
+  const chave = data.toLocaleDateString('pt-BR', {
+    weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric'
+  });
+  if (!grupos[chave]) grupos[chave] = [];
+  grupos[chave].push(order);
+});
 
-          orders.forEach(order => {
-            const date = new Date(order.created_at).toLocaleDateString('pt-BR');
+ordersList.innerHTML = "";
 
-            const div = document.createElement("div");
-            div.className = "order-card";
+const statusMap = {
+  'novo': { label: 'Recebido', color: '#f59e0b', icon: '🟡' },
+  'aguardando_pagamento': { label: 'Aguardando Pix', color: '#f59e0b', icon: '⏳' },
+  'em_preparo': { label: 'Preparando', color: '#3b82f6', icon: '🔥' },
+  'saiu_entrega': { label: 'Saiu para entrega', color: '#8b5cf6', icon: '🛵' },
+  'entregue': { label: 'Pedido concluído', color: '#10b981', icon: '✅' },
+  'cancelado': { label: 'Cancelado', color: '#ef4444', icon: '❌' }
+};
 
-            div.innerHTML = `
-          <div class="order-header">
-            <strong>Pedido #${order.id}</strong>
-            <span>${date}</span>
+Object.entries(grupos).forEach(([data, pedidos]) => {
+  const dataLabel = document.createElement('p');
+  dataLabel.style.cssText = 'font-size:13px; color:#888; margin:16px 0 8px; font-weight:600; text-transform:capitalize;';
+  dataLabel.textContent = data;
+  ordersList.appendChild(dataLabel);
+
+  pedidos.forEach(order => {
+    const st = statusMap[order.status] || { label: order.status, color: '#888', icon: '•' };
+    const total = (order.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    const card = document.createElement('div');
+    card.style.cssText = `
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid #f0f0f0;
+    `;
+
+    card.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #f5f5f5;">
+        <div style="width:44px; height:44px; border-radius:50%; background:#1f1f1f; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;">
+          🍔
+        </div>
+        <div>
+          <div style="font-weight:700; font-size:15px; color:#111;">Tempero de Mãe</div>
+          <div style="display:flex; align-items:center; gap:5px; margin-top:2px;">
+            <span style="font-size:12px; color:${st.color}; font-weight:600;">${st.label}</span>
+            <span style="font-size:14px;">${st.icon}</span>
           </div>
+        </div>
+        <div style="margin-left:auto; font-weight:800; font-size:15px; color:#111;">${total}</div>
+      </div>
 
-          <div class="order-items">
-            ${order.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join("")}
-          </div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+        <div style="font-size:13px; color:#555; line-height:1.8; flex:1;">
+          ${order.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join('')}
+        </div>
+        <div style="font-size:22px; opacity:0.6;">🍽️</div>
+      </div>
 
-          <div class="order-footer">
-            <strong>${(order.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
-          </div>
-        `;
+      <div style="display:flex; justify-content:space-between; margin-top:14px; padding-top:12px; border-top:1px solid #f5f5f5;">
+        <button style="background:none; border:none; color:#d62300; font-weight:700; font-size:13px; cursor:pointer; padding:0;">
+          Ajuda
+        </button>
+        <button style="background:none; border:none; color:#d62300; font-weight:700; font-size:13px; cursor:pointer; padding:0;">
+          Pedir novamente
+        </button>
+      </div>
+    `;
 
-            ordersList.appendChild(div);
-          });
+    ordersList.appendChild(card);
+  });
+});
 
         } catch (err) {
           ordersList.innerHTML = "Erro ao carregar pedidos.";
