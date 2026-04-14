@@ -1563,6 +1563,11 @@ function setUser(u) {
     if (inputPhone) inputPhone.value = u.phone || '';
     if (inputEmail) inputEmail.value = u.email || '';
 
+    // ✅ preenche também os campos do modal "Meus Dados"
+    if (setName) setName.value = u.name || '';
+    if (setPhone) setPhone.value = u.phone || '';
+    if (setEmail) setEmail.value = u.email || '';
+    
     // 👉 AQUI A MÁGICA: Se veio endereço do banco ou cache, calcula AGORA.
     if (inputAddress.value) {
       console.log("📍 Usuário logado: Forçando cálculo inicial de frete...");
