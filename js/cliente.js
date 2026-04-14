@@ -1452,9 +1452,11 @@ btnSendCode?.addEventListener('click', async () => {
     recFb.style.color = 'green';
     recFb.textContent = "Código enviado para seu e-mail!";
 
-    recStep1.style.display = 'none';
+    const step1 = document.getElementById('rec-step-1');
     const step2 = document.getElementById('rec-step-2');
+    if (step1) step1.style.display = 'none';
     if (step2) step2.style.display = 'block';
+    
   } catch (err) {
     console.error("ERRO:", err); // ✅ adicione isso
     recFb.style.color = 'red';
