@@ -46,10 +46,44 @@ function showToast(message, type = 'success') {
 }
 
 // === INICIALIZAÇÃO ===
-function init() {
-    if (token) {
+async function init() {
+    if (!token) {
+        showLogin();
+        return;
+    }
+
+    try {
+        // Valida o token E verifica se é admin
+        const res = await fetch(`${API_URL}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            // Token inválido ou expirado
+            localStorage.removeItem('token');
+            token = null;
+            showLogin();
+            return;
+        }
+
+        const user = await res.json();
+
+        // Verifica se é admin
+        if (user.role !== 'admin') {
+            localStorage.removeItem('token');
+            token = null;
+            showLogin();
+            loginFb.textContent = "Acesso restrito a administradores.";
+            return;
+        }
+
+        // Token válido e é admin
         showAdminPanel();
-    } else {
+
+    } catch (e) {
+        // Erro de rede — mostra login por segurança
+        localStorage.removeItem('token');
+        token = null;
         showLogin();
     }
 }
