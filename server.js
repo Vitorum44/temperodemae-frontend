@@ -900,8 +900,8 @@ app.post("/auth/send-code", async (req, res) => {
     // Salva código com expiração de 10 minutos
     resetCodes.set(phone, { codigo, userId: user.id, expira: Date.now() + 10 * 60 * 1000 });
 
-    await transporter.sendMail({
-      from: `"Tempero de Mãe" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from: "Tempero de Mãe <onboarding@resend.dev>",
       to: user.email,
       subject: "Código de verificação - Tempero de Mãe",
       html: `
@@ -915,7 +915,7 @@ app.post("/auth/send-code", async (req, res) => {
         </div>
       `
     });
-
+    
     res.json({ success: true });
   } catch (err) {
     console.error(err);
