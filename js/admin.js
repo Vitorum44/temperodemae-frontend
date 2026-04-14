@@ -354,7 +354,16 @@ function renderOrders(orders) {
             ${acompHtml}
             ${i.obs ? `<div class="item-obs">⚠️ ${i.obs}</div>` : ''}
         </div>
-        <strong class="item-price">R$ ${(i.price * i.qty).toFixed(2)}</strong>
+        <strong class="item-price">R$ ${(() => {
+    const extrasTotal = (i.acompanhamentos || []).reduce((s, a) => {
+        if (a.grupo === 'principal') {
+            return s + (Number(i.price) * Math.max(0, a.qtd - 1));
+        } else {
+            return s + (a.preco * a.qtd);
+        }
+    }, 0);
+    return ((Number(i.price) + extrasTotal) * i.qty).toFixed(2);
+})()}</strong>
     </div>`;
         }).join('');
 
