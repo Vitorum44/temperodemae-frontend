@@ -290,11 +290,20 @@ app.get("/settings", async (req, res) => {
 // 🔥 COLE AQUI EMBAIXO 🔥
 app.get("/auth/me", authMiddleware, async (req, res) => {
   try {
-    res.json({
-      id: req.user.id || null,
-      name: req.user.name || "Admin",
-      role: req.user.role
-    });
+    // ✅ busca dados frescos do banco, não do token
+    if (req.user.role === "admin") {
+      return res.json({ id: null, name: "Administrador", role: "admin" });
+    }
+
+    const { rows } = await pool.query(
+      "SELECT id, name, phone, email FROM customers WHERE id = $1 LIMIT 1",
+      [req.user.id]
+    );
+
+    if (!rows[0]) return res.status(404).json({ error: "Usuário não encontrado" });
+
+    res.json({ ...rows[0], role: "customer" });
+
   } catch (err) {
     res.status(500).json({ error: "Erro ao validar usuário" });
   }
