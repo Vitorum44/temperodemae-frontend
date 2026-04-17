@@ -674,17 +674,23 @@ async function openProductModal(item) {
   pdQty.textContent = "1";
   pdObs.value = "";
 
+  // Limpa acompanhamentos anteriores
+  const container = document.getElementById("pd-acompanhamentos");
+  if (container) container.innerHTML = '<div style="text-align:center; padding:10px; color:#aaa; font-size:13px;">Carregando opções...</div>';
+
   updateModalTotal();
 
-  // 🔥 BUSCAR ACOMPANHAMENTOS
+  // ✅ Abre o modal IMEDIATAMENTE — sem esperar a API
+  pdModal.setAttribute("aria-hidden", "false");
+
+  // 🔥 Busca acompanhamentos em paralelo (sem travar a abertura)
   try {
     const grupos = await apiGet(`/acompanhamentos/${item.id}`);
     renderAcompanhamentos(grupos);
   } catch (err) {
     console.error("Erro ao buscar acompanhamentos:", err);
+    if (container) container.innerHTML = '';
   }
-
-  pdModal.setAttribute("aria-hidden", "false");
 }
 
 function renderAcompanhamentos(grupos) {
