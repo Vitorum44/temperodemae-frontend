@@ -463,10 +463,10 @@ function initNeighborhoodAutocomplete() {
   if (!window.google || !google.maps || !google.maps.places || !inputNeighborhood) return;
 
   const autocompleteNeighborhood = new google.maps.places.Autocomplete(inputNeighborhood, {
-    componentRestrictions: { country: 'br' },
-    fields: ['address_components', 'geometry', 'formatted_address'],
-    types: ['address']
-  });
+  componentRestrictions: { country: 'br' },
+  fields: ['address_components', 'geometry', 'formatted_address'],
+  types: ['geocode']  // ← geocode mostra bairros, cidades, regiões
+});
 
   // 🔥 Quando o cliente começa a digitar no bairro,
   // injeta a rua+número já digitada para refinar a busca
