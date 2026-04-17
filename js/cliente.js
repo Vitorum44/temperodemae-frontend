@@ -673,7 +673,7 @@ function calcShip(lat, lng) {
       if (state.calculatedFee !== -1) {
         saveAddressCache(enderecoAtual, km, state.calculatedFee);
       }
-      
+
       updateCartUI();
     }
   );
@@ -1221,11 +1221,20 @@ function updateCartUI() {
   }
 }
 
-if (floatCartBtn) floatCartBtn.addEventListener('click', () => { drawer.setAttribute('aria-hidden', 'false'); loadSavedUserData(); });
+if (floatCartBtn) floatCartBtn.addEventListener('click', () => {
+  drawer.setAttribute('aria-hidden', 'false');
+  loadSavedUserData();
+  renderSavedAddress(); // ← adicione
+});
+
 document.addEventListener('click', function (e) {
   if (e.target.id === 'close-cart' || e.target.closest('#close-cart')) { drawer.setAttribute('aria-hidden', 'true'); }
   if (e.target === drawer) { drawer.setAttribute('aria-hidden', 'true'); }
-  if (e.target.id === 'open-cart' || e.target.closest('#open-cart')) { drawer.setAttribute('aria-hidden', 'false'); loadSavedUserData(); }
+  if (e.target.id === 'open-cart' || e.target.closest('#open-cart')) {
+  drawer.setAttribute('aria-hidden', 'false');
+  loadSavedUserData();
+  renderSavedAddress(); // ← adicione
+}
 });
 
 // ================= CHECKOUT (COM SEGURANÇA SÊNIOR) =================
@@ -1748,10 +1757,167 @@ async function loadData() {
 
   updateCartUI();
   loadSavedUserData();
+  renderSavedAddress(); 
   initCarousel();
 }
 
-function loadSavedUserData() { if (state.user) return; const savedAddress = localStorage.getItem('lastAddress'); const savedNeighborhood = localStorage.getItem('lastNeighborhood'); if (savedAddress && inputAddress) inputAddress.value = savedAddress; if (savedNeighborhood && inputNeighborhood) inputNeighborhood.value = savedNeighborhood; }
+function loadSavedUserData() {
+  if (state.user) return;
+  const savedAddress = localStorage.getItem('lastAddress');
+  const savedNeighborhood = localStorage.getItem('lastNeighborhood');
+  if (savedAddress && inputAddress) inputAddress.value = savedAddress;
+  if (savedNeighborhood && inputNeighborhood) inputNeighborhood.value = savedNeighborhood;
+}
+
+// ================= ENDEREÇO SALVO (ESTILO IFOOD) =================
+function renderSavedAddress() {
+  const savedAddress = localStorage.getItem('lastAddress');
+  const savedNeighborhood = localStorage.getItem('lastNeighborhood');
+  const addressWrapper = document.querySelector('.address-wrapper');
+  if (!addressWrapper) return;
+
+  // Preenche os inputs ocultos sempre
+  if (inputAddress) inputAddress.value = savedAddress || '';
+  if (inputNeighborhood) inputNeighborhood.value = savedNeighborhood || '';
+
+  // Remove card anterior se existir
+  document.getElementById('saved-address-card')?.remove();
+
+  if (savedAddress) {
+    // Esconde os campos de endereço e bairro
+    addressWrapper.style.display = 'none';
+    const neighborhoodInput = document.getElementById('cust-neighborhood');
+    const neighborhoodFeedback = document.getElementById('neighborhood-feedback');
+    if (neighborhoodInput) neighborhoodInput.style.display = 'none';
+    if (neighborhoodFeedback) neighborhoodFeedback.style.display = 'none';
+
+    // Cria o card
+    const card = document.createElement('div');
+    card.id = 'saved-address-card';
+    card.innerHTML = `
+      <div style="
+        background:#fff; border:2px solid #e0d0b8; border-radius:16px;
+        padding:14px 16px; display:flex; align-items:center; gap:12px;
+        margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.06);
+      ">
+        <div style="width:40px;height:40px;background:#fff5f2;border-radius:50%;
+          display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;">
+          📍
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;color:#999;font-weight:600;text-transform:uppercase;
+            letter-spacing:0.5px;margin-bottom:2px;">Entregar em</div>
+          <div id="saved-address-text" style="font-weight:700;font-size:14px;color:#333;
+            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${savedAddress}${savedNeighborhood ? ' · ' + savedNeighborhood : ''}
+          </div>
+        </div>
+        <button id="btn-edit-address" title="Editar endereço" style="
+          background:none;border:none;cursor:pointer;padding:8px;
+          border-radius:8px;color:#d62300;flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </button>
+      </div>
+    `;
+
+    addressWrapper.parentNode.insertBefore(card, addressWrapper);
+
+    document.getElementById('btn-edit-address')?.addEventListener('click', () => {
+      openAddressEditor(savedAddress, savedNeighborhood);
+    });
+
+    // Calcula frete do cache ou refaz
+    const cached = checkAddressCache(`${savedAddress}, ${savedNeighborhood || ''}`);
+    if (cached) {
+      state.distanceKm = cached.distanceKm;
+      state.calculatedFee = cached.fee;
+      updateCartUI();
+    } else {
+      waitForGoogleMaps(() => tryCalculateByText());
+    }
+
+  } else {
+    // Sem endereço salvo: mostra os campos normais
+    addressWrapper.style.display = '';
+    const neighborhoodInput = document.getElementById('cust-neighborhood');
+    const neighborhoodFeedback = document.getElementById('neighborhood-feedback');
+    if (neighborhoodInput) neighborhoodInput.style.display = '';
+    if (neighborhoodFeedback) neighborhoodFeedback.style.display = '';
+  }
+}
+
+function openAddressEditor(currentAddress, currentNeighborhood) {
+  document.getElementById('address-editor-modal')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'address-editor-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.5);
+    z-index:99999;display:flex;align-items:flex-end;justify-content:center;
+    backdrop-filter:blur(4px);
+  `;
+  modal.innerHTML = `
+    <div style="background:#fff;width:100%;max-width:500px;border-radius:24px 24px 0 0;
+      padding:24px 20px 40px;animation:slideUpProfile 0.3s ease;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <strong style="font-size:17px;color:#333;">✏️ Editar endereço</strong>
+        <button id="close-address-editor" style="background:#f3f4f6;border:none;width:32px;
+          height:32px;border-radius:50%;font-size:18px;cursor:pointer;color:#555;">✕</button>
+      </div>
+      <label style="font-size:12px;font-weight:700;color:#502314;margin-bottom:4px;display:block;">
+        Rua e Número
+      </label>
+      <input id="edit-address-input" class="input" value="${currentAddress || ''}"
+        placeholder="Rua e Número..." autocomplete="off" style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:700;color:#502314;margin-bottom:4px;display:block;">
+        Bairro
+      </label>
+      <input id="edit-neighborhood-input" class="input" value="${currentNeighborhood || ''}"
+        placeholder="Bairro" style="margin-bottom:20px;">
+      <button id="btn-save-address" class="btn primary block"
+        style="height:52px;font-size:16px;font-weight:700;border-radius:16px;">
+        💾 Salvar endereço
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.getElementById('close-address-editor')?.addEventListener('click', () => modal.remove());
+
+  document.getElementById('btn-save-address')?.addEventListener('click', () => {
+    const newAddress = document.getElementById('edit-address-input').value.trim();
+    const newNeighborhood = document.getElementById('edit-neighborhood-input').value.trim();
+
+    if (!newAddress) { alert('Informe o endereço.'); return; }
+    if (!/,?\s*\d+/.test(newAddress)) {
+      alert('⚠️ Informe o número da casa. Ex: Rua das Flores, 123');
+      return;
+    }
+
+    localStorage.setItem('lastAddress', newAddress);
+    localStorage.setItem('lastNeighborhood', newNeighborhood);
+    if (inputAddress) inputAddress.value = newAddress;
+    if (inputNeighborhood) inputNeighborhood.value = newNeighborhood;
+
+    // Atualiza texto do card
+    const addressText = document.getElementById('saved-address-text');
+    if (addressText) {
+      addressText.textContent = `${newAddress}${newNeighborhood ? ' · ' + newNeighborhood : ''}`;
+    }
+
+    addressDirty = true;
+    state.calculatedFee = null;
+    updateCartUI();
+    waitForGoogleMaps(() => tryCalculateByText());
+    modal.remove();
+  });
+}
+
 async function tryLoadMe() { if (!state.token) return; try { const me = await apiGet('/auth/me'); setUser(me); } catch { setToken(''); setUser(null); } }
 
 // 📍 CORREÇÃO UX: SE O USUÁRIO JÁ TEM ENDEREÇO, CALCULA LOGO
