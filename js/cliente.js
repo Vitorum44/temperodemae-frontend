@@ -525,15 +525,15 @@ if (fulfillPickup && fulfillDelivery) {
   fulfillDelivery.addEventListener('change', toggleDeliveryMode);
 }
 
-
 // ================= RENDERIZAR MENU =================
 function renderItems() {
-  const originalScroll = window.scrollY;
   const existingSections = document.querySelectorAll('.category-section');
   if (existingSections.length > 0) {
     setupScrollSpy(); // ✅ garante que o spy está ativo mesmo sem re-renderizar
     return;
   }
+
+  const originalScroll = window.scrollY;
 
   grid.innerHTML = '';
   const term = state.filters.q ? state.filters.q.toLowerCase() : '';
@@ -582,8 +582,11 @@ function renderItems() {
     }
   });
 
-  setTimeout(setupScrollSpy, 500);
-  window.scrollTo(0, originalScroll); // 🔥 evita “pulo” de tela
+  // ✅ Restaura scroll sem pulo, depois ativa o spy
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: originalScroll, behavior: 'instant' });
+    setTimeout(setupScrollSpy, 300);
+  });
 }
 
 function setupScrollSpy() {
