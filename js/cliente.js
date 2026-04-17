@@ -418,6 +418,16 @@ function initGoogleAutocomplete() {
     const finalNumber = number || typedNumber;
 
     inputAddress.value = `${street}${finalNumber ? ', ' + finalNumber : ''}`;
+
+// ⚠️ Avisa se não encontrou número
+if (!finalNumber) {
+  if (fb) {
+    fb.style.color = '#d62300';
+    fb.textContent = "⚠️ Endereço sem número. Por favor, adicione o número da sua casa.";
+  }
+  inputAddress.style.borderColor = '#d62300';
+  inputAddress.focus();
+}
     if (inputNeighborhood) inputNeighborhood.value = neighborhood;
 
     waitForGoogleMaps(() => {
@@ -1060,14 +1070,29 @@ orderForm?.addEventListener('submit', async (e) => {
 
   const fulfillment = fulfillPickup && fulfillPickup.checked ? 'pickup' : 'delivery';
 
-  // ====== 🛡️ CAMADA DE SEGURANÇA DO FRETE (SÊNIOR) ======
   if (fulfillment === 'delivery') {
-    // 1. Validação básica de input
-    if (!inputAddress.value.trim()) {
-      fb.textContent = "Preencha o endereço.";
+    const endereco = inputAddress.value.trim();
+
+    // 1. Verifica se preencheu o endereço
+    if (!endereco) {
+      fb.textContent = "⚠️ Preencha o endereço.";
       inputAddress.focus();
+      inputAddress.style.borderColor = '#d62300';
       return;
     }
+
+    // 2. Verifica se tem número na rua (pelo menos um dígito depois de vírgula ou espaço)
+    const temNumero = /,?\s*\d+/.test(endereco);
+    if (!temNumero) {
+      fb.textContent = "⚠️ Informe o número da sua casa. Ex: Rua das Flores, 123";
+      inputAddress.focus();
+      inputAddress.style.borderColor = '#d62300';
+      return;
+    }
+
+    // 3. Remove o destaque vermelho se passou
+    inputAddress.style.borderColor = '';
+
 
     // 2. Trava de Segurança: Se não calculou (null) ou deu erro (-1), forçamos agora!
     if (state.calculatedFee === null || state.calculatedFee === -1) {
