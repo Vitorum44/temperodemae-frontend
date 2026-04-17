@@ -1402,11 +1402,17 @@ const checkStatus = async () => {
     const o = await apiGet(`/orders/${state.currentOrderId}`);
     state.activeOrderData = o;
     if (o.status === 'aguardando_pagamento') {
-      const deadline = new Date(o.created_at).getTime() + (15 * 60 * 1000);
-      if (!state.pixTimerInterval) startPixVisualTimer(deadline, o.id);
-      if (trackingModal.getAttribute('aria-hidden') === 'false') trackingModal.setAttribute('aria-hidden', 'true');
-      return;
-    }
+  const deadline = new Date(o.created_at).getTime() + (15 * 60 * 1000);
+  if (!state.pixTimerInterval) startPixVisualTimer(deadline, o.id);
+  if (trackingModal.getAttribute('aria-hidden') === 'false') trackingModal.setAttribute('aria-hidden', 'true');
+
+  // ✅ Guarda pixData no activeOrderData se existir
+  if (o.pixData) {
+    state.activeOrderData = o;
+    localStorage.setItem('lastPixData', JSON.stringify(o.pixData));
+  }
+  return;
+}
     if (state.pixTimerInterval) { clearInterval(state.pixTimerInterval); state.pixTimerInterval = null; }
     updateTrackUI(o);
     if (o.status === 'entregue' || o.status === 'cancelado') {
@@ -1495,19 +1501,32 @@ function updateTrackUI(order) {
 }
 
 trackingBubble?.addEventListener('click', () => {
-  // Se ainda está aguardando pagamento, abre o Pix
   if (
     state.activeOrderData &&
     state.activeOrderData.status === 'aguardando_pagamento'
   ) {
-    let pixData = state.activeOrderData.pixData;
+    // Tenta pegar pixData de várias fontes
+    let pixData = state.activeOrderData?.pixData;
+
     if (!pixData) {
       const backup = localStorage.getItem('lastPixData');
-      if (backup) pixData = JSON.parse(backup);
+      if (backup) {
+        try { pixData = JSON.parse(backup); } catch {}
+      }
     }
-    if (pixData) showPixModal(pixData);
+
+    if (pixData) {
+      showPixModal(pixData);
+    } else {
+      // Se não tiver pixData, busca o pedido novamente
+      apiGet(`/orders/${state.currentOrderId}`).then(o => {
+        if (o.pixData) {
+          localStorage.setItem('lastPixData', JSON.stringify(o.pixData));
+          showPixModal(o.pixData);
+        }
+      }).catch(console.error);
+    }
   } else {
-    // Caso contrário, abre o rastreio normal
     trackingModal.setAttribute('aria-hidden', 'false');
   }
 });
