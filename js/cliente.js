@@ -89,6 +89,37 @@ async function tryCalculateByText() {
   }
 }
 
+
+// ================= CACHE DE ENDEREÇOS =================
+const ADDRESS_CACHE_KEY = 'addressCache';
+
+function getAddressCache() {
+  try {
+    return JSON.parse(localStorage.getItem(ADDRESS_CACHE_KEY) || '{}');
+  } catch { return {}; }
+}
+
+function saveAddressCache(address, distanceKm, fee) {
+  const cache = getAddressCache();
+  const key = address.toLowerCase().trim();
+  cache[key] = { distanceKm, fee, savedAt: Date.now() };
+  // Mantém só os últimos 10 endereços
+  const keys = Object.keys(cache);
+  if (keys.length > 10) delete cache[keys[0]];
+  localStorage.setItem(ADDRESS_CACHE_KEY, JSON.stringify(cache));
+}
+
+function checkAddressCache(address) {
+  const cache = getAddressCache();
+  const key = address.toLowerCase().trim();
+  const entry = cache[key];
+  // Cache válido por 30 dias
+  if (entry && (Date.now() - entry.savedAt) < 30 * 24 * 60 * 60 * 1000) {
+    return entry;
+  }
+  return null;
+}
+
 // ================= ELEMENTOS DOM =================
 const chipsCat = $('#category-chips');
 const grid = $('#menu-grid');
@@ -598,6 +629,17 @@ function calcShip(lat, lng) {
     return;
   }
 
+  // ✅ Verifica cache antes de chamar a API
+  const enderecoAtual = `${inputAddress.value.trim()}, ${inputNeighborhood.value.trim()}`;
+  const cached = checkAddressCache(enderecoAtual);
+  if (cached) {
+    console.log("📦 Frete do cache:", cached);
+    state.distanceKm = cached.distanceKm;
+    state.calculatedFee = cached.fee;
+    updateCartUI();
+    return; // ← não chama a API do Google!
+  }
+
   const service = new google.maps.DirectionsService();
 
   service.route(
@@ -626,6 +668,12 @@ function calcShip(lat, lng) {
       } else {
         state.calculatedFee = Math.ceil(km);
       }
+
+      // ✅ Salva no cache para próximas vezes
+      if (state.calculatedFee !== -1) {
+        saveAddressCache(enderecoAtual, km, state.calculatedFee);
+      }
+      
       updateCartUI();
     }
   );
