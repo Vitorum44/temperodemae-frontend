@@ -539,6 +539,25 @@ function initNeighborhoodAutocomplete() {
   });
 }
 
+// Inicializa quando o Google Maps estiver pronto
+function initAutocompletes() {
+  initGoogleAutocomplete();
+  initNeighborhoodAutocomplete();
+}
+
+window.initAutocompletes = initAutocompletes;
+
+window.addEventListener('load', () => {
+  const tryInit = (tries = 0) => {
+    if (window.google && google.maps && google.maps.places) {
+      initAutocompletes();
+    } else if (tries < 30) {
+      setTimeout(() => tryInit(tries + 1), 200);
+    }
+  };
+  tryInit();
+});
+
 // ======= AUTO-GEOCODE SE O USUÁRIO DIGITAR MANUALMENTE =======
 inputAddress?.addEventListener('blur', async () => {
   if (!addressDirty || !inputAddress.value.trim()) return;
