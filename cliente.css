@@ -2081,3 +2081,41 @@ html {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
+
+
+/* ===== GOOGLE PLACES AUTOCOMPLETE DENTRO DO CARRINHO ===== */
+.pac-container {
+  z-index: 99999 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15) !important;
+  border: 1px solid #e5e7eb !important;
+  font-family: 'Nunito', sans-serif !important;
+  overflow: hidden;
+}
+
+.pac-item {
+  padding: 10px 14px !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  border-bottom: 1px solid #f5f5f5 !important;
+  line-height: 1.4 !important;
+}
+
+.pac-item:hover {
+  background: #f9fafb !important;
+}
+
+.pac-item-query {
+  font-weight: 700 !important;
+  color: #502314 !important;
+  font-size: 13px !important;
+}
+
+.pac-matched {
+  color: #d62300 !important;
+  font-weight: 800 !important;
+}
+
+.pac-icon {
+  display: none !important;
+}
