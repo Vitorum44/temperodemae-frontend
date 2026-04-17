@@ -1406,11 +1406,16 @@ const checkStatus = async () => {
   if (!state.pixTimerInterval) startPixVisualTimer(deadline, o.id);
   if (trackingModal.getAttribute('aria-hidden') === 'false') trackingModal.setAttribute('aria-hidden', 'true');
 
-  // ✅ Guarda pixData no activeOrderData se existir
-  if (o.pixData) {
-    state.activeOrderData = o;
+  // ✅ Injeta pixData do localStorage se a API não retornar
+  if (!o.pixData) {
+    const backup = localStorage.getItem('lastPixData');
+    if (backup) {
+      try { o.pixData = JSON.parse(backup); } catch {}
+    }
+  } else {
     localStorage.setItem('lastPixData', JSON.stringify(o.pixData));
   }
+  state.activeOrderData = o;
   return;
 }
     if (state.pixTimerInterval) { clearInterval(state.pixTimerInterval); state.pixTimerInterval = null; }
@@ -1505,7 +1510,6 @@ trackingBubble?.addEventListener('click', () => {
     state.activeOrderData &&
     state.activeOrderData.status === 'aguardando_pagamento'
   ) {
-    // Tenta pegar pixData de várias fontes
     let pixData = state.activeOrderData?.pixData;
 
     if (!pixData) {
@@ -1518,13 +1522,7 @@ trackingBubble?.addEventListener('click', () => {
     if (pixData) {
       showPixModal(pixData);
     } else {
-      // Se não tiver pixData, busca o pedido novamente
-      apiGet(`/orders/${state.currentOrderId}`).then(o => {
-        if (o.pixData) {
-          localStorage.setItem('lastPixData', JSON.stringify(o.pixData));
-          showPixModal(o.pixData);
-        }
-      }).catch(console.error);
+      alert('Dados do Pix não encontrados. Verifique seu e-mail ou tente novamente.');
     }
   } else {
     trackingModal.setAttribute('aria-hidden', 'false');
