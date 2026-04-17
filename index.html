@@ -52,8 +52,8 @@
     }
 
     * {
-  -webkit-tap-highlight-color: transparent;
-}
+      -webkit-tap-highlight-color: transparent;
+    }
   </style>
 </head>
 
@@ -179,6 +179,8 @@
           </div>
 
           <input id="cust-neighborhood" class="input" placeholder="Bairro">
+          <input id="cust-neighborhood" class="input" placeholder="Bairro">
+          <div id="neighborhood-feedback" style="margin-top:4px; padding:0 4px; min-height:18px;"></div>
           <input id="cust-reference" class="input" placeholder="Ponto de referência">
 
           <input id="coupon-code" class="input" placeholder="Tem cupom?">
@@ -467,11 +469,12 @@
         <div class="row between center" style="gap: 15px;">
           <div
             style="display: flex; align-items: center; gap: 10px; background: #f5ebdc; padding: 5px 10px; border-radius: 50px; border: 2px solid #e0d0b8;">
-           <button id="pd-minus" touch-action="manipulation"
-  style="background: transparent; border: none; color: #502314; font-size: 24px; cursor: pointer; font-weight:bold; touch-action:manipulation;">−</button><span
+            <button id="pd-minus" touch-action="manipulation"
+              style="background: transparent; border: none; color: #502314; font-size: 24px; cursor: pointer; font-weight:bold; touch-action:manipulation;">−</button><span
               id="pd-qty"
-              style="font-weight: 900; width: 30px; text-align: center; color: #502314; font-size: 18px;">1</span><button id="pd-plus" touch-action="manipulation"
-  style="background: transparent; border: none; color: var(--primary); font-size: 24px; cursor: pointer; font-weight:bold; touch-action:manipulation;">＋</button>
+              style="font-weight: 900; width: 30px; text-align: center; color: #502314; font-size: 18px;">1</span><button
+              id="pd-plus" touch-action="manipulation"
+              style="background: transparent; border: none; color: var(--primary); font-size: 24px; cursor: pointer; font-weight:bold; touch-action:manipulation;">＋</button>
           </div><button id="pd-add-btn" class="btn primary"
             style="flex: 1; justify-content: space-between; display: flex; font-size: 16px;"><span>Adicionar</span><span
               id="pd-total-btn">R$ 0,00</span></button>
