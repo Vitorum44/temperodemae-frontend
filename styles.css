@@ -58,7 +58,12 @@ a { text-decoration: none; color: inherit; }
   width: 100%; padding: 14px; background: #fff;
   border: 2px solid #dacabb; border-radius: 12px; color: var(--text);
 }
-.input:focus { outline: none; border-color: var(--primary); }
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  transform: none !important;
+  box-shadow: none;
+}
 
 /* Esconde telas trocadas */
 [hidden] { display: none !important; }
