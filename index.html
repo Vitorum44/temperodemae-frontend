@@ -727,9 +727,12 @@
       ========================= */
       document.getElementById("btn-cardapio")?.addEventListener("click", (e) => {
         e.preventDefault();
-
         ordersPage.style.display = "none";
         menuPage.style.display = "block";
+
+        // ✅ Marca cardápio como ativo
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('btn-cardapio')?.classList.add('active');
 
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
@@ -739,8 +742,22 @@
       ========================= */
       document.getElementById("btn-buscar")?.addEventListener("click", (e) => {
         e.preventDefault();
-        searchInput?.scrollIntoView({ behavior: "smooth" });
-        searchInput?.focus();
+
+        // ✅ Volta para o cardápio se estiver no histórico
+        const ordersPage = document.getElementById("orders-page");
+        const menuPage = document.getElementById("menu-page");
+        if (ordersPage) ordersPage.style.display = "none";
+        if (menuPage) menuPage.style.display = "block";
+
+        // ✅ Ativa o item da nav como ativo
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('btn-buscar')?.classList.add('active');
+
+        // ✅ Scrolla e foca no input
+        setTimeout(() => {
+          searchInput?.scrollIntoView({ behavior: "smooth" });
+          searchInput?.focus();
+        }, 100);
       });
 
       /* =========================
@@ -756,6 +773,10 @@
 
         menuPage.style.display = "none";
         ordersPage.style.display = "block";
+
+        // ✅ Marca pedidos como ativo
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.getElementById('btn-pedidos')?.classList.add('active');
 
         const ordersList = document.getElementById("orders-list");
         ordersList.innerHTML = "Carregando...";
