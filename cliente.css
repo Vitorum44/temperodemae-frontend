@@ -626,6 +626,17 @@ max-height: 95vh;
 #pd-obs {
   resize: none;
   font-family: inherit;
+  transition: none !important;
+  transform: none !important;
+  outline: none;
+  box-shadow: none;
+}
+
+#pd-obs:focus {
+  outline: none;
+  box-shadow: none;
+  transform: none !important;
+  border-color: #dacabb;
 }
 
 /* 7. FOOTER (Ajustado) */
