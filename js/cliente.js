@@ -2069,63 +2069,92 @@ pmHistory?.addEventListener('click', async () => {
 
     historyList.innerHTML = '';
 
-    orders.forEach(order => {
-      const date = new Date(order.created_at).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      const statusMap = {
-        'novo': '🟡 Recebido',
-        'aguardando_pagamento': '⏳ Aguardando Pix',
-        'em_preparo': '🔥 Preparando',
-        'saiu_entrega': '🛵 Saiu para Entrega',
-        'entregue': '✅ Entregue',
-        'cancelado': '❌ Cancelado'
+    const statusMap = {
+        'novo': { label: 'Recebido', color: '#f59e0b', icon: '🟡' },
+        'aguardando_pagamento': { label: 'Aguardando Pix', color: '#f59e0b', icon: '⏳' },
+        'em_preparo': { label: 'Preparando', color: '#3b82f6', icon: '🔥' },
+        'saiu_entrega': { label: 'Saiu para entrega', color: '#8b5cf6', icon: '🛵' },
+        'entregue': { label: 'Pedido concluído', color: '#10b981', icon: '✅' },
+        'cancelado': { label: 'Cancelado', color: '#ef4444', icon: '❌' }
       };
 
-      const statusLabel = statusMap[order.status] || order.status;
-      const statusColor =
-        order.status === 'cancelado'
-          ? '#ef4444'
-          : order.status === 'entregue'
-            ? '#10b981'
-            : '#f59e0b';
+    orders.forEach(order => {
+      const st = statusMap[order.status] || { label: order.status, color: '#888', icon: '•' };
+      const total = (order.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      const date = new Date(order.created_at).toLocaleDateString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
 
-      const div = document.createElement('div');
-      div.className = 'history-card';
-
-      div.innerHTML = `
-        <div class="history-header"
-          style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:5px;">
-          <strong>Pedido #${order.id}</strong>
-          <span style="font-size:12px; color:#666;">${date}</span>
-        </div>
-
-        <div style="font-size:13px; color:#444; margin-bottom:10px;">
-          ${order.items.map(i => `${i.qty}x ${i.name}`).join(', ')}
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="background:${statusColor}; color:white; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold;">
-            ${statusLabel}
-          </span>
-          <strong style="color:var(--primary);">${brl(order.total)}</strong>
-        </div>
-
-        ${order.status === 'aguardando_pagamento'
-          ? `<button class="btn block"
-              style="margin-top:10px; font-size:12px; height:auto; padding:8px;"
-              onclick="window.location.reload()">
-              Pagar Agora (Ver Rastreio)
-            </button>`
-          : ''
-        }
+      const card = document.createElement('div');
+      card.style.cssText = `
+        background:#fff; border-radius:16px; padding:16px;
+        margin-bottom:12px; box-shadow:0 2px 12px rgba(0,0,0,0.07);
+        border:1px solid #f0f0f0;
       `;
 
-      historyList.appendChild(div);
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;
+          padding-bottom:12px;border-bottom:1px solid #f5f5f5;">
+          <div style="width:44px;height:44px;border-radius:50%;background:#1f1f1f;
+            display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
+            🍔
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:15px;color:#111;">Tempero de Mãe</div>
+            <div style="display:flex;align-items:center;gap:5px;margin-top:2px;">
+              <span style="font-size:12px;color:${st.color};font-weight:600;">${st.label}</span>
+              <span style="font-size:14px;">${st.icon}</span>
+            </div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-weight:800;font-size:15px;color:#111;">${total}</div>
+            <div style="font-size:11px;color:#aaa;margin-top:2px;">${date}</div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+          <div style="font-size:13px;color:#555;line-height:1.8;flex:1;">
+            ${order.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join('')}
+          </div>
+          ${order.items[0]?.image
+            ? `<img src="${order.items[0].image}"
+                onerror="this.src='https://placehold.co/60x60?text=🍔'"
+                style="width:60px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0;">`
+            : `<div style="font-size:22px;opacity:0.3;">🍽️</div>`
+          }
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:14px;
+          padding-top:12px;border-top:1px solid #f5f5f5;">
+          <button class="btn-pedir-novamente-history"
+            style="background:none;border:1px solid #d62300;color:#d62300;
+            font-weight:700;font-size:13px;cursor:pointer;padding:6px 16px;
+            border-radius:20px;display:flex;align-items:center;gap:6px;">
+            🔁 Pedir novamente
+          </button>
+        </div>
+      `;
+
+      card.querySelector('.btn-pedir-novamente-history')?.addEventListener('click', () => {
+        order.items.forEach(item => {
+          window.state.cart.push({
+            id: item.itemId || item.id,
+            name: item.name,
+            price: Number(item.price),
+            image: item.image || '',
+            qty: item.qty,
+            obs: item.obs || '',
+            acompanhamentos: item.acompanhamentos || []
+          });
+        });
+        localStorage.setItem('cart', JSON.stringify(window.state.cart));
+        if (typeof window.updateCartUI === 'function') window.updateCartUI();
+        historyModal.setAttribute('aria-hidden', 'true');
+        drawer.setAttribute('aria-hidden', 'false');
+      });
+
+      historyList.appendChild(card);
     });
 
   } catch (err) {
