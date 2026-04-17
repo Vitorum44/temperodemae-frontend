@@ -384,14 +384,14 @@ function initMap(lat, lng) {
   setTimeout(() => map.invalidateSize(), 200);
 }
 
-// ================= AUTOCOMPLETE GOOGLE PLACES =================
+/// ================= AUTOCOMPLETE GOOGLE PLACES (RUA) =================
 function initGoogleAutocomplete() {
   if (!window.google || !google.maps || !google.maps.places || !inputAddress) return;
 
   const autocomplete = new google.maps.places.Autocomplete(inputAddress, {
-    types: ['address'],
     componentRestrictions: { country: 'br' },
-    fields: ['address_components', 'geometry']
+    fields: ['address_components', 'geometry', 'formatted_address'],
+    types: ['address']
   });
 
   autocomplete.addListener('place_changed', () => {
@@ -401,15 +401,17 @@ function initGoogleAutocomplete() {
     let street = '';
     let number = '';
     let neighborhood = '';
+    let postalCode = '';
+    let city = '';
+    let stateShort = '';
 
     place.address_components.forEach(c => {
       if (c.types.includes('route')) street = c.long_name;
       if (c.types.includes('street_number')) number = c.long_name;
-      if (
-        c.types.includes('sublocality') ||
-        c.types.includes('sublocality_level_1') ||
-        c.types.includes('neighborhood')
-      ) neighborhood = c.long_name;
+      if (c.types.includes('sublocality') || c.types.includes('sublocality_level_1') || c.types.includes('neighborhood')) neighborhood = c.long_name;
+      if (c.types.includes('postal_code')) postalCode = c.long_name;
+      if (c.types.includes('administrative_area_level_2')) city = c.long_name;
+      if (c.types.includes('administrative_area_level_1')) stateShort = c.short_name;
     });
 
     const typedValue = inputAddress.value;
@@ -417,18 +419,35 @@ function initGoogleAutocomplete() {
     const typedNumber = typedNumberMatch ? typedNumberMatch[1] : '';
     const finalNumber = number || typedNumber;
 
+    // Preenche rua + número
     inputAddress.value = `${street}${finalNumber ? ', ' + finalNumber : ''}`;
 
-// ⚠️ Avisa se não encontrou número
-if (!finalNumber) {
-  if (fb) {
-    fb.style.color = '#d62300';
-    fb.textContent = "⚠️ Endereço sem número. Por favor, adicione o número da sua casa.";
-  }
-  inputAddress.style.borderColor = '#d62300';
-  inputAddress.focus();
-}
-    if (inputNeighborhood) inputNeighborhood.value = neighborhood;
+    // Preenche bairro automaticamente
+    if (inputNeighborhood && neighborhood) {
+      inputNeighborhood.value = neighborhood;
+    }
+
+    // Feedback com endereço completo + CEP
+    const feedbackEl = document.getElementById('neighborhood-feedback');
+    if (feedbackEl && (neighborhood || postalCode)) {
+      feedbackEl.innerHTML = `
+        <span style="color:#10b981; font-size:12px;">
+          ✅ ${neighborhood ? neighborhood + ', ' : ''}${city}${stateShort ? ' - ' + stateShort : ''}
+          ${postalCode ? `<span style="color:#6b7280;"> · CEP: ${postalCode}</span>` : ''}
+        </span>`;
+    }
+
+    // Avisa se não veio número
+    if (!finalNumber) {
+      if (fb) {
+        fb.style.color = '#d62300';
+        fb.textContent = "⚠️ Endereço sem número. Adicione o número da casa.";
+      }
+      inputAddress.style.borderColor = '#d62300';
+    } else {
+      inputAddress.style.borderColor = '';
+      if (fb && fb.textContent.includes('número')) fb.textContent = '';
+    }
 
     waitForGoogleMaps(() => {
       calcShip(
@@ -439,52 +458,55 @@ if (!finalNumber) {
   });
 }
 
-
 // ================= AUTOCOMPLETE NO CAMPO BAIRRO =================
 function initNeighborhoodAutocomplete() {
   if (!window.google || !google.maps || !google.maps.places || !inputNeighborhood) return;
 
   const autocompleteNeighborhood = new google.maps.places.Autocomplete(inputNeighborhood, {
-    types: ['geocode'],  // ← mostra endereços completos
     componentRestrictions: { country: 'br' },
-    fields: ['address_components', 'geometry', 'formatted_address']
+    fields: ['address_components', 'geometry', 'formatted_address'],
+    types: ['address']  // ← mostra endereços completos com rua, número, bairro
   });
 
   autocompleteNeighborhood.addListener('place_changed', () => {
     const place = autocompleteNeighborhood.getPlace();
     if (!place || !place.address_components) return;
 
+    let street = '';
+    let number = '';
     let neighborhood = '';
-    let city = '';
-    let state = '';
     let postalCode = '';
+    let city = '';
+    let stateShort = '';
 
     place.address_components.forEach(c => {
-      if (c.types.includes('sublocality') || c.types.includes('sublocality_level_1') || c.types.includes('neighborhood')) {
-        neighborhood = c.long_name;
-      }
-      if (c.types.includes('administrative_area_level_2')) city = c.long_name;
-      if (c.types.includes('administrative_area_level_1')) state = c.short_name;
+      if (c.types.includes('route')) street = c.long_name;
+      if (c.types.includes('street_number')) number = c.long_name;
+      if (c.types.includes('sublocality') || c.types.includes('sublocality_level_1') || c.types.includes('neighborhood')) neighborhood = c.long_name;
       if (c.types.includes('postal_code')) postalCode = c.long_name;
+      if (c.types.includes('administrative_area_level_2')) city = c.long_name;
+      if (c.types.includes('administrative_area_level_1')) stateShort = c.short_name;
     });
 
-    // Preenche o bairro com nome limpo
+    // Se o campo de rua estiver vazio, preenche também
+    if (inputAddress && !inputAddress.value.trim() && street) {
+      inputAddress.value = `${street}${number ? ', ' + number : ''}`;
+    }
+
+    // Preenche só o bairro no campo
     if (neighborhood) {
       inputNeighborhood.value = neighborhood;
     }
 
-    // Mostra feedback visual com endereço completo + CEP
+    // Feedback com endereço completo + CEP
     const feedbackEl = document.getElementById('neighborhood-feedback');
     if (feedbackEl) {
-      if (neighborhood) {
-        feedbackEl.innerHTML = `
-          <span style="color:#10b981; font-size:12px;">
-            ✅ ${neighborhood}${city ? ', ' + city : ''}${state ? ' - ' + state : ''}
-            ${postalCode ? `<span style="color:#6b7280;"> · CEP: ${postalCode}</span>` : ''}
-          </span>`;
-      } else {
-        feedbackEl.innerHTML = '';
-      }
+      feedbackEl.innerHTML = `
+        <span style="color:#10b981; font-size:12px;">
+          ✅ ${street ? street + (number ? ', ' + number + ' · ' : ' · ') : ''}
+          ${neighborhood ? neighborhood + ', ' : ''}${city}${stateShort ? ' - ' + stateShort : ''}
+          ${postalCode ? `<span style="color:#6b7280;"> · CEP: ${postalCode}</span>` : ''}
+        </span>`;
     }
 
     // Recalcula frete
@@ -500,6 +522,12 @@ function initNeighborhoodAutocomplete() {
     }
   });
 }
+
+// Inicializa os dois juntos
+window.addEventListener('load', () => {
+  initGoogleAutocomplete();
+  initNeighborhoodAutocomplete();
+});
 
 // ======= AUTO-GEOCODE SE O USUÁRIO DIGITAR MANUALMENTE =======
 inputAddress?.addEventListener('blur', async () => {
