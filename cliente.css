@@ -2046,3 +2046,12 @@ opacity:1;
 
   padding-bottom: 120px;
 }
+
+/* Evita pulo de scroll ao atualizar carrinho */
+html {
+  scroll-behavior: auto !important;
+}
+
+#carrinho[aria-hidden="true"] {
+  pointer-events: none;
+}
