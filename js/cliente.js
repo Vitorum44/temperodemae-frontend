@@ -439,7 +439,60 @@ if (!finalNumber) {
   });
 }
 
-window.addEventListener('load', initGoogleAutocomplete);
+
+// ================= AUTOCOMPLETE NO CAMPO BAIRRO =================
+function initNeighborhoodAutocomplete() {
+  if (!window.google || !google.maps || !google.maps.places || !inputNeighborhood) return;
+
+  const autocompleteNeighborhood = new google.maps.places.Autocomplete(inputNeighborhood, {
+    types: ['(regions)'],
+    componentRestrictions: { country: 'br' },
+    fields: ['address_components', 'geometry', 'name']
+  });
+
+  autocompleteNeighborhood.addListener('place_changed', () => {
+    const place = autocompleteNeighborhood.getPlace();
+    if (!place) return;
+
+    // Extrai só o nome do bairro
+    let neighborhood = '';
+    if (place.address_components) {
+      place.address_components.forEach(c => {
+        if (
+          c.types.includes('sublocality') ||
+          c.types.includes('sublocality_level_1') ||
+          c.types.includes('neighborhood')
+        ) {
+          neighborhood = c.long_name;
+        }
+      });
+    }
+
+    // Se encontrou bairro específico, usa ele. Senão usa o nome do lugar
+    if (neighborhood) {
+      inputNeighborhood.value = neighborhood;
+    }
+
+    // Recalcula frete com a nova localização confirmada
+    if (place.geometry) {
+      waitForGoogleMaps(() => {
+        calcShip(
+          place.geometry.location.lat(),
+          place.geometry.location.lng()
+        );
+      });
+    } else {
+      // Tenta recalcular pelo texto completo
+      waitForGoogleMaps(() => tryCalculateByText());
+    }
+  });
+}
+
+// Inicializa junto com o autocomplete da rua
+window.addEventListener('load', () => {
+  initGoogleAutocomplete();
+  initNeighborhoodAutocomplete();
+});
 
 // ======= AUTO-GEOCODE SE O USUÁRIO DIGITAR MANUALMENTE =======
 inputAddress?.addEventListener('blur', async () => {
