@@ -2055,3 +2055,18 @@ html {
 #carrinho[aria-hidden="true"] {
   pointer-events: none;
 }
+
+/* ✅ Previne zoom duplo toque nos botões + e - do modal */
+#pd-plus,
+#pd-minus,
+.qty-btn,
+.plus,
+.minus,
+.btn-add,
+#pd-add-btn,
+#btn-finalize,
+.acomp-controls button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
