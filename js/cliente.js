@@ -1889,6 +1889,58 @@ function openAddressEditor(currentAddress, currentNeighborhood) {
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   document.getElementById('close-address-editor')?.addEventListener('click', () => modal.remove());
 
+  // ✅ Autocomplete no campo rua do editor
+  waitForGoogleMaps(() => {
+    const editAddressInput = document.getElementById('edit-address-input');
+    const editNeighborhoodInput = document.getElementById('edit-neighborhood-input');
+
+    if (window.google && google.maps.places && editAddressInput) {
+      const acEdit = new google.maps.places.Autocomplete(editAddressInput, {
+        componentRestrictions: { country: 'br' },
+        fields: ['address_components', 'geometry'],
+        types: ['address']
+      });
+
+      acEdit.addListener('place_changed', () => {
+        const place = acEdit.getPlace();
+        if (!place.geometry) return;
+
+        let street = '', number = '', neighborhood = '';
+        place.address_components.forEach(c => {
+          if (c.types.includes('route')) street = c.long_name;
+          if (c.types.includes('street_number')) number = c.long_name;
+          if (c.types.includes('sublocality') || c.types.includes('sublocality_level_1') || c.types.includes('neighborhood')) neighborhood = c.long_name;
+        });
+
+        editAddressInput.value = `${street}${number ? ', ' + number : ''}`;
+        if (neighborhood && editNeighborhoodInput) editNeighborhoodInput.value = neighborhood;
+      });
+    }
+
+    if (window.google && google.maps.places && editNeighborhoodInput) {
+      const acNeighEdit = new google.maps.places.Autocomplete(editNeighborhoodInput, {
+        componentRestrictions: { country: 'br' },
+        fields: ['address_components', 'geometry'],
+        types: ['geocode']
+      });
+
+      acNeighEdit.addListener('place_changed', () => {
+        const place = acNeighEdit.getPlace();
+        if (!place || !place.address_components) return;
+
+        let street = '', number = '', neighborhood = '';
+        place.address_components.forEach(c => {
+          if (c.types.includes('route')) street = c.long_name;
+          if (c.types.includes('street_number')) number = c.long_name;
+          if (c.types.includes('sublocality') || c.types.includes('sublocality_level_1') || c.types.includes('neighborhood')) neighborhood = c.long_name;
+        });
+
+        if (street && editAddressInput) editAddressInput.value = `${street}${number ? ', ' + number : ''}`;
+        if (neighborhood) editNeighborhoodInput.value = neighborhood;
+      });
+    }
+  });
+
   document.getElementById('btn-save-address')?.addEventListener('click', () => {
     const newAddress = document.getElementById('edit-address-input').value.trim();
     const newNeighborhood = document.getElementById('edit-neighborhood-input').value.trim();
