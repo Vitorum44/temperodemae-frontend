@@ -30,7 +30,7 @@ const state = {
   categories: [],
   subcategories: [],
   items: [],
-  cart: JSON.parse(localStorage.getItem('cart') || '[]'),
+  cart: [],
   filters: { cat: null, sub: null, q: '' },
   token: localStorage.getItem('token') || '',
   user: null,
@@ -848,7 +848,9 @@ pdAddBtn?.addEventListener('click', () => {
 
 // ================= CARRINHO =================
 function saveCart() {
-  localStorage.setItem('cart', JSON.stringify(state.cart));
+  if (state.user && state.token) {
+    localStorage.setItem('cart', JSON.stringify(state.cart));
+  }
 }
 
 function addToCart(item, qty = 1, obs = "", acompanhamentos = []) {
@@ -1557,6 +1559,11 @@ async function tryLoadMe() { if (!state.token) return; try { const me = await ap
 function setUser(u) {
   state.user = u || null;
   if (u) {
+    // ✅ Restaura carrinho salvo ao logar
+    const savedCart = localStorage.getItem('cart');
+    state.cart = savedCart ? JSON.parse(savedCart) : [];
+    updateCartUI();
+
     if (btnProfile) btnProfile.textContent = `Olá, ${u.name.split(' ')[0]}`;
     if (inputName) inputName.value = u.name || '';
     if (inputPhone) inputPhone.value = u.phone || '';
@@ -1578,7 +1585,18 @@ function setUser(u) {
   }
 }
 
-function setToken(t) { state.token = t || ''; if (t) localStorage.setItem('token', t); else localStorage.removeItem('token'); }
+function setToken(t) {
+  state.token = t || '';
+  if (t) {
+    localStorage.setItem('token', t);
+  } else {
+    // ✅ Limpa carrinho ao deslogar
+    localStorage.removeItem('token');
+    localStorage.removeItem('cart');
+    state.cart = [];
+    updateCartUI();
+  }
+}
 
 btnProfile?.addEventListener('click', (e) => { e.stopPropagation(); if (state.user) { const isHidden = profileMenu.getAttribute('aria-hidden') === 'true'; profileMenu.setAttribute('aria-hidden', isHidden ? 'false' : 'true'); } else { openAuthModal('login'); } });
 
