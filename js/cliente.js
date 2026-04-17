@@ -445,35 +445,49 @@ function initNeighborhoodAutocomplete() {
   if (!window.google || !google.maps || !google.maps.places || !inputNeighborhood) return;
 
   const autocompleteNeighborhood = new google.maps.places.Autocomplete(inputNeighborhood, {
-    types: ['(regions)'],
+    types: ['geocode'],  // ← mostra endereços completos
     componentRestrictions: { country: 'br' },
-    fields: ['address_components', 'geometry', 'name']
+    fields: ['address_components', 'geometry', 'formatted_address']
   });
 
   autocompleteNeighborhood.addListener('place_changed', () => {
     const place = autocompleteNeighborhood.getPlace();
-    if (!place) return;
+    if (!place || !place.address_components) return;
 
-    // Extrai só o nome do bairro
     let neighborhood = '';
-    if (place.address_components) {
-      place.address_components.forEach(c => {
-        if (
-          c.types.includes('sublocality') ||
-          c.types.includes('sublocality_level_1') ||
-          c.types.includes('neighborhood')
-        ) {
-          neighborhood = c.long_name;
-        }
-      });
-    }
+    let city = '';
+    let state = '';
+    let postalCode = '';
 
-    // Se encontrou bairro específico, usa ele. Senão usa o nome do lugar
+    place.address_components.forEach(c => {
+      if (c.types.includes('sublocality') || c.types.includes('sublocality_level_1') || c.types.includes('neighborhood')) {
+        neighborhood = c.long_name;
+      }
+      if (c.types.includes('administrative_area_level_2')) city = c.long_name;
+      if (c.types.includes('administrative_area_level_1')) state = c.short_name;
+      if (c.types.includes('postal_code')) postalCode = c.long_name;
+    });
+
+    // Preenche o bairro com nome limpo
     if (neighborhood) {
       inputNeighborhood.value = neighborhood;
     }
 
-    // Recalcula frete com a nova localização confirmada
+    // Mostra feedback visual com endereço completo + CEP
+    const feedbackEl = document.getElementById('neighborhood-feedback');
+    if (feedbackEl) {
+      if (neighborhood) {
+        feedbackEl.innerHTML = `
+          <span style="color:#10b981; font-size:12px;">
+            ✅ ${neighborhood}${city ? ', ' + city : ''}${state ? ' - ' + state : ''}
+            ${postalCode ? `<span style="color:#6b7280;"> · CEP: ${postalCode}</span>` : ''}
+          </span>`;
+      } else {
+        feedbackEl.innerHTML = '';
+      }
+    }
+
+    // Recalcula frete
     if (place.geometry) {
       waitForGoogleMaps(() => {
         calcShip(
@@ -482,17 +496,10 @@ function initNeighborhoodAutocomplete() {
         );
       });
     } else {
-      // Tenta recalcular pelo texto completo
       waitForGoogleMaps(() => tryCalculateByText());
     }
   });
 }
-
-// Inicializa junto com o autocomplete da rua
-window.addEventListener('load', () => {
-  initGoogleAutocomplete();
-  initNeighborhoodAutocomplete();
-});
 
 // ======= AUTO-GEOCODE SE O USUÁRIO DIGITAR MANUALMENTE =======
 inputAddress?.addEventListener('blur', async () => {
