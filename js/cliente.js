@@ -1350,7 +1350,7 @@ orderForm?.addEventListener('submit', async (e) => {
     address: fulfillment === 'pickup' ? 'Retirada na Loja' : inputAddress.value,
     neighborhood: fulfillment === 'pickup' ? '' : inputNeighborhood.value,
     reference: inputReference ? inputReference.value : '',
-    email: inputEmail ? inputEmail.value : '',
+    email: inputEmail?.value || state.user?.email || '',
     paymentMethod: selectedPayment,
     change: changeData,
     scheduledTo: (!state.isStoreOpen) ? orderSchedule.value : null
