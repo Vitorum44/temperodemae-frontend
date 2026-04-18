@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrega - Tempero de Mãe</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Arial', sans-serif; background: #f3f4f6; }
+
+    .header {
+      background: #d62300;
+      color: white;
+      padding: 16px 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .header h1 { font-size: 20px; font-weight: 700; }
+    .header p { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+
+    .card {
+      background: white;
+      margin: 16px;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    .order-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .order-icon {
+      width: 48px; height: 48px;
+      background: #fff5f2;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+    }
+    .order-details h2 { font-size: 18px; color: #111; font-weight: 700; }
+    .order-details p { font-size: 13px; color: #666; margin-top: 2px; }
+
+    .address-box {
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      border-left: 4px solid #d62300;
+    }
+    .address-box label { font-size: 11px; font-weight: 700; color: #d62300; text-transform: uppercase; letter-spacing: 0.5px; }
+    .address-box p { font-size: 15px; color: #111; font-weight: 600; margin-top: 4px; }
+
+    #map {
+      height: 280px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .status-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .status-box.waiting { background: #fff8f0; border: 1px solid #f59e0b; color: #92400e; }
+    .status-box.active { background: #f0fdf4; border: 1px solid #10b981; color: #065f46; }
+    .status-box.error { background: #fff1f2; border: 1px solid #ef4444; color: #991b1b; }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 3px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-start {
+      width: 100%;
+      height: 58px;
+      background: #d62300;
+      color: white;
+      border: none;
+      border-radius: 16px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(214,35,0,0.35);
+      transition: all 0.2s;
+    }
+    .btn-start:active { transform: scale(0.97); }
+    .btn-start:disabled { background: #9ca3af; box-shadow: none; cursor: not-allowed; }
+
+    .btn-stop {
+      width: 100%;
+      height: 50px;
+      background: white;
+      color: #ef4444;
+      border: 2px solid #ef4444;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .coords-display {
+      font-size: 11px;
+      color: #9ca3af;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .invalid-page {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .invalid-page .icon { font-size: 60px; margin-bottom: 16px; }
+    .invalid-page h2 { font-size: 22px; color: #111; margin-bottom: 8px; }
+    .invalid-page p { color: #666; font-size: 15px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛵 Tempero de Mãe</h1>
+  <p>Painel do Entregador</p>
+</div>
+
+<div id="app-content">
+  <div class="card">
+    <div style="text-align:center; padding: 20px; color: #666;">
+      <div class="spinner" style="margin: 0 auto 12px; border-color: #d62300; border-top-color: transparent;"></div>
+      Carregando pedido...
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://abilwddhuccuzsrkrmpq.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_yEOLRRdLfhBq1JbWQIp6nw_8-CeV3pK';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('orderId');
+  const customerAddress = params.get('address') ? decodeURIComponent(params.get('address')) : 'Endereço não informado';
+  const customerName = params.get('name') ? decodeURIComponent(params.get('name')) : 'Cliente';
+
+  let map = null;
+  let driverMarker = null;
+  let watchId = null;
+  let isTracking = false;
+  let updateInterval = null;
+
+  function renderInvalidPage() {
+    document.getElementById('app-content').innerHTML = `
+      <div class="card">
+        <div class="invalid-page">
+          <div class="icon">❌</div>
+          <h2>Link inválido</h2>
+          <p>Este link de entrega não é válido ou expirou.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderPage() {
+    document.getElementById('app-content').innerHTML = `
+      <div class="card">
+        <div class="order-info">
+          <div class="order-icon">🍔</div>
+          <div class="order-details">
+            <h2>Pedido #${orderId}</h2>
+            <p>Cliente: ${customerName}</p>
+          </div>
+        </div>
+
+        <div class="address-box">
+          <label>Entregar em</label>
+          <p>${customerAddress}</p>
+        </div>
+
+        <div id="map"></div>
+
+        <div id="status-box" class="status-box waiting">
+          <span style="font-size:20px;">📍</span>
+          <span>Clique em "Iniciar Entrega" para começar o rastreamento</span>
+        </div>
+
+        <button id="btn-start" class="btn-start">
+          🛵 Iniciar Entrega
+        </button>
+
+        <button id="btn-stop" class="btn-stop">
+          ⏹ Encerrar Rastreamento
+        </button>
+
+        <div id="coords-display" class="coords-display"></div>
+      </div>
+    `;
+
+    initMap();
+    document.getElementById('btn-start').addEventListener('click', startTracking);
+    document.getElementById('btn-stop').addEventListener('click', stopTracking);
+  }
+
+  function initMap() {
+    map = L.map('map').setView([-5.746906, -35.240273], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    L.marker([-5.746906, -35.240273], {
+      icon: L.divIcon({
+        html: '<div style="background:#d62300;color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🍔</div>',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+        className: ''
+      })
+    }).addTo(map).bindPopup('Tempero de Mãe').openPopup();
+  }
+
+  async function startTracking() {
+    if (!navigator.geolocation) {
+      setStatus('error', '❌', 'GPS não suportado neste dispositivo.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-start');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Obtendo localização...';
+
+    setStatus('waiting', '<div class="spinner"></div>', 'Obtendo sua localização GPS...');
+
+    watchId = navigator.geolocation.watchPosition(
+      async (position) => {
+        const { latitude: lat, longitude: lng, accuracy } = position.coords;
+
+        if (!isTracking) {
+          isTracking = true;
+          btn.style.display = 'none';
+          document.getElementById('btn-stop').style.display = 'block';
+          document.getElementById('coords-display').style.display = 'block';
+          setStatus('active', '✅', 'Rastreamento ativo — cliente está te acompanhando!');
+
+          await notifyAdmin(orderId);
+        }
+
+        updateDriverMarker(lat, lng);
+        await sendLocation(lat, lng);
+
+        document.getElementById('coords-display').textContent =
+          `GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)} (precisão: ${Math.round(accuracy)}m)`;
+      },
+      (error) => {
+        btn.disabled = false;
+        btn.innerHTML = '🛵 Iniciar Entrega';
+        let msg = 'Erro ao obter localização.';
+        if (error.code === 1) msg = 'Permissão de GPS negada. Ative nas configurações.';
+        if (error.code === 2) msg = 'GPS indisponível. Verifique sua conexão.';
+        if (error.code === 3) msg = 'Tempo esgotado. Tente novamente.';
+        setStatus('error', '❌', msg);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
+
+  async function sendLocation(lat, lng) {
+    try {
+      await supabase
+        .from('delivery_locations')
+        .upsert({
+          order_id: parseInt(orderId),
+          lat: lat,
+          lng: lng,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'order_id' });
+    } catch (e) {
+      console.error('Erro ao enviar localização:', e);
+    }
+  }
+
+  async function notifyAdmin(orderId) {
+    try {
+      await fetch(`https://api-temperodemae.onrender.com/orders/${orderId}/driver-started`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch(e) {}
+  }
+
+  function updateDriverMarker(lat, lng) {
+    const latlng = [lat, lng];
+    map.setView(latlng, 16);
+
+    if (driverMarker) {
+      driverMarker.setLatLng(latlng);
+    } else {
+      driverMarker = L.marker(latlng, {
+        icon: L.divIcon({
+          html: '<div style="background:#10b981;color:white;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;border:3px solid white;box-shadow:0 3px 12px rgba(0,0,0,0.4);">🛵</div>',
+          iconSize: [44, 44],
+          iconAnchor: [22, 22],
+          className: ''
+        })
+      }).addTo(map).bindPopup('Você está aqui').openPopup();
+    }
+  }
+
+  function stopTracking() {
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+    isTracking = false;
+    setStatus('waiting', '⏹', 'Rastreamento encerrado.');
+    document.getElementById('btn-stop').style.display = 'none';
+    document.getElementById('btn-start').style.display = 'flex';
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-start').innerHTML = '🛵 Retomar Entrega';
+  }
+
+  function setStatus(type, icon, message) {
+    const box = document.getElementById('status-box');
+    if (!box) return;
+    box.className = `status-box ${type}`;
+    box.innerHTML = `<span style="font-size:20px; flex-shrink:0;">${icon}</span><span>${message}</span>`;
+  }
+
+  if (!orderId) {
+    renderInvalidPage();
+  } else {
+    renderPage();
+  }
+</script>
+</body>
+</html>
