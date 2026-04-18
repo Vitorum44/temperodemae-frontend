@@ -1084,7 +1084,20 @@ app.post("/auth/verify-code", async (req, res) => {
   }
 });
 
-
+app.get("/orders/active/:userId", authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id FROM orders 
+       WHERE user_id = $1 
+       AND status NOT IN ('entregue', 'cancelado') 
+       ORDER BY created_at DESC LIMIT 1`,
+      [req.params.userId]
+    );
+    res.json(rows[0] || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
