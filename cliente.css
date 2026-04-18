@@ -2134,3 +2134,14 @@ html {
 .pac-icon {
   display: none !important;
 }
+
+#tracking-modal .modal-dialog {
+  max-width: 100% !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+#driver-map-container {
+  max-width: 100%;
+  overflow: hidden;
+}
