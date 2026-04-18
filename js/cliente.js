@@ -1381,10 +1381,10 @@ orderForm?.addEventListener('submit', async (e) => {
 
   try {
     const createdOrder = await apiSend('/orders', 'POST', order);
-    state.cart = []; saveCart(); orderForm.reset(); drawer.setAttribute('aria-hidden', 'true'); updateCartUI();
-    if (createdOrder.pixData) localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
-    startTracking(createdOrder.id);
-    if (createdOrder.pixData) showPixModal(createdOrder.pixData);
+state.cart = []; saveCart(); orderForm.reset(); drawer.setAttribute('aria-hidden', 'true'); updateCartUI();
+if (createdOrder.pixData) localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
+startTracking(createdOrder.id);
+if (createdOrder.pixData) showPixModal(createdOrder.pixData);
   } catch (err) { console.error(err); fb.textContent = 'Erro: ' + err.message; }
 });
 
@@ -1418,7 +1418,7 @@ const checkStatus = async () => {
       if (trackingModal.getAttribute('aria-hidden') === 'false') trackingModal.setAttribute('aria-hidden', 'true');
       return;
     }
-    
+
     if (state.pixTimerInterval) { clearInterval(state.pixTimerInterval); state.pixTimerInterval = null; }
     updateTrackUI(o);
     if (o.status === 'entregue' || o.status === 'cancelado') {
