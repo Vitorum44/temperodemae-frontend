@@ -31,7 +31,15 @@ const app = express();
 // ================= BANCO DE DADOS (NEON / POSTGRES) =================
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000,
+});
+
+// ✅ Evita crash quando o Neon derruba conexões ociosas
+pool.on('error', (err, client) => {
+  console.error('⚠️ Conexão perdida com o banco:', err.message);
 });
 
 // ================= CONFIGURAÇÃO CLOUDINARY =================
