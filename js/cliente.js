@@ -1439,13 +1439,13 @@ function updateTrackUI(order) {
   if (s === 'novo') { if (stepNovo) stepNovo.classList.add('active'); m = 'Recebido'; i = '✅'; pw = "10%"; }
   else if (s === 'em_preparo') { if (stepNovo) stepNovo.classList.add('active'); if (stepPreparo) stepPreparo.classList.add('active'); m = 'Preparando'; i = '🔥'; pw = "40%"; }
   else if (s === 'saiu_entrega') {
-  if (stepNovo) stepNovo.classList.add('active');
-  if (stepPreparo) stepPreparo.classList.add('active');
-  if (stepSaiu) stepSaiu.classList.add('active');
-  m = 'Saiu!'; i = '🛵'; pw = "70%";
-  // ✅ Inicia rastreamento do motorista em tempo real
-  startDriverTracking(order.id);
-}
+    if (stepNovo) stepNovo.classList.add('active');
+    if (stepPreparo) stepPreparo.classList.add('active');
+    if (stepSaiu) stepSaiu.classList.add('active');
+    m = 'Saiu!'; i = '🛵'; pw = "70%";
+    // ✅ Inicia rastreamento do motorista em tempo real
+    startDriverTracking(order.id);
+  }
   else if (s === 'entregue') { if (stepNovo) $$('.step').forEach(e => e.classList.add('active')); m = 'Entregue'; i = '🏠'; pw = "100%"; }
   else if (s === 'cancelado') { m = 'Cancelado'; i = '❌'; pw = "0%"; trackingBubble.style.background = '#EF4444'; }
   else { trackingBubble.style.background = '#10B981'; }
@@ -1814,22 +1814,22 @@ formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.t
 async function loadData() {
   await tryLoadMe();
   const urlParams = new URLSearchParams(window.location.search);
-const orderIdFromUrl = urlParams.get('orderId');
+  const orderIdFromUrl = urlParams.get('orderId');
 
-if (orderIdFromUrl) {
-  localStorage.setItem('lastOrderId', orderIdFromUrl);
-  window.history.replaceState({}, '', window.location.pathname);
-  startTracking(orderIdFromUrl);
-} else if (state.user?.id) {
-  try {
-    const active = await apiGet(`/orders/active/${state.user.id}`);
-    if (active?.id) {
-      startTracking(active.id);
-    }
-  } catch {}
-} else if (localStorage.getItem('lastOrderId')) {
-  startTracking(localStorage.getItem('lastOrderId'));
-}
+  if (orderIdFromUrl) {
+    localStorage.setItem('lastOrderId', orderIdFromUrl);
+    window.history.replaceState({}, '', window.location.pathname);
+    startTracking(orderIdFromUrl);
+  } else if (state.user?.id) {
+    try {
+      const active = await apiGet(`/orders/active/${state.user.id}`);
+      if (active?.id) {
+        startTracking(active.id);
+      }
+    } catch { }
+  } else if (localStorage.getItem('lastOrderId')) {
+    startTracking(localStorage.getItem('lastOrderId'));
+  }
 
   try {
     const s = await apiGet("/settings");
@@ -2464,20 +2464,24 @@ function startDriverTracking(orderId) {
 }
 
 function initDriverTracking(orderId) {
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // Mostra mapa no modal de tracking
   showDriverMap();
 
-  // Busca posição inicial
-  supabase
-    .from('delivery_locations')
-    .select('lat, lng')
-    .eq('order_id', orderId)
-    .maybeSingle()
-    .then(({ data, error }) => {
-      if (data) updateDriverMapPosition(data.lat, data.lng);
-    });
+  // Escuta atualizações em tempo real
+  supabaseChannel = sbClient
+    .channel(`delivery_${orderId}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'delivery_locations',
+      filter: `order_id=eq.${orderId}`
+    }, (payload) => {
+      const { lat, lng } = payload.new;
+      updateDriverMapPosition(lat, lng);
+    })
+    .subscribe();
 
   // Escuta atualizações em tempo real
   supabaseChannel = supabase
@@ -2608,10 +2612,10 @@ function updateDriverMapPosition(lat, lng) {
           const R = 6371;
           const dLat = (destLat - lat) * Math.PI / 180;
           const dLon = (destLng - lng) * Math.PI / 180;
-          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(lat * Math.PI / 180) * Math.cos(destLat * Math.PI / 180) *
-                    Math.sin(dLon/2) * Math.sin(dLon/2);
-          const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat * Math.PI / 180) * Math.cos(destLat * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+          const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
           // Velocidade média moto urbana ~25km/h
           const minutos = Math.round((distKm / 25) * 60);
@@ -2625,7 +2629,7 @@ function updateDriverMapPosition(lat, lng) {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }
 }
 
