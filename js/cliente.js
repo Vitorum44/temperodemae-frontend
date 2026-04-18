@@ -2511,9 +2511,16 @@ function showDriverMap() {
     box-sizing: border-box;
   `;
   container.innerHTML = `
-    <div style="background:#d62300; color:white; padding:10px 14px; font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px;">
-      <span style="font-size:18px;">🛵</span>
-      Acompanhe seu entregador em tempo real
+    <div style="background:#d62300; color:white; padding:10px 14px; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size:18px;">🛵</span>
+        Acompanhe seu entregador em tempo real
+      </div>
+      <button id="btn-center-driver" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:4px 10px; border-radius:20px; font-size:12px; cursor:pointer;">📍 Centralizar</button>
+    </div>
+    <div id="eta-box" style="background:#fff8f0; padding:8px 14px; font-size:13px; color:#92400e; font-weight:600; display:flex; align-items:center; gap:6px; border-bottom:1px solid #fde68a;">
+      <span>⏱</span>
+      <span id="eta-text">Calculando tempo estimado...</span>
     </div>
     <div id="driver-map" style="height:220px; width:100%;"></div>
   `;
@@ -2563,7 +2570,6 @@ function updateDriverMapPosition(lat, lng) {
   if (!driverMap) return;
 
   const latlng = [lat, lng];
-  driverMap.setView(latlng, 16);
 
   if (driverMarker) {
     driverMarker.setLatLng(latlng);
@@ -2574,6 +2580,52 @@ function updateDriverMapPosition(lat, lng) {
         iconSize: [44, 44], iconAnchor: [22, 22], className: ''
       })
     }).addTo(driverMap).bindPopup('Seu entregador').openPopup();
+  }
+
+  // ✅ Centraliza automaticamente no motorista
+  driverMap.setView(latlng, 16);
+
+  // ✅ Botão centralizar
+  const btnCenter = document.getElementById('btn-center-driver');
+  if (btnCenter) {
+    btnCenter.onclick = () => driverMap.setView(latlng, 16);
+  }
+
+  // ✅ Calcula tempo estimado via Nominatim + distância em linha reta
+  const customerAddress = localStorage.getItem('lastAddress') || '';
+  const customerNeighborhood = localStorage.getItem('lastNeighborhood') || '';
+
+  if (customerAddress) {
+    const fullAddr = encodeURIComponent(`${customerAddress}, ${customerNeighborhood}, Natal, RN`);
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${fullAddr}&limit=1`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.length > 0) {
+          const destLat = parseFloat(data[0].lat);
+          const destLng = parseFloat(data[0].lon);
+
+          // Distância em linha reta (Haversine)
+          const R = 6371;
+          const dLat = (destLat - lat) * Math.PI / 180;
+          const dLon = (destLng - lng) * Math.PI / 180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat * Math.PI / 180) * Math.cos(destLat * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+          const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+          // Velocidade média moto urbana ~25km/h
+          const minutos = Math.round((distKm / 25) * 60);
+          const etaText = document.getElementById('eta-text');
+          if (etaText) {
+            if (minutos <= 1) {
+              etaText.textContent = 'Chegando agora!';
+            } else {
+              etaText.textContent = `Previsão de chegada: ~${minutos} min (${distKm.toFixed(1)} km)`;
+            }
+          }
+        }
+      })
+      .catch(() => {});
   }
 }
 
