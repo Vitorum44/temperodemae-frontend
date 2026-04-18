@@ -156,7 +156,7 @@
 <script>
   const SUPABASE_URL = 'https://abilwddhuccuzsrkrmpq.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_yEOLRRdLfhBq1JbWQIp6nw_8-CeV3pK';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const params = new URLSearchParams(window.location.search);
   const orderId = params.get('orderId');
