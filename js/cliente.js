@@ -1805,15 +1805,22 @@ formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.t
 async function loadData() {
   await tryLoadMe();
   const urlParams = new URLSearchParams(window.location.search);
-  const orderIdFromUrl = urlParams.get('orderId');
+const orderIdFromUrl = urlParams.get('orderId');
 
-  if (orderIdFromUrl) {
-    localStorage.setItem('lastOrderId', orderIdFromUrl);
-    window.history.replaceState({}, '', window.location.pathname);
-    startTracking(orderIdFromUrl);
-  } else if (localStorage.getItem('lastOrderId')) {
-    startTracking(localStorage.getItem('lastOrderId'));
-  }
+if (orderIdFromUrl) {
+  localStorage.setItem('lastOrderId', orderIdFromUrl);
+  window.history.replaceState({}, '', window.location.pathname);
+  startTracking(orderIdFromUrl);
+} else if (state.user?.id) {
+  try {
+    const active = await apiGet(`/orders/active/${state.user.id}`);
+    if (active?.id) {
+      startTracking(active.id);
+    }
+  } catch {}
+} else if (localStorage.getItem('lastOrderId')) {
+  startTracking(localStorage.getItem('lastOrderId'));
+}
 
   try {
     const s = await apiGet("/settings");
