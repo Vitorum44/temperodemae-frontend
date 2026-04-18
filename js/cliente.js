@@ -666,7 +666,7 @@ function calcShip(lat, lng) {
       } else if (km > 8) {
         state.calculatedFee = -1;
       } else {
-        state.calculatedFee = Math.ceil(km);
+        state.calculatedFee = Math.ceil(km * 10) / 10; // arredonda para 1 casa decimal
       }
 
       // ✅ Salva no cache para próximas vezes
@@ -2039,7 +2039,9 @@ function openAddressEditor(currentAddress, currentNeighborhood) {
     }
   });
 
-  document.getElementById('btn-save-address')?.addEventListener('click', () => {
+  document.getElementById('btn-save-address')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
     const newAddress = document.getElementById('edit-address-input').value.trim();
     const newNeighborhood = document.getElementById('edit-neighborhood-input').value.trim();
 
