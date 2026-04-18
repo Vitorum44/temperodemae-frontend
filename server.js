@@ -641,6 +641,30 @@ app.post("/orders", async (req, res) => {
     if (isPickup) order.deliveryFee = 0;
     const initialStatus = order.paymentMethod === 'Pix' ? 'aguardando_pagamento' : 'novo';
 
+    // ✅ VALIDAÇÃO DE PREÇOS (SEGURANÇA SÊNIOR)
+    let totalCalculado = 0;
+    for (const item of order.items) {
+      const { rows } = await pool.query(
+        'SELECT price FROM menu_items WHERE id = $1 AND active = true',
+        [item.itemId]
+      );
+      if (!rows[0]) {
+        return res.status(400).json({ error: `Produto não encontrado: ${item.name}` });
+      }
+      const precoReal = Number(rows[0].price);
+      const precoEnviado = Number(item.price);
+      if (Math.abs(precoReal - precoEnviado) > 0.01) {
+        return res.status(400).json({ error: `Preço inválido para ${item.name}. Recarregue a página.` });
+      }
+      totalCalculado += precoReal * item.qty;
+    }
+
+    // Valida o total geral (subtotal)
+    if (Math.abs(totalCalculado - order.subtotal) > 0.10) {
+      return res.status(400).json({ error: 'Total inválido. Recarregue a página.' });
+    }
+    // ✅ FIM VALIDAÇÃO
+
     const customerData = {
       ...order.customer,
       paymentMethod: order.paymentMethod,
