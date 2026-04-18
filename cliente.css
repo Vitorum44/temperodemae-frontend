@@ -262,16 +262,16 @@ main.container {
   align-items: center;
   padding: 20px;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-  transition: background 0.2s;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s ease;
   cursor: pointer;
-  border: 1px solid #f0f0f0;
+  border: 1px solid #f0ebe4;
 }
 
 .item-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
 .card-info {
@@ -308,34 +308,36 @@ main.container {
 }
 
 .card-price {
-  font-size: 16px;
-  color: #2ecc71;
+  font-size: 19px;
+  color: #d62300;
   font-weight: 700;
 }
 
 .btn-add {
-  background: transparent;
-  color: var(--primary);
-  border: 1px solid var(--primary);
-  padding: 6px 14px;
+  background: #d62300;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
   border-radius: 50px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   transition: 0.2s;
+  box-shadow: 0 4px 12px rgba(214, 35, 0, 0.3);
 }
 
 .btn-add:hover {
-  background: var(--primary);
-  color: #fff;
+  background: #b51d00;
+  transform: scale(1.05);
 }
 
 .card-img-right {
-  width: 110px;
-  height: 110px;
-  border-radius: 12px;
+  width: 100px;
+  height: 100px;
+  border-radius: 14px;
   object-fit: cover;
   flex-shrink: 0;
   background: #eee;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* 6. MODAL & CARRINHO */
