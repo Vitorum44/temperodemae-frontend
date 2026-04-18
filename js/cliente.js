@@ -2474,8 +2474,8 @@ function initDriverTracking(orderId) {
     .from('delivery_locations')
     .select('lat, lng')
     .eq('order_id', orderId)
-    .single()
-    .then(({ data }) => {
+    .maybeSingle()
+    .then(({ data, error }) => {
       if (data) updateDriverMapPosition(data.lat, data.lng);
     });
 
