@@ -2589,11 +2589,21 @@ function updateDriverMapPosition(lat, lng) {
   // ✅ Centraliza automaticamente no motorista
   driverMap.setView(latlng, 16);
 
-  // ✅ Botão centralizar
-  const btnCenter = document.getElementById('btn-center-driver');
-  if (btnCenter) {
-    btnCenter.onclick = () => driverMap.setView(latlng, 16);
-  }
+  // ✅ Botão centralizar com animação
+const btnCenter = document.getElementById('btn-center-driver');
+if (btnCenter) {
+    btnCenter.onclick = () => {
+        if (!driverMarker) return;
+        const pos = driverMarker.getLatLng();
+        driverMap.flyTo([pos.lat, pos.lng], 17, { duration: 1 });
+        btnCenter.style.background = 'rgba(255,255,255,0.5)';
+        btnCenter.textContent = '✅ Centralizado!';
+        setTimeout(() => {
+            btnCenter.style.background = 'rgba(255,255,255,0.2)';
+            btnCenter.textContent = '📍 Centralizar';
+        }, 2000);
+    };
+}
 
   // ✅ Calcula tempo estimado via Nominatim + distância em linha reta
   const customerAddress = localStorage.getItem('lastAddress') || '';
