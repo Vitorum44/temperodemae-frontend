@@ -1438,7 +1438,14 @@ function updateTrackUI(order) {
 
   if (s === 'novo') { if (stepNovo) stepNovo.classList.add('active'); m = 'Recebido'; i = '✅'; pw = "10%"; }
   else if (s === 'em_preparo') { if (stepNovo) stepNovo.classList.add('active'); if (stepPreparo) stepPreparo.classList.add('active'); m = 'Preparando'; i = '🔥'; pw = "40%"; }
-  else if (s === 'saiu_entrega') { if (stepNovo) stepNovo.classList.add('active'); if (stepPreparo) stepPreparo.classList.add('active'); if (stepSaiu) stepSaiu.classList.add('active'); m = 'Saiu!'; i = '🛵'; pw = "70%"; }
+  else if (s === 'saiu_entrega') {
+  if (stepNovo) stepNovo.classList.add('active');
+  if (stepPreparo) stepPreparo.classList.add('active');
+  if (stepSaiu) stepSaiu.classList.add('active');
+  m = 'Saiu!'; i = '🛵'; pw = "70%";
+  // ✅ Inicia rastreamento do motorista em tempo real
+  startDriverTracking(order.id);
+}
   else if (s === 'entregue') { if (stepNovo) $$('.step').forEach(e => e.classList.add('active')); m = 'Entregue'; i = '🏠'; pw = "100%"; }
   else if (s === 'cancelado') { m = 'Cancelado'; i = '❌'; pw = "0%"; trackingBubble.style.background = '#EF4444'; }
   else { trackingBubble.style.background = '#10B981'; }
@@ -1740,6 +1747,8 @@ function stopTracking() {
   ) {
     trackingBubble.style.display = 'none';
   }
+
+  stopDriverTracking();
 
   if (trackingModal) trackingModal.setAttribute('aria-hidden', 'true');
 }
@@ -2428,6 +2437,153 @@ window.openAuthModal = openAuthModal;
 window.state = state;
 window.apiGet = apiGet;
 window.updateCartUI = updateCartUI;
+
+
+// ================= RASTREAMENTO DO MOTORISTA EM TEMPO REAL =================
+const SUPABASE_URL = 'https://abilwddhuccuzsrkrmpq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_yEOLRRdLfhBq1JbWQIp6nw_8-CeV3pK';
+
+let driverTrackingActive = false;
+let driverMap = null;
+let driverMarker = null;
+let supabaseChannel = null;
+
+function startDriverTracking(orderId) {
+  if (driverTrackingActive) return;
+  driverTrackingActive = true;
+
+  // Carrega Supabase SDK se ainda não carregou
+  if (!window.supabase) {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    script.onload = () => initDriverTracking(orderId);
+    document.head.appendChild(script);
+  } else {
+    initDriverTracking(orderId);
+  }
+}
+
+function initDriverTracking(orderId) {
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Mostra mapa no modal de tracking
+  showDriverMap();
+
+  // Busca posição inicial
+  supabase
+    .from('delivery_locations')
+    .select('lat, lng')
+    .eq('order_id', orderId)
+    .single()
+    .then(({ data }) => {
+      if (data) updateDriverMapPosition(data.lat, data.lng);
+    });
+
+  // Escuta atualizações em tempo real
+  supabaseChannel = supabase
+    .channel(`delivery_${orderId}`)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'delivery_locations',
+      filter: `order_id=eq.${orderId}`
+    }, (payload) => {
+      const { lat, lng } = payload.new;
+      updateDriverMapPosition(lat, lng);
+    })
+    .subscribe();
+}
+
+function showDriverMap() {
+  // Remove mapa anterior se existir
+  document.getElementById('driver-map-container')?.remove();
+
+  const container = document.createElement('div');
+  container.id = 'driver-map-container';
+  container.style.cssText = `
+    margin: 16px 0;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 2px solid #e5e7eb;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  `;
+  container.innerHTML = `
+    <div style="background:#d62300; color:white; padding:10px 14px; font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px;">
+      <span style="font-size:18px;">🛵</span>
+      Acompanhe seu entregador em tempo real
+    </div>
+    <div id="driver-map" style="height:240px;"></div>
+  `;
+
+  // Insere antes do resumo do pedido no modal de tracking
+  const trackItemsList = document.getElementById('track-items-list');
+  if (trackItemsList) {
+    trackItemsList.parentNode.insertBefore(container, trackItemsList);
+  }
+
+  // Carrega Leaflet se ainda não carregou
+  if (!window.L) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = () => initDriverMap();
+    document.head.appendChild(script);
+  } else {
+    initDriverMap();
+  }
+}
+
+function initDriverMap() {
+  if (driverMap) { driverMap.remove(); driverMap = null; }
+
+  driverMap = L.map('driver-map').setView([RESTAURANT_LOCATION.lat, RESTAURANT_LOCATION.lng], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(driverMap);
+
+  // Marca o restaurante
+  L.marker([RESTAURANT_LOCATION.lat, RESTAURANT_LOCATION.lng], {
+    icon: L.divIcon({
+      html: '<div style="background:#d62300;color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🍔</div>',
+      iconSize: [36, 36], iconAnchor: [18, 18], className: ''
+    })
+  }).addTo(driverMap);
+
+  setTimeout(() => driverMap?.invalidateSize(), 300);
+}
+
+function updateDriverMapPosition(lat, lng) {
+  if (!driverMap) return;
+
+  const latlng = [lat, lng];
+  driverMap.setView(latlng, 16);
+
+  if (driverMarker) {
+    driverMarker.setLatLng(latlng);
+  } else {
+    driverMarker = L.marker(latlng, {
+      icon: L.divIcon({
+        html: '<div style="background:#10b981;color:white;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;border:3px solid white;box-shadow:0 3px 12px rgba(0,0,0,0.4);">🛵</div>',
+        iconSize: [44, 44], iconAnchor: [22, 22], className: ''
+      })
+    }).addTo(driverMap).bindPopup('Seu entregador').openPopup();
+  }
+}
+
+function stopDriverTracking() {
+  if (supabaseChannel) {
+    supabaseChannel.unsubscribe();
+    supabaseChannel = null;
+  }
+  driverTrackingActive = false;
+  driverMarker = null;
+  if (driverMap) { driverMap.remove(); driverMap = null; }
+  document.getElementById('driver-map-container')?.remove();
+}
 
 window.addEventListener('DOMContentLoaded', () => {
 
