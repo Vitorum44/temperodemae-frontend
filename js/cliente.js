@@ -1924,9 +1924,12 @@ function renderSavedAddress() {
 
     addressWrapper.parentNode.insertBefore(card, addressWrapper);
 
-    document.getElementById('btn-edit-address')?.addEventListener('click', () => {
-      openAddressEditor(savedAddress, savedNeighborhood);
-    });
+    document.getElementById('btn-edit-address')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+  openAddressEditor(savedAddress, savedNeighborhood);
+});
 
     // Calcula frete do cache ou refaz
     const cached = checkAddressCache(`${savedAddress}, ${savedNeighborhood || ''}`);
@@ -2042,6 +2045,7 @@ function openAddressEditor(currentAddress, currentNeighborhood) {
   document.getElementById('btn-save-address')?.addEventListener('click', (e) => {
   e.preventDefault();
   e.stopPropagation();
+  e.stopImmediatePropagation();
     const newAddress = document.getElementById('edit-address-input').value.trim();
     const newNeighborhood = document.getElementById('edit-neighborhood-input').value.trim();
 
