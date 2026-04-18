@@ -1099,6 +1099,18 @@ app.get("/orders/active/:userId", authMiddleware, async (req, res) => {
   }
 });
 
+app.patch("/orders/:id/driver-started", async (req, res) => {
+  try {
+    await pool.query(
+      "UPDATE orders SET status = 'saiu_entrega' WHERE id = $1",
+      [req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Servidor ON na porta ${PORT}`);
