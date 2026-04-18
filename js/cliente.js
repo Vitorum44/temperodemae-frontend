@@ -2464,7 +2464,7 @@ function startDriverTracking(orderId) {
 }
 
 function initDriverTracking(orderId) {
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // Mostra mapa no modal de tracking
   showDriverMap();
@@ -2506,13 +2506,16 @@ function showDriverMap() {
     overflow: hidden;
     border: 2px solid #e5e7eb;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
   `;
   container.innerHTML = `
     <div style="background:#d62300; color:white; padding:10px 14px; font-size:13px; font-weight:700; display:flex; align-items:center; gap:8px;">
       <span style="font-size:18px;">🛵</span>
       Acompanhe seu entregador em tempo real
     </div>
-    <div id="driver-map" style="height:240px;"></div>
+    <div id="driver-map" style="height:220px; width:100%;"></div>
   `;
 
   // Insere antes do resumo do pedido no modal de tracking
