@@ -1552,27 +1552,21 @@ function updatePixTick(deadline, orderId) {
   }
 }
 
-/* ========================================================= */
-/* NOVA FUNÇÃO DE MODAL PIX (LAYOUT PROFISSIONAL)            */
-/* ========================================================= */
 function showPixModal(pixData) {
-  // 1. Remove se já existir algum aberto para não duplicar
   const existing = document.getElementById('modal-pix-modern');
   if (existing) existing.remove();
 
   state.pixModalOpen = true;
 
-  // 2. Cria o elemento container (Fundo escuro)
   const overlay = document.createElement('div');
   overlay.id = 'modal-pix-modern';
-  overlay.className = 'pix-overlay'; // Usa a classe do CSS novo
+  overlay.className = 'pix-overlay';
 
-  // 3. Monta o HTML Moderno
   overlay.innerHTML = `
     <div class="pix-card">
       <button id="btn-close-pix" class="pix-close-btn">&times;</button>
-      
-      <div style="margin-top: 10px;">
+
+      <div style="margin-top:10px;">
         <img src="https://logospng.org/download/pix/logo-pix-icone-512.png" width="40" style="margin-bottom:10px;">
         <h3 class="pix-title">Pagamento via Pix</h3>
         <p class="pix-subtitle">Escaneie o QR Code ou copie o código abaixo</p>
@@ -1582,62 +1576,147 @@ function showPixModal(pixData) {
         <img src="data:image/png;base64,${pixData.qr_base64}" class="pix-qr-img" alt="QR Code Pix">
       </div>
 
-      <div class="pix-copy-area">
+      <div class="pix-copy-area" id="pix-copy-area-box">
         <span class="pix-code-text">${pixData.qr_code}</span>
         <span style="font-size:18px;">📋</span>
       </div>
 
-      <textarea id="pix-hidden-input" style="position:absolute; left:-9999px;">${pixData.qr_code}</textarea>
+      <textarea id="pix-hidden-input" style="position:absolute;left:-9999px;">${pixData.qr_code}</textarea>
 
-      <button id="btn-copy-pix" class="pix-btn-copy">
-        COPIAR CÓDIGO PIX
-      </button>
+      <button id="btn-copy-pix" class="pix-btn-copy">COPIAR CÓDIGO PIX</button>
 
-      <p style="font-size:12px; color:#9ca3af; margin-top:15px;">
+      <div id="pix-timer-box" style="margin-top:16px; text-align:center;">
+        <p style="font-size:12px; color:#6b7280; margin-bottom:4px;">⏱ Tempo restante para pagar:</p>
+        <div id="pix-modal-timer" style="font-size:28px; font-weight:900; color:#ef4444; letter-spacing:2px;">15:00</div>
+        <div style="height:6px; background:#f3f4f6; border-radius:6px; margin-top:8px; overflow:hidden;">
+          <div id="pix-timer-bar" style="height:100%; background:#ef4444; border-radius:6px; width:100%; transition:width 1s linear;"></div>
+        </div>
+      </div>
+
+      <div id="pix-status-box" style="
+        margin-top:16px; padding:12px; border-radius:12px;
+        background:#f0fdf4; border:1px solid #bbf7d0;
+        display:flex; align-items:center; gap:10px;
+      ">
+        <div id="pix-spinner" style="
+          width:20px; height:20px; border:3px solid #10b981;
+          border-top-color:transparent; border-radius:50%;
+          animation:spin 0.8s linear infinite; flex-shrink:0;
+        "></div>
+        <span id="pix-status-text" style="font-size:13px; color:#065f46; font-weight:600;">
+          Aguardando pagamento...
+        </span>
+      </div>
+
+      <p style="font-size:11px; color:#9ca3af; margin-top:12px;">
         Após pagar, o pedido atualiza automaticamente.
       </p>
     </div>
   `;
 
+  // Adiciona animação do spinner
+  if (!document.getElementById('pix-spin-style')) {
+    const style = document.createElement('style');
+    style.id = 'pix-spin-style';
+    style.textContent = `@keyframes spin { to { transform: rotate(360deg); } }`;
+    document.head.appendChild(style);
+  }
+
   document.body.appendChild(overlay);
 
-  // --- EVENTOS DOS BOTÕES ---
-
-  // A. Fechar Modal
-  const closeBtn = overlay.querySelector('#btn-close-pix');
-  closeBtn.onclick = () => {
+  // Fechar
+  overlay.querySelector('#btn-close-pix').onclick = () => {
     state.pixModalOpen = false;
     state.pixManuallyClosed = true;
-    overlay.style.opacity = '0'; // Efeito visual de sumir
+    clearInterval(pixModalTimer);
+    clearInterval(pixPollTimer);
+    overlay.style.opacity = '0';
     setTimeout(() => overlay.remove(), 300);
   };
 
-  // B. Copiar Código
+  // Copiar
   const copyBtn = overlay.querySelector('#btn-copy-pix');
   copyBtn.onclick = () => {
-    const hiddenInput = overlay.querySelector('#pix-hidden-input');
-    hiddenInput.select();
-
-    // Tenta copiar de forma moderna, se falhar usa o método antigo
     navigator.clipboard.writeText(pixData.qr_code)
       .then(() => feedbackCopy())
-      .catch(() => {
-        document.execCommand('copy');
-        feedbackCopy();
-      });
+      .catch(() => { document.execCommand('copy'); feedbackCopy(); });
 
-    // Função para mudar a cor do botão avisando que copiou
     function feedbackCopy() {
-      const originalText = copyBtn.innerText;
       copyBtn.innerText = "CÓDIGO COPIADO! ✅";
-      copyBtn.style.backgroundColor = "#059669"; // Verde mais escuro
-
+      copyBtn.style.backgroundColor = "#059669";
       setTimeout(() => {
-        copyBtn.innerText = originalText;
-        copyBtn.style.backgroundColor = "#10b981"; // Volta ao normal
+        copyBtn.innerText = "COPIAR CÓDIGO PIX";
+        copyBtn.style.backgroundColor = "#10b981";
       }, 2000);
     }
   };
+
+  // ⏱ TIMER VISUAL
+  const deadline = state.activeOrderData?.created_at
+    ? new Date(state.activeOrderData.created_at).getTime() + 15 * 60 * 1000
+    : Date.now() + 15 * 60 * 1000;
+
+  const totalMs = 15 * 60 * 1000;
+  const timerEl = overlay.querySelector('#pix-modal-timer');
+  const timerBar = overlay.querySelector('#pix-timer-bar');
+
+  const pixModalTimer = setInterval(() => {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      clearInterval(pixModalTimer);
+      timerEl.textContent = '00:00';
+      timerBar.style.width = '0%';
+      return;
+    }
+    const min = Math.floor(remaining / 60000);
+    const sec = Math.floor((remaining % 60000) / 1000);
+    timerEl.textContent = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+    timerBar.style.width = `${(remaining / totalMs) * 100}%`;
+
+    // Fica vermelho quando menos de 2 min
+    if (remaining < 2 * 60 * 1000) {
+      timerEl.style.color = '#dc2626';
+      timerBar.style.background = '#dc2626';
+    }
+  }, 1000);
+
+  // 🔄 POLLING DE CONFIRMAÇÃO EM TEMPO REAL
+  const orderId = state.activeOrderData?.id || state.currentOrderId;
+  const statusText = overlay.querySelector('#pix-status-text');
+  const spinner = overlay.querySelector('#pix-spinner');
+  const statusBox = overlay.querySelector('#pix-status-box');
+
+  const pixPollTimer = setInterval(async () => {
+    if (!orderId) return;
+    try {
+      const o = await apiGet(`/orders/${orderId}`);
+      if (o.status === 'em_preparo' || o.status === 'novo') {
+        clearInterval(pixModalTimer);
+        clearInterval(pixPollTimer);
+
+        // ✅ PAGAMENTO CONFIRMADO
+        spinner.style.borderColor = '#10b981';
+        spinner.style.borderTopColor = 'transparent';
+        statusBox.style.background = '#f0fdf4';
+        statusBox.style.borderColor = '#10b981';
+        statusText.textContent = '✅ Pagamento confirmado!';
+        statusText.style.color = '#065f46';
+
+        timerEl.textContent = '✅ Pago!';
+        timerEl.style.color = '#10b981';
+        timerBar.style.background = '#10b981';
+        timerBar.style.width = '100%';
+
+        setTimeout(() => {
+          overlay.style.opacity = '0';
+          setTimeout(() => {
+            overlay.remove();
+            trackingModal.setAttribute('aria-hidden', 'false');
+          }, 400);
+        }, 2000);
+      }
+    } catch {}
+  }, 3000);
 }
 
 async function cancelMyOrder(id) { if (!confirm("Cancelar?")) return; try { await apiSend(`/orders/${id}/cancel`, 'PATCH', {}); alert("Cancelado."); stopTracking(); checkStatus(); } catch (err) { alert(err.message); } }
