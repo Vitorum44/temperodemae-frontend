@@ -1400,8 +1400,19 @@ const checkStatus = async () => {
   if (!state.currentOrderId) return;
   try {
     const o = await apiGet(`/orders/${state.currentOrderId}`);
-    state.activeOrderData = o;
-    if (o.status === 'aguardando_pagamento') {
+
+if (o.status === 'aguardando_pagamento') {
+  // ✅ Injeta pixData ANTES de salvar no state
+  if (!o.pixData) {
+    const backup = localStorage.getItem('lastPixData');
+    if (backup) {
+      try { o.pixData = JSON.parse(backup); } catch {}
+    }
+  } else {
+    localStorage.setItem('lastPixData', JSON.stringify(o.pixData));
+  }
+  state.activeOrderData = o;
+  
   const deadline = new Date(o.created_at).getTime() + (15 * 60 * 1000);
   if (!state.pixTimerInterval) startPixVisualTimer(deadline, o.id);
   if (trackingModal.getAttribute('aria-hidden') === 'false') trackingModal.setAttribute('aria-hidden', 'true');
