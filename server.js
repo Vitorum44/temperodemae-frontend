@@ -781,7 +781,7 @@ if (order.customer?.email) {
       </tr>
     `).join('');
 
-    const trackUrl = `https://temperodemae.vercel.app?orderId=${savedOrder.id}`;
+    const trackUrl = `https://temperodemae-frontend.vercel.app?orderId=${savedOrder.id}`;
 
     await transporter.sendMail({
       from: `"Tempero de Mãe 🍔" <${process.env.EMAIL_USER}>`,
