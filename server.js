@@ -641,27 +641,27 @@ app.post("/orders", async (req, res) => {
     };
 
     const { rows } = await pool.query(
-      `INSERT INTO orders 
-       (items, subtotal, delivery_fee, discount, total, coupon_used, neighborhood, customer, status, fulfillment, user_id, distance_km) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-      [
-        JSON.stringify(order.items),
-        order.subtotal,
-        order.deliveryFee,
-        order.discount,
-        order.total,
-        order.couponUsed,
-        order.neighborhood,
-        JSON.stringify(customerData),
-        initialStatus,
-        order.fulfillment || "delivery",
-        order.user_id,
-        order.distance_km || 0
-      ]
-    );
+  `INSERT INTO orders 
+   (items, subtotal, delivery_fee, discount, total, coupon_used, neighborhood, customer, status, fulfillment, user_id, distance_km, "paymentMethod") 
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+  [
+    JSON.stringify(order.items),
+    order.subtotal,
+    order.deliveryFee,
+    order.discount,
+    order.total,
+    order.couponUsed,
+    order.neighborhood,
+    JSON.stringify(customerData),
+    initialStatus,
+    order.fulfillment || "delivery",
+    order.user_id,
+    order.distance_km || 0,
+    order.paymentMethod
+  ]
+);
 
-    let savedOrder = rows[0];
-
+let savedOrder = rows[0];
 
     // ================= BAIXAR ESTOQUE =================
 try {
