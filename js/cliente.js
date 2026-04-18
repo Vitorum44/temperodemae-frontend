@@ -494,10 +494,10 @@ function initNeighborhoodAutocomplete() {
   if (!window.google || !google.maps || !google.maps.places || !inputNeighborhood) return;
 
   const autocompleteNeighborhood = new google.maps.places.Autocomplete(inputNeighborhood, {
-  componentRestrictions: { country: 'br' },
-  fields: ['address_components', 'geometry', 'formatted_address'],
-  types: ['geocode']  // ← geocode mostra bairros, cidades, regiões
-});
+    componentRestrictions: { country: 'br' },
+    fields: ['address_components', 'geometry', 'formatted_address'],
+    types: ['geocode']  // ← geocode mostra bairros, cidades, regiões
+  });
 
   // 🔥 Quando o cliente começa a digitar no bairro,
   // injeta a rua+número já digitada para refinar a busca
@@ -1231,10 +1231,10 @@ document.addEventListener('click', function (e) {
   if (e.target.id === 'close-cart' || e.target.closest('#close-cart')) { drawer.setAttribute('aria-hidden', 'true'); }
   if (e.target === drawer) { drawer.setAttribute('aria-hidden', 'true'); }
   if (e.target.id === 'open-cart' || e.target.closest('#open-cart')) {
-  drawer.setAttribute('aria-hidden', 'false');
-  loadSavedUserData();
-  renderSavedAddress(); // ← adicione
-}
+    drawer.setAttribute('aria-hidden', 'false');
+    loadSavedUserData();
+    renderSavedAddress(); // ← adicione
+  }
 });
 
 // ================= CHECKOUT (COM SEGURANÇA SÊNIOR) =================
@@ -1381,11 +1381,11 @@ orderForm?.addEventListener('submit', async (e) => {
 
   try {
     const createdOrder = await apiSend('/orders', 'POST', order);
-console.log('🔍 createdOrder:', JSON.stringify(createdOrder));
-state.cart = []; saveCart(); orderForm.reset(); drawer.setAttribute('aria-hidden', 'true'); updateCartUI();
-if (createdOrder.pixData) localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
-startTracking(createdOrder.id);
-if (createdOrder.pixData) showPixModal(createdOrder.pixData);
+    console.log('🔍 createdOrder:', JSON.stringify(createdOrder));
+    state.cart = []; saveCart(); orderForm.reset(); drawer.setAttribute('aria-hidden', 'true'); updateCartUI();
+    if (createdOrder.pixData) localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
+    startTracking(createdOrder.id);
+    if (createdOrder.pixData) showPixModal(createdOrder.pixData);
   } catch (err) { console.error(err); fb.textContent = 'Erro: ' + err.message; }
 });
 
@@ -1407,7 +1407,7 @@ const checkStatus = async () => {
       if (!o.pixData) {
         const backup = localStorage.getItem('lastPixData');
         if (backup) {
-          try { o.pixData = JSON.parse(backup); } catch {}
+          try { o.pixData = JSON.parse(backup); } catch { }
         }
       } else {
         localStorage.setItem('lastPixData', JSON.stringify(o.pixData));
@@ -1517,7 +1517,7 @@ trackingBubble?.addEventListener('click', () => {
     if (!pixData) {
       const backup = localStorage.getItem('lastPixData');
       if (backup) {
-        try { pixData = JSON.parse(backup); } catch {}
+        try { pixData = JSON.parse(backup); } catch { }
       }
     }
 
@@ -1715,7 +1715,7 @@ function showPixModal(pixData) {
           }, 400);
         }, 2000);
       }
-    } catch {}
+    } catch { }
   }, 3000);
 }
 
@@ -1805,15 +1805,15 @@ formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.t
 async function loadData() {
   await tryLoadMe();
   const urlParams = new URLSearchParams(window.location.search);
-const orderIdFromUrl = urlParams.get('orderId');
+  const orderIdFromUrl = urlParams.get('orderId');
 
-if (orderIdFromUrl) {
-  localStorage.setItem('lastOrderId', orderIdFromUrl);
-  window.history.replaceState({}, '', window.location.pathname);
-  startTracking(orderIdFromUrl);
-} else if (localStorage.getItem('lastOrderId')) {
-  startTracking(localStorage.getItem('lastOrderId'));
-}
+  if (orderIdFromUrl) {
+    localStorage.setItem('lastOrderId', orderIdFromUrl);
+    window.history.replaceState({}, '', window.location.pathname);
+    startTracking(orderIdFromUrl);
+  } else if (localStorage.getItem('lastOrderId')) {
+    startTracking(localStorage.getItem('lastOrderId'));
+  }
 
   try {
     const s = await apiGet("/settings");
@@ -1864,7 +1864,7 @@ if (orderIdFromUrl) {
 
   updateCartUI();
   loadSavedUserData();
-  renderSavedAddress(); 
+  renderSavedAddress();
   initCarousel();
 }
 
@@ -1934,14 +1934,14 @@ function renderSavedAddress() {
     addressWrapper.parentNode.insertBefore(card, addressWrapper);
 
     document.getElementById('btn-edit-address')?.addEventListener('click', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation();
-  // ✅ Lê os valores ATUAIS do localStorage, não os capturados no closure
-  const currentAddress = localStorage.getItem('lastAddress');
-  const currentNeighborhood = localStorage.getItem('lastNeighborhood');
-  openAddressEditor(currentAddress, currentNeighborhood);
-});
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      // ✅ Lê os valores ATUAIS do localStorage, não os capturados no closure
+      const currentAddress = localStorage.getItem('lastAddress');
+      const currentNeighborhood = localStorage.getItem('lastNeighborhood');
+      openAddressEditor(currentAddress, currentNeighborhood);
+    });
     // Calcula frete do cache ou refaz
     const cached = checkAddressCache(`${savedAddress}, ${savedNeighborhood || ''}`);
     if (cached) {
@@ -2054,9 +2054,9 @@ function openAddressEditor(currentAddress, currentNeighborhood) {
   });
 
   document.getElementById('btn-save-address')?.addEventListener('click', (e) => {
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation();
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
     const newAddress = document.getElementById('edit-address-input').value.trim();
     const newNeighborhood = document.getElementById('edit-neighborhood-input').value.trim();
 
@@ -2122,9 +2122,12 @@ function setToken(t) {
   if (t) {
     localStorage.setItem('token', t);
   } else {
-    // ✅ Limpa carrinho ao deslogar
     localStorage.removeItem('token');
     localStorage.removeItem('cart');
+    localStorage.removeItem('lastOrderId');
+    localStorage.removeItem('lastPixData');
+    state.currentOrderId = null;
+    state.activeOrderData = null;
     state.cart = [];
     updateCartUI();
   }
@@ -2149,7 +2152,13 @@ document.addEventListener('click', (e) => {
   }
 });
 
-pmLogout?.addEventListener('click', () => { setToken(''); setUser(null); window.location.reload(); });
+pmLogout?.addEventListener('click', () => {
+  setToken('');
+  setUser(null);
+  localStorage.removeItem('lastOrderId');
+  localStorage.removeItem('lastPixData');
+  window.location.reload();
+});
 
 function initCarousel() {
   if (!carouselTrack || slides.length === 0) return;
@@ -2185,13 +2194,13 @@ pmHistory?.addEventListener('click', async () => {
     historyList.innerHTML = '';
 
     const statusMap = {
-        'novo': { label: 'Recebido', color: '#f59e0b', icon: '🟡' },
-        'aguardando_pagamento': { label: 'Aguardando Pix', color: '#f59e0b', icon: '⏳' },
-        'em_preparo': { label: 'Preparando', color: '#3b82f6', icon: '🔥' },
-        'saiu_entrega': { label: 'Saiu para entrega', color: '#8b5cf6', icon: '🛵' },
-        'entregue': { label: 'Pedido concluído', color: '#10b981', icon: '✅' },
-        'cancelado': { label: 'Cancelado', color: '#ef4444', icon: '❌' }
-      };
+      'novo': { label: 'Recebido', color: '#f59e0b', icon: '🟡' },
+      'aguardando_pagamento': { label: 'Aguardando Pix', color: '#f59e0b', icon: '⏳' },
+      'em_preparo': { label: 'Preparando', color: '#3b82f6', icon: '🔥' },
+      'saiu_entrega': { label: 'Saiu para entrega', color: '#8b5cf6', icon: '🛵' },
+      'entregue': { label: 'Pedido concluído', color: '#10b981', icon: '✅' },
+      'cancelado': { label: 'Cancelado', color: '#ef4444', icon: '❌' }
+    };
 
     orders.forEach(order => {
       const st = statusMap[order.status] || { label: order.status, color: '#888', icon: '•' };
@@ -2233,11 +2242,11 @@ pmHistory?.addEventListener('click', async () => {
             ${order.items.map(i => `<div>${i.qty}x ${i.name}</div>`).join('')}
           </div>
           ${order.items[0]?.image
-            ? `<img src="${order.items[0].image}"
+          ? `<img src="${order.items[0].image}"
                 onerror="this.src='https://placehold.co/60x60?text=🍔'"
                 style="width:60px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0;">`
-            : `<div style="font-size:22px;opacity:0.3;">🍽️</div>`
-          }
+          : `<div style="font-size:22px;opacity:0.3;">🍽️</div>`
+        }
         </div>
 
         <div style="display:flex;justify-content:flex-end;margin-top:14px;
@@ -2397,6 +2406,9 @@ pmMobileLogout?.addEventListener('click', () => {
   if (btnProfile) {
     btnProfile.textContent = '👤 Perfil';
   }
+
+  localStorage.removeItem('lastOrderId');
+  localStorage.removeItem('lastPixData');
 
   // recarrega página
   window.location.reload();
