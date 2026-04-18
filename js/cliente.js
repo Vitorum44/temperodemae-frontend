@@ -1976,10 +1976,10 @@ function openAddressEditor(currentAddress, currentNeighborhood) {
       </label>
       <input id="edit-neighborhood-input" class="input" value="${currentNeighborhood || ''}"
         placeholder="Bairro" style="margin-bottom:20px;">
-      <button id="btn-save-address" class="btn primary block"
-        style="height:52px;font-size:16px;font-weight:700;border-radius:16px;">
-        💾 Salvar endereço
-      </button>
+      <button id="btn-save-address" type="button" class="btn primary block"
+  style="height:52px;font-size:16px;font-weight:700;border-radius:16px;">
+  💾 Salvar endereço
+</button>
     </div>
   `;
 
