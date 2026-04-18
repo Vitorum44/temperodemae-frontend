@@ -174,7 +174,7 @@ async function loadOrders() {
 // === AUTO-CANCEL PIX ===
 async function checkPixExpiry(orders) {
     const now = new Date().getTime();
-    const fiveMinutes = 5 * 60 * 1000;
+    const quinzeMinutes = 15 * 60 * 1000;
 
     for (const order of orders) {
         const isPix = order.paymentMethod?.toLowerCase() === 'pix';
@@ -355,15 +355,15 @@ function renderOrders(orders) {
             ${i.obs ? `<div class="item-obs">⚠️ ${i.obs}</div>` : ''}
         </div>
         <strong class="item-price">R$ ${(() => {
-    const extrasTotal = (i.acompanhamentos || []).reduce((s, a) => {
-        if (a.grupo === 'principal') {
-            return s + (Number(i.price) * Math.max(0, a.qtd - 1));
-        } else {
-            return s + (a.preco * a.qtd);
-        }
-    }, 0);
-    return ((Number(i.price) + extrasTotal) * i.qty).toFixed(2);
-})()}</strong>
+                    const extrasTotal = (i.acompanhamentos || []).reduce((s, a) => {
+                        if (a.grupo === 'principal') {
+                            return s + (Number(i.price) * Math.max(0, a.qtd - 1));
+                        } else {
+                            return s + (a.preco * a.qtd);
+                        }
+                    }, 0);
+                    return ((Number(i.price) + extrasTotal) * i.qty).toFixed(2);
+                })()}</strong>
     </div>`;
         }).join('');
 
@@ -881,7 +881,10 @@ async function cancelOrderAdmin(orderId) {
     try {
         await fetch(`${API_URL}/orders/${orderId}/cancel`, {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`  // ← ADD ISSO
+            }
         });
 
         alert("Pedido cancelado com sucesso.");
