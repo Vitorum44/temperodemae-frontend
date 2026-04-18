@@ -596,7 +596,19 @@ app.get("/orders/me", authMiddleware, async (req, res) => {
 app.get("/orders/:id", async (req, res) => {
   try {
     const { rows } = await pool.query("SELECT * FROM orders WHERE id = $1", [req.params.id]);
-    res.json(rows[0] || null);
+    const order = rows[0];
+    if (!order) return res.status(404).json({ error: "Pedido não encontrado" });
+
+    // ✅ Reconstrói pixData se existir
+    if (order.pix_qr_code && order.pix_qr_base64) {
+      order.pixData = {
+        qr_code: order.pix_qr_code,
+        qr_base64: order.pix_qr_base64,
+        id: order.pix_payment_id
+      };
+    }
+
+    res.json(order);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -718,9 +730,9 @@ try {
         savedOrder.pixData = pixDataToSave;
 
         await pool.query(
-          "UPDATE orders SET pix_payment_id = $1 WHERE id = $2",
-          [pixData.id, savedOrder.id]
-        );
+  "UPDATE orders SET pix_payment_id = $1, pix_qr_code = $2, pix_qr_base64 = $3 WHERE id = $4",
+  [pixData.id, pixDataToSave.qr_code, pixDataToSave.qr_base64, savedOrder.id]
+);
 
       } catch (mpError) {
         console.error("❌ ERRO MP:", mpError);
