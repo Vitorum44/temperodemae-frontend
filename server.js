@@ -912,21 +912,21 @@ app.post("/auth/send-code", async (req, res) => {
     // Salva código com expiração de 10 minutos
     resetCodes.set(phone, { codigo, userId: user.id, expira: Date.now() + 10 * 60 * 1000 });
 
-    await resend.emails.send({
-      from: "Tempero de Mãe <onboarding@resend.dev>",
-      to: user.email,
-      subject: "Código de verificação - Tempero de Mãe",
-      html: `
-        <div style="font-family:sans-serif;padding:20px;color:#111">
-          <h2>Olá, ${user.name}! 🍔</h2>
-          <p>Seu código de verificação é:</p>
-          <h1 style="color:#d62300;font-size:40px;letter-spacing:8px">${codigo}</h1>
-          <p>Este código expira em 10 minutos.</p>
-          <hr style="margin:20px 0">
-          <small style="color:#777">Tempero de Mãe Delivery</small>
-        </div>
-      `
-    });
+    await transporter.sendMail({
+  from: `"Tempero de Mãe" <${process.env.EMAIL_USER}>`,
+  to: user.email,
+  subject: "Código de verificação - Tempero de Mãe",
+  html: `
+    <div style="font-family:sans-serif;padding:20px;color:#111">
+      <h2>Olá, ${user.name}! 🍔</h2>
+      <p>Seu código de verificação é:</p>
+      <h1 style="color:#d62300;font-size:40px;letter-spacing:8px">${codigo}</h1>
+      <p>Este código expira em 10 minutos.</p>
+      <hr style="margin:20px 0">
+      <small style="color:#777">Tempero de Mãe Delivery</small>
+    </div>
+  `
+});
     
     res.json({ success: true });
   } catch (err) {
