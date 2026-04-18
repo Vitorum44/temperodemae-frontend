@@ -407,11 +407,14 @@ function renderOrders(orders) {
             }
 
             else if (order.status === 'em_preparo') {
-                if (order.fulfillment === 'delivery') {
-                    buttons += `<button class="btn btn-delivery" onclick="updateStatus(${order.id}, 'saiu_entrega')">
-        SAIU PARA ENTREGA
-      </button>`;
-                } else {
+    if (order.fulfillment === 'delivery') {
+        // ✅ Gera link do motorista
+        const driverLink = `https://temperodemae-frontend.vercel.app/motorista.html?orderId=${order.id}&name=${encodeURIComponent(cust.name || 'Cliente')}&address=${encodeURIComponent((cust.address || '') + ', ' + (cust.neighborhood || ''))}`;
+        
+        buttons += `<button class="btn btn-delivery" onclick="sendDriverLink(${order.id}, '${driverLink}')">
+    🛵 SAIU PARA ENTREGA
+  </button>`;
+    } else {
                     buttons += `<button class="btn btn-ready" onclick="updateStatus(${order.id}, 'entregue')">
         PRONTO P/ RETIRADA
       </button>`;
@@ -894,6 +897,26 @@ async function cancelOrderAdmin(orderId) {
     }
 }
 
+window.sendDriverLink = async function(orderId, driverLink) {
+    const confirmed = await showConfirm(
+        'Enviar link ao motorista',
+        'Isso vai gerar o link de rastreamento. Confirmar?',
+        '🛵'
+    );
+    if (!confirmed) return;
+
+    // Copia o link para o clipboard
+    try {
+        await navigator.clipboard.writeText(driverLink);
+    } catch(e) {}
+
+    // Abre WhatsApp com o link para enviar ao motorista
+    const msg = encodeURIComponent(`🛵 Link de rastreamento da entrega:\n${driverLink}\n\nClique para iniciar o GPS e o cliente vai te acompanhar em tempo real!`);
+    window.open(`https://wa.me/?text=${msg}`, '_blank');
+
+    // Atualiza status para saiu_entrega
+    await window.updateStatus(orderId, 'saiu_entrega', true);
+};
 
 
 init();
