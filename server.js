@@ -771,7 +771,106 @@ try {
         savedOrder.pixError = "Erro no Pix.";
       }
     }
-    res.json(savedOrder);
+    // ✅ EMAIL DE CONFIRMAÇÃO
+if (order.customer?.email) {
+  try {
+    const itemsHtml = (order.items || []).map(i => `
+      <tr>
+        <td style="padding:8px 0; border-bottom:1px solid #f5f5f5; font-size:13px; color:#333;">${i.qty}x ${i.name}</td>
+        <td style="padding:8px 0; border-bottom:1px solid #f5f5f5; font-size:13px; color:#333; text-align:right;">R$ ${(i.price * i.qty).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const trackUrl = `https://temperodemae.vercel.app?orderId=${savedOrder.id}`;
+
+    await transporter.sendMail({
+      from: `"Tempero de Mãe 🍔" <${process.env.EMAIL_USER}>`,
+      to: order.customer.email,
+      subject: `✅ Pedido #${savedOrder.id} recebido — Tempero de Mãe`,
+      html: `
+        <div style="font-family:Arial,sans-serif; max-width:520px; margin:0 auto; background:#f9f9f9; padding:20px;">
+          
+          <div style="background:#d62300; padding:28px; text-align:center; border-radius:12px 12px 0 0;">
+            <div style="font-size:32px;">🍔</div>
+            <div style="color:white; font-size:20px; font-weight:bold; margin-top:8px;">Tempero de Mãe</div>
+            <div style="color:rgba(255,255,255,0.85); font-size:13px; margin-top:4px;">Seu pedido foi recebido!</div>
+          </div>
+
+          <div style="background:#fff; padding:24px; border-radius:0 0 12px 12px;">
+            
+            <p style="font-size:15px; color:#111; margin:0 0 6px;">Olá, <strong>${order.customer.name?.split(' ')[0] || 'Cliente'}</strong>!</p>
+            <p style="font-size:13px; color:#666; margin:0 0 20px; line-height:1.6;">
+              Recebemos seu pedido e já estamos preparando tudo com carinho. 😊
+            </p>
+
+            <div style="background:#fff8f0; border:1px solid #f59e0b; border-radius:20px; display:inline-block; padding:5px 14px; margin-bottom:20px;">
+              <span style="font-size:12px; color:#92400e; font-weight:bold;">🟡 Pedido recebido — aguardando preparo</span>
+            </div>
+
+            <div style="background:#f9f9f9; border-radius:8px; padding:16px; margin-bottom:20px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:12px; color:#888;">Pedido</span>
+                <span style="font-size:12px; font-weight:bold; color:#111;">#${savedOrder.id}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:12px; color:#888;">Data</span>
+                <span style="font-size:12px; color:#111;">${new Date().toLocaleString('pt-BR')}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-size:12px; color:#888;">Pagamento</span>
+                <span style="font-size:12px; color:#111;">${order.paymentMethod || '—'}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-size:12px; color:#888;">Entrega</span>
+                <span style="font-size:12px; color:#111; text-align:right; max-width:200px;">
+                  ${order.fulfillment === 'pickup' ? 'Retirada na loja' : `${order.customer.address || '—'}`}
+                </span>
+              </div>
+            </div>
+
+            <div style="font-size:13px; font-weight:bold; color:#111; margin-bottom:10px;">Itens do pedido</div>
+            
+            <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+              ${itemsHtml}
+              <tr>
+                <td style="padding:8px 0; font-size:12px; color:#888;">Frete</td>
+                <td style="padding:8px 0; font-size:12px; color:#888; text-align:right;">
+                  ${order.deliveryFee > 0 ? `R$ ${Number(order.deliveryFee).toFixed(2)}` : 'Grátis'}
+                </td>
+              </tr>
+              <tr style="border-top:2px solid #eee;">
+                <td style="padding:12px 0 0; font-size:15px; font-weight:bold; color:#111;">Total</td>
+                <td style="padding:12px 0 0; font-size:15px; font-weight:bold; color:#d62300; text-align:right;">
+                  R$ ${Number(order.total).toFixed(2)}
+                </td>
+              </tr>
+            </table>
+
+            <div style="text-align:center; margin-bottom:20px;">
+              <a href="${trackUrl}" style="display:inline-block; background:#d62300; color:white; padding:13px 30px; border-radius:25px; font-size:14px; font-weight:bold; text-decoration:none;">
+                Acompanhar meu pedido →
+              </a>
+            </div>
+
+            <p style="font-size:12px; color:#888; text-align:center; line-height:1.6; margin:0;">
+              Dúvidas? Fale com a gente pelo WhatsApp<br>
+              <a href="https://wa.me/5584996065229" style="color:#d62300;">(84) 99606-5229</a>
+            </p>
+          </div>
+
+          <p style="font-size:11px; color:#aaa; text-align:center; margin-top:16px; line-height:1.6;">
+            Tempero de Mãe · R. Lauro Bezerra, 89 · Pajuçara · Natal, RN
+          </p>
+        </div>
+      `
+    });
+    console.log(`📧 E-mail enviado para ${order.customer.email}`);
+  } catch (emailErr) {
+    console.error('❌ Erro ao enviar e-mail:', emailErr.message);
+  }
+}
+
+res.json(savedOrder);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
