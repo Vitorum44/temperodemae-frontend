@@ -1928,9 +1928,11 @@ function renderSavedAddress() {
   e.preventDefault();
   e.stopPropagation();
   e.stopImmediatePropagation();
-  openAddressEditor(savedAddress, savedNeighborhood);
+  // ✅ Lê os valores ATUAIS do localStorage, não os capturados no closure
+  const currentAddress = localStorage.getItem('lastAddress');
+  const currentNeighborhood = localStorage.getItem('lastNeighborhood');
+  openAddressEditor(currentAddress, currentNeighborhood);
 });
-
     // Calcula frete do cache ou refaz
     const cached = checkAddressCache(`${savedAddress}, ${savedNeighborhood || ''}`);
     if (cached) {
