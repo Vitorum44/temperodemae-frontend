@@ -1381,6 +1381,7 @@ orderForm?.addEventListener('submit', async (e) => {
 
   try {
     const createdOrder = await apiSend('/orders', 'POST', order);
+console.log('🔍 createdOrder:', JSON.stringify(createdOrder));
 state.cart = []; saveCart(); orderForm.reset(); drawer.setAttribute('aria-hidden', 'true'); updateCartUI();
 if (createdOrder.pixData) localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
 startTracking(createdOrder.id);
