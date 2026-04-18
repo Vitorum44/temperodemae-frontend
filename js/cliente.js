@@ -1804,7 +1804,16 @@ formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.t
 // ================= LOADER (CORREÇÃO DE UX: CÁLCULO AUTOMÁTICO) =================
 async function loadData() {
   await tryLoadMe();
-  if (localStorage.getItem('lastOrderId')) startTracking(localStorage.getItem('lastOrderId'));
+  const urlParams = new URLSearchParams(window.location.search);
+const orderIdFromUrl = urlParams.get('orderId');
+
+if (orderIdFromUrl) {
+  localStorage.setItem('lastOrderId', orderIdFromUrl);
+  window.history.replaceState({}, '', window.location.pathname);
+  startTracking(orderIdFromUrl);
+} else if (localStorage.getItem('lastOrderId')) {
+  startTracking(localStorage.getItem('lastOrderId'));
+}
 
   try {
     const s = await apiGet("/settings");
