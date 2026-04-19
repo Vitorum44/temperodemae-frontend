@@ -2563,6 +2563,25 @@ function initDriverMap() {
     })
   }).addTo(driverMap);
 
+  // ✅ Botão centralizar ligado aqui, onde o mapa já existe
+  const btnCenter = document.getElementById('btn-center-driver');
+  if (btnCenter) {
+    btnCenter.onclick = () => {
+      if (!driverMarker) {
+        driverMap.setView([RESTAURANT_LOCATION.lat, RESTAURANT_LOCATION.lng], 14);
+        return;
+      }
+      const pos = driverMarker.getLatLng();
+      driverMap.flyTo([pos.lat, pos.lng], 17, { duration: 1 });
+      btnCenter.style.background = 'rgba(255,255,255,0.5)';
+      btnCenter.textContent = '✅ Centralizado!';
+      setTimeout(() => {
+        btnCenter.style.background = 'rgba(255,255,255,0.2)';
+        btnCenter.textContent = '📍 Centralizar';
+      }, 2000);
+    };
+  }
+
   setTimeout(() => driverMap?.invalidateSize(), 300);
 }
 
@@ -2585,57 +2604,59 @@ function updateDriverMapPosition(lat, lng) {
   // ✅ Centraliza automaticamente no motorista
   driverMap.setView(latlng, 16);
 
-  // ✅ Botão centralizar com animação
-const btnCenter = document.getElementById('btn-center-driver');
-if (btnCenter) {
-    btnCenter.onclick = () => {
-        if (!driverMarker) return;
-        const pos = driverMarker.getLatLng();
-        driverMap.flyTo([pos.lat, pos.lng], 17, { duration: 1 });
-        btnCenter.style.background = 'rgba(255,255,255,0.5)';
-        btnCenter.textContent = '✅ Centralizado!';
-        setTimeout(() => {
-            btnCenter.style.background = 'rgba(255,255,255,0.2)';
-            btnCenter.textContent = '📍 Centralizar';
-        }, 2000);
-    };
+  // ✅ Calcula ETA sem chamar Nominatim toda vez
+  calcDriverETA(lat, lng);
 }
 
-  // ✅ Calcula tempo estimado via Nominatim + distância em linha reta
-  const customerAddress = localStorage.getItem('lastAddress') || '';
-  const customerNeighborhood = localStorage.getItem('lastNeighborhood') || '';
+// Cache das coordenadas do destino
+let _destCoords = null;
 
-  if (customerAddress) {
-    const fullAddr = encodeURIComponent(`${customerAddress}, ${customerNeighborhood}, Natal, RN`);
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${fullAddr}&limit=1`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.length > 0) {
-          const destLat = parseFloat(data[0].lat);
-          const destLng = parseFloat(data[0].lon);
+async function calcDriverETA(driverLat, driverLng) {
+  const etaText = document.getElementById('eta-text');
+  if (!etaText) return;
 
-          // Distância em linha reta (Haversine)
-          const R = 6371;
-          const dLat = (destLat - lat) * Math.PI / 180;
-          const dLon = (destLng - lng) * Math.PI / 180;
-          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat * Math.PI / 180) * Math.cos(destLat * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-          const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  // Busca coordenadas do destino só na primeira vez
+  if (!_destCoords) {
+    const customerAddress = localStorage.getItem('lastAddress') || '';
+    const customerNeighborhood = localStorage.getItem('lastNeighborhood') || '';
 
-          // Velocidade média moto urbana ~25km/h
-          const minutos = Math.round((distKm / 25) * 60);
-          const etaText = document.getElementById('eta-text');
-          if (etaText) {
-            if (minutos <= 1) {
-              etaText.textContent = 'Chegando agora!';
-            } else {
-              etaText.textContent = `Previsão de chegada: ~${minutos} min (${distKm.toFixed(1)} km)`;
-            }
-          }
-        }
-      })
-      .catch(() => { });
+    if (!customerAddress) {
+      etaText.textContent = 'Endereço não informado';
+      return;
+    }
+
+    try {
+      const fullAddr = encodeURIComponent(`${customerAddress}, ${customerNeighborhood}, Natal, RN`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${fullAddr}&limit=1`);
+      const data = await res.json();
+
+      if (data.length > 0) {
+        _destCoords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      } else {
+        etaText.textContent = 'Endereço não encontrado';
+        return;
+      }
+    } catch {
+      etaText.textContent = 'Erro ao calcular rota';
+      return;
+    }
+  }
+
+  // Haversine: distância entre motorista e destino
+  const R = 6371;
+  const dLat = (_destCoords.lat - driverLat) * Math.PI / 180;
+  const dLon = (_destCoords.lng - driverLng) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(driverLat * Math.PI / 180) * Math.cos(_destCoords.lat * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  const minutos = Math.round((distKm / 25) * 60);
+
+  if (minutos <= 1) {
+    etaText.textContent = '🏠 Chegando agora!';
+  } else {
+    etaText.textContent = `Previsão de chegada: ~${minutos} min (${distKm.toFixed(1)} km)`;
   }
 }
 
