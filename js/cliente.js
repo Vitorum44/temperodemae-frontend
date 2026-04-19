@@ -2469,22 +2469,18 @@ function initDriverTracking(orderId) {
   // Mostra mapa no modal de tracking
   showDriverMap();
 
-  // Escuta atualizações em tempo real
-  supabaseChannel = sbClient
-    .channel(`delivery_${orderId}`)
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'delivery_locations',
-      filter: `order_id=eq.${orderId}`
-    }, (payload) => {
-      const { lat, lng } = payload.new;
-      updateDriverMapPosition(lat, lng);
-    })
-    .subscribe();
+  // Busca posição inicial do motorista (caso já tenha começado)
+  sbClient
+    .from('delivery_locations')
+    .select('lat, lng')
+    .eq('order_id', orderId)
+    .maybeSingle()
+    .then(({ data }) => {
+      if (data) updateDriverMapPosition(data.lat, data.lng);
+    });
 
   // Escuta atualizações em tempo real
-  supabaseChannel = supabase
+  supabaseChannel = sbClient
     .channel(`delivery_${orderId}`)
     .on('postgres_changes', {
       event: '*',
