@@ -284,7 +284,7 @@
 
   async function sendLocation(lat, lng) {
     try {
-      await supabase
+      await supabaseClient
         .from('delivery_locations')
         .upsert({
           order_id: parseInt(orderId),
