@@ -2608,7 +2608,7 @@ function initDriverMap() {
   // Marca o restaurante com ícone de casa
   L.marker([RESTAURANT_LOCATION.lat, RESTAURANT_LOCATION.lng], {
     icon: L.divIcon({
-      html: '<div style="background:#d62300;color:white;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);">🏠</div>',
+      html: '<div style="background:#d62300;color:white;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);">🍔</div>',
       iconSize: [34, 34], iconAnchor: [17, 17], className: ''
     })
   }).addTo(driverMap).bindPopup('Restaurante');
@@ -2645,7 +2645,7 @@ function updateDriverMapPosition(lat, lng) {
   } else {
     driverMarker = L.marker(latlng, {
       icon: L.icon({
-        iconUrl: 'https://temperodemae-frontend.vercel.app/assets/moto-icon.png',
+        iconUrl: '/assets/moto-icon.png',
         iconSize: [60, 60],
         iconAnchor: [30, 30],
         popupAnchor: [0, -30]
