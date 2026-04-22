@@ -1561,7 +1561,7 @@ function updatePixTick(deadline, orderId) {
 
     // Cancela o pedido automaticamente
     if (orderId) {
-      apiSend(`/orders/${orderId}/cancel`, 'PATCH', {}).catch(() => {});
+      apiSend(`/orders/${orderId}/cancel`, 'PATCH', {}).catch(() => { });
     }
 
     // Limpa tudo
@@ -1704,7 +1704,7 @@ function showPixModal(pixData) {
       // Cancela o pedido automaticamente
       const expiredOrderId = state.activeOrderData?.id || state.currentOrderId;
       if (expiredOrderId) {
-        apiSend(`/orders/${expiredOrderId}/cancel`, 'PATCH', {}).catch(() => {});
+        apiSend(`/orders/${expiredOrderId}/cancel`, 'PATCH', {}).catch(() => { });
       }
 
       // Limpa state e bolinha
@@ -2632,7 +2632,8 @@ function initDriverMap() {
     };
   }
 
-  setTimeout(() => driverMap?.invalidateSize(), 300);
+  setTimeout(() => driverMap?.invalidateSize(), 500);
+  setTimeout(() => driverMap?.invalidateSize(), 1000);
 }
 
 function updateDriverMapPosition(lat, lng) {
