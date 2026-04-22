@@ -1536,7 +1536,7 @@ function updateTrackUI(order) {
       </div>
     `;
   }
-  if (btnTrackWa) btnTrackWa.href = `https://wa.me/5584996065229?text=${encodeURIComponent(`Olá, sobre meu pedido #${order.id}...`)}`;
+  if (btnTrackWa) btnTrackWa.href = `https://wa.me/5584998364794?text=${encodeURIComponent(`Olá, sobre meu pedido #${order.id}...`)}`;
   if (btnCancelOrder) {
     btnCancelOrder.style.display = (s === 'novo' || s === 'agendado') ? 'block' : 'none';
     btnCancelOrder.onclick = () => cancelMyOrder(order.id);
