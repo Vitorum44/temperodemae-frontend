@@ -1555,7 +1555,25 @@ function startPixVisualTimer(deadline, orderId) {
 
 function updatePixTick(deadline, orderId) {
   const remaining = deadline - Date.now();
-  if (remaining <= 0) { clearInterval(state.pixTimerInterval); state.pixTimerInterval = null; stopTracking(); alert("Pix expirou."); }
+  if (remaining <= 0) {
+    clearInterval(state.pixTimerInterval);
+    state.pixTimerInterval = null;
+
+    // Cancela o pedido automaticamente
+    if (orderId) {
+      apiSend(`/orders/${orderId}/cancel`, 'PATCH', {}).catch(() => {});
+    }
+
+    // Limpa tudo
+    state.activeOrderData = null;
+    stopTracking();
+
+    // Só mostra o alerta se o modal de pix não estiver aberto (evita spam)
+    if (!state.pixModalOpen) {
+      alert("⏱ Tempo do Pix expirou. Seu pedido foi cancelado.");
+    }
+    return;
+  }
   else {
     if (trackingBubble) {
       trackingBubble.style.setProperty('display', 'flex', 'important');
@@ -1679,8 +1697,30 @@ function showPixModal(pixData) {
     const remaining = deadline - Date.now();
     if (remaining <= 0) {
       clearInterval(pixModalTimer);
+      clearInterval(pixPollTimer);
       timerEl.textContent = '00:00';
       timerBar.style.width = '0%';
+
+      // Cancela o pedido automaticamente
+      const expiredOrderId = state.activeOrderData?.id || state.currentOrderId;
+      if (expiredOrderId) {
+        apiSend(`/orders/${expiredOrderId}/cancel`, 'PATCH', {}).catch(() => {});
+      }
+
+      // Limpa state e bolinha
+      state.activeOrderData = null;
+      state.pixModalOpen = false;
+      stopTracking();
+
+      // Fecha o modal e avisa
+      setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+          overlay.remove();
+          alert("⏱ Tempo do Pix expirou. Seu pedido foi cancelado.");
+        }, 300);
+      }, 1000);
+
       return;
     }
     const min = Math.floor(remaining / 60000);
