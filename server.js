@@ -30,7 +30,7 @@ const app = express();
 
 // ================= BANCO DE DADOS (NEON / POSTGRES) =================
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL + '?sslmode=verify-full',
   ssl: { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30000,
