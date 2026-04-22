@@ -2598,20 +2598,22 @@ function showDriverMap() {
 function initDriverMap() {
   if (driverMap) { driverMap.remove(); driverMap = null; }
 
-  driverMap = L.map('driver-map').setView([RESTAURANT_LOCATION.lat, RESTAURANT_LOCATION.lng], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
+  driverMap = L.map('driver-map', { zoomControl: false }).setView([RESTAURANT_LOCATION.lat, RESTAURANT_LOCATION.lng], 14);
+
+  // Tiles mais modernos
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO'
   }).addTo(driverMap);
 
-  // Marca o restaurante
+  // Marca o restaurante com ícone de casa
   L.marker([RESTAURANT_LOCATION.lat, RESTAURANT_LOCATION.lng], {
     icon: L.divIcon({
-      html: '<div style="background:#d62300;color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🍔</div>',
-      iconSize: [36, 36], iconAnchor: [18, 18], className: ''
+      html: '<div style="background:#d62300;color:white;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);">🏠</div>',
+      iconSize: [34, 34], iconAnchor: [17, 17], className: ''
     })
-  }).addTo(driverMap);
+  }).addTo(driverMap).bindPopup('Restaurante');
 
-  // ✅ Botão centralizar ligado aqui, onde o mapa já existe
+  // ✅ Botão centralizar
   const btnCenter = document.getElementById('btn-center-driver');
   if (btnCenter) {
     btnCenter.onclick = () => {
