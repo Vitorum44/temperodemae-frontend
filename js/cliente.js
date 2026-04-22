@@ -1223,17 +1223,25 @@ function updateCartUI() {
 
 if (floatCartBtn) floatCartBtn.addEventListener('click', () => {
   drawer.setAttribute('aria-hidden', 'false');
+  floatCartBtn.style.display = 'none';
   loadSavedUserData();
-  renderSavedAddress(); // ← adicione
+  renderSavedAddress();
 });
 
 document.addEventListener('click', function (e) {
-  if (e.target.id === 'close-cart' || e.target.closest('#close-cart')) { drawer.setAttribute('aria-hidden', 'true'); }
-  if (e.target === drawer) { drawer.setAttribute('aria-hidden', 'true'); }
+  if (e.target.id === 'close-cart' || e.target.closest('#close-cart')) {
+    drawer.setAttribute('aria-hidden', 'true');
+    if (floatCartBtn) floatCartBtn.style.display = '';
+  }
+  if (e.target === drawer) {
+    drawer.setAttribute('aria-hidden', 'true');
+    if (floatCartBtn) floatCartBtn.style.display = '';
+  }
   if (e.target.id === 'open-cart' || e.target.closest('#open-cart')) {
     drawer.setAttribute('aria-hidden', 'false');
+    if (floatCartBtn) floatCartBtn.style.display = 'none';
     loadSavedUserData();
-    renderSavedAddress(); // ← adicione
+    renderSavedAddress();
   }
 });
 
@@ -1268,8 +1276,8 @@ orderForm?.addEventListener('submit', async (e) => {
     inputAddress.style.borderColor = '';
 
 
-    // 2. Trava de Segurança: Se não calculou (null) ou deu erro (-1), forçamos agora!
-    if (state.calculatedFee === null || state.calculatedFee === -1) {
+    // 2. Trava de Segurança: só recalcula se realmente não tiver frete calculado
+    if (state.calculatedFee === null) {
       const btnSubmit = orderForm.querySelector('button[type="submit"]');
       const originalText = btnSubmit ? btnSubmit.innerText : 'Finalizar';
 
