@@ -1829,10 +1829,10 @@ select,
 
   /* 🔥 BOTÃO FIXO */
   #btn-finalize {
-    position: fixed;
-    left: 16px;
-    right: 16px;
-    bottom: calc(70px + 16px);
+    position: sticky;
+    bottom: 16px;
+    left: 0;
+    right: 0;
     z-index: 10002;
 
     height: 56px;
@@ -1841,6 +1841,7 @@ select,
     border-radius: 18px;
 
     box-shadow: 0 10px 30px rgba(214, 35, 0, 0.35);
+    margin-top: 16px;
   }
 
 }
