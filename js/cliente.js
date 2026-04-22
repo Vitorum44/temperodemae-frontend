@@ -1925,11 +1925,15 @@ async function loadData() {
 
     if (cachedMenu) {
       const parsed = JSON.parse(cachedMenu);
-      state.categories = parsed.categories || [];
-      state.subcategories = parsed.subcategories || [];
-      state.items = parsed.items || [];
-      renderFilters();
-      renderItems();
+      // Cache válido por só 2 minutos — depois sempre busca do servidor
+      const cacheAge = Date.now() - (parsed.cachedAt || 0);
+      if (cacheAge < 2 * 60 * 1000) {
+        state.categories = parsed.categories || [];
+        state.subcategories = parsed.subcategories || [];
+        state.items = parsed.items || [];
+        renderFilters();
+        renderItems();
+      }
     }
 
     // 2. Atualiza em background
@@ -1943,11 +1947,12 @@ async function loadData() {
     state.subcategories = s || [];
     state.items = i || [];
 
-    // salva no cache
+    // salva no cache com timestamp
     localStorage.setItem('menuCache', JSON.stringify({
       categories: state.categories,
       subcategories: state.subcategories,
-      items: state.items
+      items: state.items,
+      cachedAt: Date.now()
     }));
 
     renderFilters();
