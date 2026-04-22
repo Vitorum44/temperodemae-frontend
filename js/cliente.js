@@ -629,16 +629,30 @@ function calcShip(lat, lng) {
     return;
   }
 
-  // ✅ Verifica cache antes de chamar a API
+  // ✅ Verifica cache local primeiro
   const enderecoAtual = `${inputAddress.value.trim()}, ${inputNeighborhood.value.trim()}`;
   const cached = checkAddressCache(enderecoAtual);
   if (cached) {
-    console.log("📦 Frete do cache:", cached);
+    console.log("📦 Frete do cache local:", cached);
     state.distanceKm = cached.distanceKm;
     state.calculatedFee = cached.fee;
     updateCartUI();
-    return; // ← não chama a API do Google!
+    return;
   }
+
+  // ✅ Verifica no servidor (vale para qualquer dispositivo)
+  try {
+    const serverCache = await fetch(`${API_URL}/delivery-fee?address=${encodeURIComponent(enderecoAtual)}`);
+    const serverData = await serverCache.json();
+    if (serverData && serverData.fee != null) {
+      console.log("📦 Frete do servidor:", serverData);
+      state.distanceKm = Number(serverData.distance_km);
+      state.calculatedFee = Number(serverData.fee);
+      saveAddressCache(enderecoAtual, state.distanceKm, state.calculatedFee);
+      updateCartUI();
+      return;
+    }
+  } catch (e) {}
 
   const service = new google.maps.DirectionsService();
 
@@ -669,12 +683,18 @@ function calcShip(lat, lng) {
         state.calculatedFee = Math.ceil(km * 10) / 10; // arredonda para 1 casa decimal
       }
 
-      // ✅ Salva no cache para próximas vezes
-      if (state.calculatedFee !== -1) {
-        saveAddressCache(enderecoAtual, km, state.calculatedFee);
-      }
+      // ✅ Salva no cache local E no servidor
+  if (state.calculatedFee !== -1) {
+    saveAddressCache(enderecoAtual, km, state.calculatedFee);
+    // Salva no banco para não recalcular nunca mais
+    fetch(`${API_URL}/delivery-fee`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: enderecoAtual, distance_km: km, fee: state.calculatedFee })
+    }).catch(() => {});
+  }
 
-      updateCartUI();
+  updateCartUI();
     }
   );
 }
