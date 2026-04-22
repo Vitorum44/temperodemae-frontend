@@ -1377,10 +1377,10 @@ orderForm?.addEventListener('submit', async (e) => {
       image: i.image,
       acompanhamentos: i.acompanhamentos || [] // ✅ inclui acompanhamentos no pedido
     })),
-    subtotal: cartSubtotal(),
-    deliveryFee: fulfillment === 'pickup' ? 0 : state.calculatedFee,
+    subtotal: Math.round(cartSubtotal() * 100) / 100,
+    deliveryFee: fulfillment === 'pickup' ? 0 : (state.calculatedFee || 0),
     discount: 0,
-    total: cartSubtotal() + (fulfillment === 'pickup' ? 0 : state.calculatedFee),
+    total: Math.round((cartSubtotal() + (fulfillment === 'pickup' ? 0 : (state.calculatedFee || 0))) * 100) / 100,
     neighborhood: customer.neighborhood,
     customer: customer,
     fulfillment: fulfillment,
