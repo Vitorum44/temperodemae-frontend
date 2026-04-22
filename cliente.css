@@ -2147,29 +2147,65 @@ html {
 }
 
 /* ===== TRACKING MODAL MOBILE FIX ===== */
-#tracking-modal {
-  align-items: flex-end !important;
-  padding: 0 !important;
+/* DESKTOP */
+@media (min-width: 769px) {
+  #tracking-modal {
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  #tracking-modal .modal-dialog {
+    max-width: 560px !important;
+    width: 560px !important;
+    max-height: 90vh !important;
+    border-radius: 24px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-bottom: 20px !important;
+  }
+
+  #tracking-modal .modal-header {
+    position: sticky !important;
+    top: 0 !important;
+    background: #fff !important;
+    z-index: 10 !important;
+    flex-shrink: 0 !important;
+    border-radius: 24px 24px 0 0 !important;
+  }
+
+  #driver-map {
+    height: 260px !important;
+  }
 }
 
-#tracking-modal .modal-dialog {
-  max-width: 100% !important;
-  width: 100% !important;
-  overflow-x: hidden !important;
-  max-height: 92dvh !important;
-  border-radius: 24px 24px 0 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow-y: auto !important;
-  padding-bottom: 20px !important;
-}
+/* MOBILE */
+@media (max-width: 768px) {
+  #tracking-modal {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
 
-#tracking-modal .modal-header {
-  position: sticky !important;
-  top: 0 !important;
-  background: #fff !important;
-  z-index: 10 !important;
-  flex-shrink: 0 !important;
+  #tracking-modal .modal-dialog {
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+    max-height: 92dvh !important;
+    border-radius: 24px 24px 0 0 !important;
+    overflow-y: auto !important;
+    padding-bottom: 20px !important;
+  }
+
+  #tracking-modal .modal-header {
+    position: sticky !important;
+    top: 0 !important;
+    background: #fff !important;
+    z-index: 10 !important;
+    flex-shrink: 0 !important;
+  }
+
+  #driver-map {
+    height: 200px !important;
+  }
 }
 
 #driver-map-container {
