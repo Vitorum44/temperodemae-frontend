@@ -180,7 +180,7 @@ async function checkPixExpiry(orders) {
         const isPix = order.paymentMethod?.toLowerCase() === 'pix';
         if (order.status === 'aguardando_pagamento' && isPix) {
             const createdAt = new Date(order.created_at).getTime();
-            if (!isNaN(createdAt) && (now - createdAt > fiveMinutes)) {
+            if (!isNaN(createdAt) && (now - createdAt > quinzeMinutes)) {
                 try {
                     await fetch(`${API_URL}/orders/${order.id}/status`, {
                         method: 'PATCH',
