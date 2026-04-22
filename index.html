@@ -187,85 +187,97 @@
           <label class="title">Pagamento</label>
           <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
 
-            <label style="cursor:pointer;">
+            <label style="cursor:pointer;" onclick="selectPayment(this, 'Pix')">
               <input type="radio" name="payment" value="Pix" checked style="display:none;">
-              <div class="pay-card"
-                onclick="this.closest('label').querySelector('input').checked=true; document.querySelectorAll('.pay-card').forEach(c=>c.classList.remove('pay-selected')); this.classList.add('pay-selected');"
-                style="display:flex; align-items:center; gap:14px; padding:14px 16px; border:2px solid #e5e7eb; border-radius:14px; transition:0.2s; background:#fff;">
-                <div
-                  style="width:42px; height:42px; background:#e0f2fe; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">
-                  ⚡</div>
+              <div class="pay-card pay-selected" style="display:flex; align-items:center; gap:14px; padding:14px 16px; border:2px solid #d62300; border-radius:14px; transition:0.2s; background:#fff5f2;">
+                <div style="width:42px; height:42px; background:#e0f2fe; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">⚡</div>
                 <div>
                   <div style="font-weight:700; font-size:15px; color:#111;">Pix</div>
                   <div style="font-size:12px; color:#6b7280;">Aprovação instantânea</div>
                 </div>
-                <div
-                  style="margin-left:auto; width:20px; height:20px; border-radius:50%; border:2px solid #d62300; display:flex; align-items:center; justify-content:center;"
-                  class="pay-radio-dot">
-                  <div style="width:10px; height:10px; border-radius:50%; background:#d62300;"></div>
+                <div style="margin-left:auto; width:20px; height:20px; border-radius:50%; border:2px solid #d62300; display:flex; align-items:center; justify-content:center;">
+                  <div class="pay-dot" style="width:10px; height:10px; border-radius:50%; background:#d62300;"></div>
                 </div>
               </div>
             </label>
 
-            <label style="cursor:pointer;">
+            <label style="cursor:pointer;" onclick="selectPayment(this, 'Cartão')">
               <input type="radio" name="payment" value="Cartão" style="display:none;">
-              <div class="pay-card"
-                onclick="this.closest('label').querySelector('input').checked=true; document.querySelectorAll('.pay-card').forEach(c=>c.classList.remove('pay-selected')); this.classList.add('pay-selected');"
-                style="display:flex; align-items:center; gap:14px; padding:14px 16px; border:2px solid #e5e7eb; border-radius:14px; transition:0.2s; background:#fff;">
-                <div
-                  style="width:42px; height:42px; background:#ede9fe; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">
-                  💳</div>
+              <div class="pay-card" style="display:flex; align-items:center; gap:14px; padding:14px 16px; border:2px solid #e5e7eb; border-radius:14px; transition:0.2s; background:#fff;">
+                <div style="width:42px; height:42px; background:#ede9fe; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">💳</div>
                 <div>
                   <div style="font-weight:700; font-size:15px; color:#111;">Cartão</div>
                   <div style="font-size:12px; color:#6b7280;">Maquininha na entrega</div>
                 </div>
-                <div
-                  style="margin-left:auto; width:20px; height:20px; border-radius:50%; border:2px solid #e5e7eb; display:flex; align-items:center; justify-content:center;"
-                  class="pay-radio-dot"></div>
+                <div style="margin-left:auto; width:20px; height:20px; border-radius:50%; border:2px solid #e5e7eb; display:flex; align-items:center; justify-content:center;">
+                  <div class="pay-dot" style="width:10px; height:10px; border-radius:50%; background:transparent;"></div>
+                </div>
               </div>
             </label>
 
-            <label style="cursor:pointer;">
+            <label style="cursor:pointer;" onclick="selectPayment(this, 'Dinheiro')">
               <input type="radio" name="payment" value="Dinheiro" id="pay-cash" style="display:none;">
-              <div class="pay-card"
-                onclick="this.closest('label').querySelector('input').checked=true; document.querySelectorAll('.pay-card').forEach(c=>c.classList.remove('pay-selected')); this.classList.add('pay-selected');"
-                style="display:flex; align-items:center; gap:14px; padding:14px 16px; border:2px solid #e5e7eb; border-radius:14px; transition:0.2s; background:#fff;">
-                <div
-                  style="width:42px; height:42px; background:#dcfce7; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">
-                  💵</div>
+              <div class="pay-card" style="display:flex; align-items:center; gap:14px; padding:14px 16px; border:2px solid #e5e7eb; border-radius:14px; transition:0.2s; background:#fff;">
+                <div style="width:42px; height:42px; background:#dcfce7; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;">💵</div>
                 <div>
                   <div style="font-weight:700; font-size:15px; color:#111;">Dinheiro</div>
                   <div style="font-size:12px; color:#6b7280;">Pague na entrega</div>
                 </div>
-                <div
-                  style="margin-left:auto; width:20px; height:20px; border-radius:50%; border:2px solid #e5e7eb; display:flex; align-items:center; justify-content:center;"
-                  class="pay-radio-dot"></div>
+                <div style="margin-left:auto; width:20px; height:20px; border-radius:50%; border:2px solid #e5e7eb; display:flex; align-items:center; justify-content:center;">
+                  <div class="pay-dot" style="width:10px; height:10px; border-radius:50%; background:transparent;"></div>
+                </div>
               </div>
             </label>
 
-            <div id="cash-change-box"
-              style="display:none; background:#f9fafb; border-radius:12px; padding:14px; border:1px solid #e5e7eb;">
-              <label
-                style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:600; font-size:14px; color:#374151;">
+            <div id="cash-change-box" style="display:none; background:#f9fafb; border-radius:12px; padding:14px; border:1px solid #e5e7eb;">
+              <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:600; font-size:14px; color:#374151;">
                 <input type="checkbox" id="need-change" style="width:18px; height:18px; accent-color:#d62300;">
                 Precisa de troco?
               </label>
-              <input id="change-amount" type="number" class="input" placeholder="Troco para quanto?"
-                style="display:none; margin-top:10px;">
+              <input id="change-amount" type="number" class="input" placeholder="Troco para quanto?" style="display:none; margin-top:10px;">
             </div>
 
           </div>
 
           <style>
-            .pay-card:hover {
-              border-color: #d62300 !important;
-            }
-
-            .pay-selected {
-              border-color: #d62300 !important;
-              background: #fff5f2 !important;
-            }
+            .pay-card { transition: all 0.2s; }
+            .pay-card:hover { border-color: #d62300 !important; }
+            .pay-selected { border-color: #d62300 !important; background: #fff5f2 !important; }
           </style>
+
+          <script>
+            function selectPayment(label, value) {
+              // Marca o radio
+              label.querySelector('input').checked = true;
+
+              // Remove seleção de todos
+              document.querySelectorAll('.pay-card').forEach(c => {
+                c.classList.remove('pay-selected');
+                c.style.border = '2px solid #e5e7eb';
+                c.style.background = '#fff';
+                c.querySelector('.pay-dot').style.background = 'transparent';
+                c.querySelector('.pay-dot').parentElement.style.border = '2px solid #e5e7eb';
+              });
+
+              // Aplica seleção no clicado
+              const card = label.querySelector('.pay-card');
+              card.classList.add('pay-selected');
+              card.style.border = '2px solid #d62300';
+              card.style.background = '#fff5f2';
+              card.querySelector('.pay-dot').style.background = '#d62300';
+              card.querySelector('.pay-dot').parentElement.style.border = '2px solid #d62300';
+
+              // Mostra/esconde troco
+              const cashBox = document.getElementById('cash-change-box');
+              if (cashBox) cashBox.style.display = value === 'Dinheiro' ? 'block' : 'none';
+              if (value !== 'Dinheiro') {
+                const needChange = document.getElementById('need-change');
+                const changeAmount = document.getElementById('change-amount');
+                if (needChange) needChange.checked = false;
+                if (changeAmount) changeAmount.style.display = 'none';
+              }
+            }
+          </script>
 
           <div style="background:#fff; border-top:2px solid #f0e6dc; padding:12px 0 8px; margin-bottom:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
