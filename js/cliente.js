@@ -2062,14 +2062,38 @@ function renderSavedAddress() {
       openAddressEditor(currentAddress, currentNeighborhood);
     });
     // Calcula frete do cache ou refaz
-    const cached = checkAddressCache(`${savedAddress}, ${savedNeighborhood || ''}`);
-    if (cached) {
-      state.distanceKm = cached.distanceKm;
-      state.calculatedFee = cached.fee;
-      updateCartUI();
-    } else {
-      waitForGoogleMaps(() => tryCalculateByText());
-    }
+    // Sempre busca do servidor primeiro (ignora cache local)
+    const enderecoKey = `${savedAddress}, ${savedNeighborhood || ''}`;
+    fetch(`${API_URL}/delivery-fee?address=${encodeURIComponent(enderecoKey)}`)
+      .then(r => r.json())
+      .then(serverData => {
+        if (serverData && serverData.fee != null) {
+          state.distanceKm = Number(serverData.distance_km);
+          state.calculatedFee = Number(serverData.fee);
+          saveAddressCache(enderecoKey, state.distanceKm, state.calculatedFee);
+          updateCartUI();
+        } else {
+          // Fallback para cache local ou recálculo
+          const cached = checkAddressCache(enderecoKey);
+          if (cached) {
+            state.distanceKm = cached.distanceKm;
+            state.calculatedFee = cached.fee;
+            updateCartUI();
+          } else {
+            waitForGoogleMaps(() => tryCalculateByText());
+          }
+        }
+      })
+      .catch(() => {
+        const cached = checkAddressCache(enderecoKey);
+        if (cached) {
+          state.distanceKm = cached.distanceKm;
+          state.calculatedFee = cached.fee;
+          updateCartUI();
+        } else {
+          waitForGoogleMaps(() => tryCalculateByText());
+        }
+      });
 
   } else {
     // Sem endereço salvo: mostra os campos normais
