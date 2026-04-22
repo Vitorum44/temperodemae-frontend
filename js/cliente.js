@@ -1396,7 +1396,14 @@ orderForm?.addEventListener('submit', async (e) => {
     state.cart = []; saveCart(); orderForm.reset(); drawer.setAttribute('aria-hidden', 'true'); updateCartUI();
     if (createdOrder.pixData) localStorage.setItem('lastPixData', JSON.stringify(createdOrder.pixData));
     startTracking(createdOrder.id);
-    if (createdOrder.pixData) showPixModal(createdOrder.pixData);
+    if (createdOrder.pixData) {
+      showPixModal(createdOrder.pixData);
+    } else {
+      // Abre o modal de rastreamento automaticamente
+      setTimeout(() => {
+        trackingModal.setAttribute('aria-hidden', 'false');
+      }, 500);
+    }
   } catch (err) { console.error(err); fb.textContent = 'Erro: ' + err.message; }
 });
 
