@@ -1215,6 +1215,10 @@ function updateCartUI() {
     if (viewSubtotal) viewSubtotal.textContent = brl(sub);
     if (viewFee) viewFee.innerHTML = feeDisplay;
     if (viewGrandTotal) viewGrandTotal.textContent = brl(sub + finalFee);
+    const previewTotal = document.getElementById('btn-total-preview');
+    if (previewTotal) previewTotal.textContent = brl(sub + finalFee);
+    const previewTotal = document.getElementById('btn-total-preview');
+    if (previewTotal) previewTotal.textContent = brl(sub + finalFee);
 
   } catch (err) {
     console.error("Erro no updateCartUI:", err);
