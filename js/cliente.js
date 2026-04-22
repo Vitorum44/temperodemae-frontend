@@ -2644,9 +2644,11 @@ function updateDriverMapPosition(lat, lng) {
     driverMarker.setLatLng(latlng);
   } else {
     driverMarker = L.marker(latlng, {
-      icon: L.divIcon({
-        html: '<div style="background:#10b981;color:white;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;border:3px solid white;box-shadow:0 3px 12px rgba(0,0,0,0.4);">🛵</div>',
-        iconSize: [44, 44], iconAnchor: [22, 22], className: ''
+      icon: L.icon({
+        iconUrl: 'https://temperodemae-frontend.vercel.app/assets/moto-icon.png',
+        iconSize: [60, 60],
+        iconAnchor: [30, 30],
+        popupAnchor: [0, -30]
       })
     }).addTo(driverMap).bindPopup('Seu entregador').openPopup();
   }
