@@ -1111,6 +1111,37 @@ app.patch("/orders/:id/driver-started", async (req, res) => {
   }
 });
 
+// ================= CACHE DE FRETE POR ENDEREÇO =================
+app.get("/delivery-fee", async (req, res) => {
+  const { address } = req.query;
+  if (!address) return res.json(null);
+  try {
+    const { rows } = await pool.query(
+      "SELECT distance_km, fee FROM delivery_fee_cache WHERE address_key = $1 LIMIT 1",
+      [address.toLowerCase().trim()]
+    );
+    res.json(rows[0] || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/delivery-fee", async (req, res) => {
+  const { address, distance_km, fee } = req.body;
+  if (!address || distance_km == null || fee == null) return res.status(400).json({ error: "Dados inválidos" });
+  try {
+    await pool.query(
+      `INSERT INTO delivery_fee_cache (address_key, distance_km, fee)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (address_key) DO UPDATE SET distance_km = $2, fee = $3`,
+      [address.toLowerCase().trim(), distance_km, fee]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Servidor ON na porta ${PORT}`);
