@@ -1910,6 +1910,8 @@ formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.t
 
 // ================= LOADER (CORREÇÃO DE UX: CÁLCULO AUTOMÁTICO) =================
 async function loadData() {
+  // Limpa cache de frete antigo para forçar busca do servidor
+  localStorage.removeItem('addressCache');
   await tryLoadMe();
   const urlParams = new URLSearchParams(window.location.search);
   const orderIdFromUrl = urlParams.get('orderId');
