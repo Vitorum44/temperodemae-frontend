@@ -1829,19 +1829,23 @@ select,
 
   /* 🔥 BOTÃO FIXO */
   #btn-finalize {
-    position: sticky;
-    bottom: 16px;
-    left: 0;
-    right: 0;
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: 80px;
     z-index: 10002;
-
     height: 56px;
     font-size: 16px;
     font-weight: 700;
     border-radius: 18px;
-
     box-shadow: 0 10px 30px rgba(214, 35, 0, 0.35);
-    margin-top: 16px;
+  }
+
+  /* 🔥 ESPAÇO PARA O BOTÃO NÃO COBRIR CONTEÚDO */
+  #carrinho .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 160px;
   }
 
 }
