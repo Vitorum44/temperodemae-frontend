@@ -1504,14 +1504,35 @@ function updateTrackUI(order) {
   if (trackTotalEl) {
     const subtotal = order.total - (order.delivery_fee || 0);
     trackTotalEl.innerHTML = `
-      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; margin-bottom:4px;">
-        <span>Subtotal</span><span>${brl(subtotal)}</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280; margin-bottom:4px;">
-        <span>Frete</span><span>${order.delivery_fee > 0 ? brl(order.delivery_fee) : 'Grátis'}</span>
-      </div>
-      <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:700; color:#d62300; margin-top:8px; border-top:1px solid #eee; padding-top:8px;">
-        <span>Total</span><span>${brl(order.total)}</span>
+      <div style="
+        background:#f9fafb;
+        border:1px solid #f0f0f0;
+        border-radius:16px;
+        padding:16px;
+        margin-top:12px;
+      ">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:13px; color:#6b7280; font-weight:500;">🛒 Subtotal</span>
+          <span style="font-size:13px; color:#374151; font-weight:600;">${brl(subtotal)}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px dashed #e5e7eb;">
+          <span style="font-size:13px; color:#6b7280; font-weight:500;">🛵 Frete</span>
+          <span style="font-size:13px; color:${order.delivery_fee > 0 ? '#374151' : '#10b981'}; font-weight:600;">
+            ${order.delivery_fee > 0 ? brl(order.delivery_fee) : '✅ Grátis'}
+          </span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+          <span style="font-size:15px; color:#111827; font-weight:700;">Total</span>
+          <span style="
+            font-size:18px;
+            font-weight:800;
+            color:#fff;
+            background:#d62300;
+            padding:4px 14px;
+            border-radius:50px;
+            box-shadow:0 3px 10px rgba(214,35,0,0.3);
+          ">${brl(order.total)}</span>
+        </div>
       </div>
     `;
   }
