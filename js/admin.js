@@ -921,6 +921,133 @@ window.sendDriverLink = async function(orderId, driverLink) {
     await window.updateStatus(orderId, 'saiu_entrega', true);
 };
 
+// ================= RELATÓRIO DE VENDAS =================
+document.getElementById('btn-open-report')?.addEventListener('click', () => {
+  const modal = document.getElementById('report-modal');
+  modal.style.display = 'flex';
+  generateReport('today');
+});
+
+document.getElementById('btn-close-report')?.addEventListener('click', () => {
+  document.getElementById('report-modal').style.display = 'none';
+});
+
+document.getElementById('report-modal')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('report-modal')) {
+    document.getElementById('report-modal').style.display = 'none';
+  }
+});
+
+document.querySelectorAll('.report-period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.report-period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const period = btn.dataset.period;
+    const customDates = document.getElementById('report-custom-dates');
+    if (period === 'custom') {
+      customDates.style.display = 'block';
+    } else {
+      customDates.style.display = 'none';
+      generateReport(period);
+    }
+  });
+});
+
+document.getElementById('btn-apply-custom')?.addEventListener('click', () => {
+  generateReport('custom');
+});
+
+function generateReport(period) {
+  const now = new Date();
+  let from, to;
+
+  if (period === 'today') {
+    from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  } else if (period === 'week') {
+    from = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    to = now;
+  } else if (period === 'month') {
+    from = new Date(now - 30 * 24 * 60 * 60 * 1000);
+    to = now;
+  } else if (period === 'custom') {
+    const fromVal = document.getElementById('report-date-from').value;
+    const toVal = document.getElementById('report-date-to').value;
+    if (!fromVal || !toVal) { alert('Selecione as datas.'); return; }
+    from = new Date(fromVal + 'T00:00:00');
+    to = new Date(toVal + 'T23:59:59');
+  }
+
+  const filtered = ORDERS_CACHE.filter(o => {
+    const d = new Date(o.created_at);
+    return d >= from && d <= to && o.status !== 'cancelado';
+  });
+
+  const cancelled = ORDERS_CACHE.filter(o => {
+    const d = new Date(o.created_at);
+    return d >= from && d <= to && o.status === 'cancelado';
+  });
+
+  const total = filtered.reduce((s, o) => s + Number(o.total), 0);
+  const avg = filtered.length > 0 ? total / filtered.length : 0;
+
+  document.getElementById('report-total').textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  document.getElementById('report-count').textContent = filtered.length;
+  document.getElementById('report-avg').textContent = avg.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  document.getElementById('report-cancelled').textContent = cancelled.length;
+
+  // Pagamentos
+  const payments = {};
+  filtered.forEach(o => {
+    const pm = o.paymentMethod || o.customer?.paymentMethod || 'Não informado';
+    payments[pm] = (payments[pm] || 0) + Number(o.total);
+  });
+
+  const payEl = document.getElementById('report-payments');
+  payEl.innerHTML = Object.entries(payments).length === 0
+    ? '<div style="color:#9ca3af; font-size:13px;">Nenhum dado</div>'
+    : Object.entries(payments).map(([pm, val]) => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #e5e7eb;">
+        <span style="font-size:13px; color:#374151;">${pm}</span>
+        <span style="font-size:13px; font-weight:700; color:#111;">${val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+      </div>
+    `).join('');
+
+  // Top produtos
+  const products = {};
+  filtered.forEach(o => {
+    (o.items || []).forEach(i => {
+      if (!products[i.name]) products[i.name] = { qty: 0, total: 0 };
+      products[i.name].qty += i.qty;
+      products[i.name].total += Number(i.price) * i.qty;
+    });
+  });
+
+  const topProducts = Object.entries(products)
+    .sort((a, b) => b[1].qty - a[1].qty)
+    .slice(0, 5);
+
+  const prodEl = document.getElementById('report-top-products');
+  prodEl.innerHTML = topProducts.length === 0
+    ? '<div style="color:#9ca3af; font-size:13px;">Nenhum dado</div>'
+    : topProducts.map(([name, data], i) => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #e5e7eb;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="
+            width:22px; height:22px; border-radius:50%; background:${i === 0 ? '#fbbf24' : i === 1 ? '#9ca3af' : i === 2 ? '#cd7c2e' : '#e5e7eb'};
+            color:${i < 3 ? 'white' : '#6b7280'}; font-size:11px; font-weight:800;
+            display:flex; align-items:center; justify-content:center; flex-shrink:0;
+          ">${i + 1}</span>
+          <span style="font-size:13px; color:#374151;">${name}</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:13px; font-weight:700; color:#111;">${data.qty}x</div>
+          <div style="font-size:11px; color:#6b7280;">${data.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+        </div>
+      </div>
+    `).join('');
+}
+
 
 init();
 
