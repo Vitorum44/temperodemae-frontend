@@ -610,14 +610,20 @@ async function loadSettings() {
     if (!token) return;
     try {
         const res = await fetch(`${API_URL}/settings`);
-        const data = await res.json();
+        const raw = await res.json();
+
+        // ✅ Suporta tanto array quanto objeto
+        const data = Array.isArray(raw) ? raw[0] : raw;
+        if (!data) return;
+
+        const mode = data.mode || 'auto';
 
         btnsMode.forEach(b => {
-            if (b.dataset.mode === data.mode) b.classList.add('active');
+            if (b.dataset.mode === mode) b.classList.add('active');
             else b.classList.remove('active');
         });
-        document.querySelector('#store-mode').value = data.mode;
-        toggleSchedule(data.mode);
+        document.querySelector('#store-mode').value = mode;
+        toggleSchedule(mode);
 
         const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
         const container = document.querySelector('#schedule-container');
