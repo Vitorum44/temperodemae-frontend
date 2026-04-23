@@ -528,10 +528,18 @@ app.delete("/subcategories/:id", adminMiddleware, async (req, res) => {
 
 app.patch("/settings", adminMiddleware, async (req, res) => { 
   try {
-    const query = buildUpdate("store_settings", req.body, "id", 1);
-    await pool.query(query);
+    const { mode, weekly_schedule } = req.body;
+    
+    await pool.query(
+      `UPDATE store_settings SET mode = $1, weekly_schedule = $2 WHERE id = 1`,
+      [mode, JSON.stringify(weekly_schedule)]
+    );
+    
     res.json({ success: true }); 
-  } catch (err) { res.status(500).json({ error: err.message }); }
+  } catch (err) { 
+    console.error("Erro ao salvar settings:", err);
+    res.status(500).json({ error: err.message }); 
+  }
 });
 
 app.get("/orders", adminMiddleware, async (req, res) => { 
