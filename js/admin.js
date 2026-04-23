@@ -52,6 +52,10 @@ async function init() {
         return;
     }
 
+    // ✅ Esconde TUDO enquanto valida — sem piscar login
+    authCard.hidden = true;
+    ordersPanel.hidden = true;
+
     try {
         // Valida o token E verifica se é admin
         const res = await fetch(`${API_URL}/auth/me`, {
@@ -65,7 +69,6 @@ async function init() {
             showLogin();
             return;
         }
-
         const user = await res.json();
 
         // Verifica se é admin
