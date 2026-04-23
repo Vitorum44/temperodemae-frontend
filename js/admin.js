@@ -832,7 +832,7 @@ formSettings?.addEventListener('submit', async (e) => {
     });
 
     try {
-        await fetch(`${API_URL}/settings`, {
+        const res = await fetch(`${API_URL}/settings`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -840,6 +840,15 @@ formSettings?.addEventListener('submit', async (e) => {
             },
             body: JSON.stringify({ mode, weekly_schedule: newSchedule })
         });
+
+        if (!res.ok) throw new Error('Erro ao salvar');
+        
+        // ✅ Atualiza os botões visualmente após salvar
+        btnsMode.forEach(b => {
+            if (b.dataset.mode === mode) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+
         showToast('Configurações salvas!', 'success');
     } catch (e) {
         showToast('Erro ao salvar.', 'error');
