@@ -458,6 +458,9 @@ function initGoogleAutocomplete() {
       inputNeighborhood.value = neighborhood;
     }
 
+    // Salva CEP no state para enviar no pedido
+    if (postalCode) state.postalCode = postalCode;
+
     // Feedback com endereço completo + CEP
     const feedbackEl = document.getElementById('neighborhood-feedback');
     if (feedbackEl && (neighborhood || postalCode)) {
@@ -1144,6 +1147,7 @@ function updateCartUI() {
     if (floatCartBtn && floatCartCount) {
       if (totalQty > 0) {
         floatCartBtn.hidden = false;
+        floatCartBtn.style.display = '';
         floatCartCount.textContent = totalQty;
       } else {
         floatCartBtn.hidden = true;
@@ -1379,13 +1383,13 @@ orderForm?.addEventListener('submit', async (e) => {
     phone: inputPhone.value || state.user.phone,
     address: fulfillment === 'pickup' ? 'Retirada na Loja' : inputAddress.value,
     neighborhood: fulfillment === 'pickup' ? '' : inputNeighborhood.value,
+    postalCode: fulfillment === 'pickup' ? '' : (state.postalCode || ''),
     reference: inputReference ? inputReference.value : '',
     email: inputEmail?.value || state.user?.email || '',
     paymentMethod: selectedPayment,
     change: changeData,
     scheduledTo: (!state.isStoreOpen) ? orderSchedule.value : null
   };
-
   const order = {
     items: state.cart.map(i => ({
       itemId: i.id,
