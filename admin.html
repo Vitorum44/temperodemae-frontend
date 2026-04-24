@@ -58,19 +58,23 @@
         <div class="sidebar-card">
           <h3 style="display:flex; justify-content:space-between; align-items:center;">
             <span>📊 Resumo Hoje</span>
-            <button id="btn-open-report" title="Ver relatórios" style="
-              background:none; border:none; cursor:pointer; padding:4px;
-              color:#6b7280; transition:0.2s; border-radius:6px;
-            " onmouseover="this.style.color='#d62300'" onmouseout="this.style.color='#6b7280'">
+            <button id="btn-open-report" title="Ver relatórios" style="background:none; border:none; cursor:pointer; padding:4px; color:#6b7280; transition:0.2s; border-radius:6px;" onmouseover="this.style.color='#d62300'" onmouseout="this.style.color='#6b7280'">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
               </svg>
             </button>
           </h3>
-          <div class="stat-row">
-            <span class="stat-label">Pedidos Realizados</span>
-            <strong id="count-today" class="stat-value">0</strong>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-box-label">Pedidos</div>
+              <div id="count-today" class="stat-box-value">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-label">Faturamento</div>
+              <div id="total-today" class="stat-box-value green">R$ 0,00</div>
+            </div>
           </div>
+        </div>
           <div class="stat-row">
             <span class="stat-label">Faturamento Total</span>
             <strong id="total-today">R$ 0,00</strong>
