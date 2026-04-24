@@ -438,55 +438,41 @@ function renderOrders(orders) {
   </button>`;
         }
 
-
-
-
-
         card.innerHTML = `
   <div class="card-top">
+    <div style="display:flex; align-items:center; gap:8px;">
       <div class="order-id">#${order.id}</div>
-      <div class="order-time">${new Date(order.created_at).toLocaleTimeString().slice(0, 5)}</div>
-  </div>
-  <div class="card-status-bar">
       <span class="status-tag tag-${order.status}">${statusMap[order.status] || order.status}</span>
       ${paymentTag}
+    </div>
+    <div class="order-time">${new Date(order.created_at).toLocaleTimeString().slice(0, 5)}</div>
   </div>
   <div class="order-items-container">${itemsHtml}</div>
-  <div class="order-footer">
-      <div class="customer-info">
-          <strong>${cust.name}</strong>
-          <a href="${waLink}" target="_blank" class="wa-btn-small">WhatsApp</a>
-          <div style="margin-top:4px; color:#555;">
-  ${address}
-  ${cust.reference
-                ? `<div style="margin-top:4px; font-size:12px; color:#555;">
-         📍 Referência: ${cust.reference}
-       </div>`
-                : ""
-            }
-</div>
-
-
-          ${order.distance_km
-                ? `<div style="margin-top:4px; color:#2563eb; font-size:12px;">
-                  🚚 Distância: <strong>${Number(order.distance_km).toFixed(1)} km</strong>
-               </div>`
-                : ""
-            }
-
-          ${cust.change
-                ? `<div style="color:#d62300; font-size:12px; margin-top:2px;">
-                 💰 ${cust.change}
-               </div>`
-                : ""
-            }
+  <div class="card-customer">
+    <div class="card-customer-info">
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <strong style="font-size:14px;">${cust.name}</strong>
+        <a href="${waLink}" target="_blank" class="wa-btn-small">WhatsApp</a>
       </div>
-
-      <div class="order-total">Total: R$ ${Number(order.total).toFixed(2)}</div>
+      ${order.fulfillment === 'pickup'
+        ? `<div class="card-address"><span class="badge-pickup">🏃 Retirada na loja</span></div>`
+        : `<div class="card-address">
+            🛵 ${cust.address}${cust.neighborhood ? ', ' + cust.neighborhood : ''}
+            ${cust.reference ? `<span class="card-ref">📍 ${cust.reference}</span>` : ''}
+           </div>`
+      }
+      ${order.distance_km ? `<div class="card-distance">🚚 ${Number(order.distance_km).toFixed(1)} km</div>` : ''}
+      ${cust.change ? `<div class="card-change">💰 ${cust.change}</div>` : ''}
+    </div>
+    <div class="card-total-box">
+      <div class="card-total-label">Total</div>
+      <div class="card-total-value">R$ ${Number(order.total).toFixed(2)}</div>
+      ${order.delivery_fee > 0 ? `<div class="card-fee">+ R$ ${Number(order.delivery_fee).toFixed(2)} frete</div>` : ''}
+    </div>
   </div>
   <div class="order-actions">
-      ${buttons}
-      <button class="btn btn-print" onclick="printOrder(${order.id})">🖨</button>
+    ${buttons}
+    <button class="btn btn-print" onclick="printOrder(${order.id})">🖨</button>
   </div>
 `;
         ordersList.appendChild(card);
