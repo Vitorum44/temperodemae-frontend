@@ -551,7 +551,24 @@ app.get("/orders", adminMiddleware, async (req, res) => {
 
 app.patch("/orders/:id/status", adminMiddleware, async (req, res) => { 
   try {
-    await pool.query("UPDATE orders SET status = $1 WHERE id = $2", [req.body.status, req.params.id]);
+    const newStatus = req.body.status;
+    
+    // ✅ Se cancelando, devolve estoque
+    if (newStatus === 'cancelado') {
+      const { rows } = await pool.query("SELECT items, status FROM orders WHERE id = $1", [req.params.id]);
+      const order = rows[0];
+      if (order && order.status !== 'cancelado') {
+        const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+        for (const item of (items || [])) {
+          await pool.query(
+            "UPDATE menu_items SET stock = stock + $1 WHERE id = $2",
+            [item.qty, item.itemId]
+          );
+        }
+      }
+    }
+
+    await pool.query("UPDATE orders SET status = $1 WHERE id = $2", [newStatus, req.params.id]);
     res.json({ success: true }); 
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -630,7 +647,7 @@ app.get("/orders/:id", async (req, res) => {
 
 app.patch("/orders/:id/cancel", authMiddleware, async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT user_id, status FROM orders WHERE id = $1", [req.params.id]);
+    const { rows } = await pool.query("SELECT user_id, status, items FROM orders WHERE id = $1", [req.params.id]);
     const order = rows[0];
 
     if (!order) return res.status(404).json({ error: "Pedido não encontrado" });
@@ -638,6 +655,16 @@ app.patch("/orders/:id/cancel", authMiddleware, async (req, res) => {
     if (order.status !== 'novo' && order.status !== 'agendado' && order.status !== 'aguardando_pagamento') return res.status(400).json({ error: "Já em preparo." });
     
     await pool.query("UPDATE orders SET status = 'cancelado' WHERE id = $1", [req.params.id]);
+
+    // ✅ Devolve o estoque
+    const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
+    for (const item of (items || [])) {
+      await pool.query(
+        "UPDATE menu_items SET stock = stock + $1 WHERE id = $2",
+        [item.qty, item.itemId]
+      );
+    }
+
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
