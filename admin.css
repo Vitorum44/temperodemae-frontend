@@ -1450,6 +1450,17 @@ body.admin-page { background: #F1F5F9; }
   background: #D62300;
 }
 
+/* ===== ANIMAÇÃO DE ENTRADA DOS CARDS ===== */
+.order-card {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.order-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 
 
 
