@@ -16,6 +16,16 @@
 </head>
 
 <body>
+  
+  <script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = 'admin.html';
+    }
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'admin.html';
+    }
+  </script>
 
   <aside class="admin-sidebar" id="admin-sidebar">
     <div class="sidebar-brand">
@@ -47,7 +57,7 @@
           <div class="sidebar-user-role">Proprietária</div>
         </div>
       </div>
-      <button id="btn-logout" class="Btn">
+      <button id="btn-logout" class="Btn" onclick="logout()">
         <div class="sign">
           <svg viewBox="0 0 512 512">
             <path
