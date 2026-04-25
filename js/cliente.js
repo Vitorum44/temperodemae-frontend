@@ -2873,13 +2873,11 @@ function getAvatarUrl(style, seed) {
 function loadCurrentAvatar() {
   const saved = localStorage.getItem('userAvatar');
   const img = document.getElementById('current-avatar-img');
-  if (!img) return;
-  if (saved) {
-    img.src = saved;
-  } else {
-    const name = state.user?.name || 'User';
-    img.src = getAvatarUrl('adventurer', name);
-  }
+  const imgDesktop = document.getElementById('current-avatar-img-desktop');
+  const fallback = getAvatarUrl('adventurer', state.user?.name || 'User');
+  const url = saved || fallback;
+  if (img) img.src = url;
+  if (imgDesktop) imgDesktop.src = url;
 }
 
 function renderAvatarGrid(style) {
@@ -2945,4 +2943,10 @@ document.getElementById('btn-perfil')?.addEventListener('click', () => {
 // Inicializa avatar
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(loadCurrentAvatar, 500);
+});
+
+document.getElementById('pm-avatar')?.addEventListener('click', () => {
+  document.getElementById('profile-menu').setAttribute('aria-hidden', 'true');
+  document.getElementById('avatar-modal').setAttribute('aria-hidden', 'false');
+  renderAvatarGrid(currentAvatarStyle);
 });
