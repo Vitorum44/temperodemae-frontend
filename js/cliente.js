@@ -2473,25 +2473,46 @@ pmSettings?.addEventListener('click', async () => {
   profileMenu.setAttribute('aria-hidden', 'true');
   settingsModal.setAttribute('aria-hidden', 'false');
 
-  // Preenche imediatamente com dados já em memória
-  if (setName) { setName.value = state.user.name || ''; setName.setAttribute('readonly', true); }
-  if (setPhone) { setPhone.value = state.user.phone || ''; setPhone.setAttribute('readonly', true); }
-  if (setEmail) { setEmail.value = state.user.email || ''; setEmail.setAttribute('readonly', true); }
-  if (setPass) { setPass.value = ''; setPass.setAttribute('readonly', true); }
-  if (settingsFb) settingsFb.textContent = '';
-
-  const btnSave = formSettings.querySelector('button[type="submit"]');
-
-  // Atualiza em background sem travar o modal
+  // Busca dados frescos do servidor
   try {
     const freshUser = await apiGet('/auth/me');
-    setUser(freshUser);
-    if (setName) setName.value = freshUser.name || '';
-    if (setPhone) setPhone.value = freshUser.phone || '';
-    if (setEmail) setEmail.value = freshUser.email || '';
+    console.log('👤 freshUser:', freshUser);
+
+    // Força preenchimento direto nos elementos
+    const nameEl = document.getElementById('set-name');
+    const phoneEl = document.getElementById('set-phone');
+    const emailEl = document.getElementById('set-email');
+    const passEl = document.getElementById('set-pass');
+
+    console.log('nameEl:', nameEl, 'valor:', freshUser.name);
+
+    if (nameEl) { nameEl.removeAttribute('readonly'); nameEl.value = freshUser.name || ''; nameEl.setAttribute('readonly', true); }
+    if (phoneEl) { phoneEl.removeAttribute('readonly'); phoneEl.value = freshUser.phone || ''; phoneEl.setAttribute('readonly', true); }
+    if (emailEl) { emailEl.removeAttribute('readonly'); emailEl.value = freshUser.email || ''; emailEl.setAttribute('readonly', true); }
+    if (passEl) { passEl.removeAttribute('readonly'); passEl.value = ''; passEl.setAttribute('readonly', true); }
+
+    // Atualiza header do modal
+    const settingsName = document.getElementById('settings-user-name');
+    const settingsPhone = document.getElementById('settings-user-phone');
+    const settingsAvatar = document.getElementById('settings-avatar-img');
+    if (settingsName) settingsName.textContent = freshUser.name?.split(' ')[0] || 'Usuário';
+    if (settingsPhone) settingsPhone.textContent = freshUser.phone || '';
+    if (settingsAvatar) settingsAvatar.src = localStorage.getItem('userAvatar') || getAvatarUrl('adventurer', freshUser.name);
+
+    state.user = freshUser;
+
   } catch (err) {
     console.error("Erro ao carregar perfil:", err);
+    // Fallback com dados em memória
+    const nameEl = document.getElementById('set-name');
+    const phoneEl = document.getElementById('set-phone');
+    const emailEl = document.getElementById('set-email');
+    if (nameEl) { nameEl.removeAttribute('readonly'); nameEl.value = state.user.name || ''; nameEl.setAttribute('readonly', true); }
+    if (phoneEl) { phoneEl.removeAttribute('readonly'); phoneEl.value = state.user.phone || ''; phoneEl.setAttribute('readonly', true); }
+    if (emailEl) { emailEl.removeAttribute('readonly'); emailEl.value = state.user.email || ''; emailEl.setAttribute('readonly', true); }
   }
+
+  if (settingsFb) settingsFb.textContent = '';
 });
 
 
@@ -2506,27 +2527,49 @@ formSettings?.addEventListener('submit', async (e) => {
   if (settingsFb) settingsFb.textContent = '';
 
   try {
+    // Lê direto do DOM para garantir o valor atual
+    const nameEl = document.getElementById('set-name');
+    const phoneEl = document.getElementById('set-phone');
+    const emailEl = document.getElementById('set-email');
+    const passEl = document.getElementById('set-pass');
+
+    // Remove readonly temporariamente para ler o valor
     const payload = {
-      name: setName.value,
-      phone: setPhone.value,
-      email: setEmail.value,
-      password: setPass.value
+      name: nameEl?.value || '',
+      phone: phoneEl?.value || '',
+      email: emailEl?.value || '',
+      password: passEl?.value || ''
     };
+
+    console.log('📤 Payload enviado:', payload);
 
     const res = await apiSend('/auth/update', 'PATCH', payload);
 
     if (res.success) {
-      // Toast bonito em vez de alert feio
       showSettingsToast();
 
-      state.user = res.user;
+      // Atualiza state com dados retornados OU mantém os campos editados
+      const updatedUser = res.user || {
+        ...state.user,
+        name: document.getElementById('set-name')?.value || state.user?.name,
+        phone: document.getElementById('set-phone')?.value || state.user?.phone,
+        email: document.getElementById('set-email')?.value || state.user?.email,
+      };
+
+      state.user = updatedUser;
 
       if (res.token) {
         localStorage.setItem('token', res.token);
         state.token = res.token;
       }
 
-      setUser(res.user);
+      // Atualiza header com novo nome
+      const headerName = document.getElementById('header-user-name');
+      if (headerName) headerName.textContent = `Olá, ${updatedUser.name?.split(' ')[0] || ''}`;
+
+      const settingsNameEl = document.getElementById('settings-user-name');
+      if (settingsNameEl) settingsNameEl.textContent = updatedUser.name?.split(' ')[0] || '';
+
       settingsModal.setAttribute('aria-hidden', 'true');
     }
 
