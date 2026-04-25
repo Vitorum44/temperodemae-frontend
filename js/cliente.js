@@ -2880,12 +2880,14 @@ function loadCurrentAvatar() {
   const saved = localStorage.getItem('userAvatar');
   const img = document.getElementById('current-avatar-img');
   const imgDesktop = document.getElementById('current-avatar-img-desktop');
+  const imgMenu = document.getElementById('avatar-menu-preview');
   const navImg = document.getElementById('nav-avatar-img');
   const navIcon = document.getElementById('nav-perfil-icon');
   const fallback = getAvatarUrl('adventurer', state.user?.name || 'User');
   const url = saved || fallback;
   if (img) img.src = url;
   if (imgDesktop) imgDesktop.src = url;
+  if (imgMenu) imgMenu.src = url;
   if (navImg) {
     navImg.src = url;
     navImg.style.display = 'block';
