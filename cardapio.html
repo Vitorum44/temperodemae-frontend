@@ -18,6 +18,11 @@
 </head>
 
 <body class="admin-page">
+  <script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = 'admin.html';
+    }
+  </script>
 
     <aside class="admin-sidebar" id="admin-sidebar">
         <div class="sidebar-brand">
