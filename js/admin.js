@@ -319,7 +319,7 @@ function renderOrders(orders) {
         return;
     }
 
-    orders.forEach(order => {
+    orders.forEach((order, index) => {
         const card = document.createElement('div');
         card.className = `order-card status-${order.status}`;
         const cust = order.customer || {};
@@ -486,6 +486,7 @@ function renderOrders(orders) {
   </div>
 `;
         ordersList.appendChild(card);
+setTimeout(() => card.classList.add('visible'), index * 150);
 
     });
 }
