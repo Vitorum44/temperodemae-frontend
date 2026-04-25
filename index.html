@@ -803,6 +803,14 @@
 
       <div style="padding:20px; display:flex; flex-direction:column; gap:15px;">
 
+        <!-- AVATAR ATUAL -->
+        <div style="display:flex; flex-direction:column; align-items:center; gap:12px; padding:16px 0;">
+          <img id="current-avatar-img" src="" alt="Avatar" style="width:80px; height:80px; border-radius:50%; border:3px solid #d62300; background:#f3f4f6;">
+          <button id="btn-change-avatar" class="btn" style="background:#d62300; color:white; border:none; padding:8px 20px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;">
+            Trocar Avatar
+          </button>
+        </div>
+
         <button id="pm-mobile-settings" class="btn block">
           ⚙️ Configurações
         </button>
@@ -812,12 +820,41 @@
           Sair
         </button>
 
-
       </div>
 
     </div>
   </div>
 
+  <!-- MODAL SELEÇÃO DE AVATAR -->
+  <div id="avatar-modal" class="modal" aria-hidden="true">
+    <div class="modal-dialog" style="max-width:420px;">
+
+      <div class="modal-header row between center">
+        <strong>Escolha seu Avatar</strong>
+        <button id="avatar-modal-close" class="btn text">✖</button>
+      </div>
+
+      <div style="padding:16px;">
+
+        <!-- FILTROS -->
+        <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+          <button class="avatar-filter-btn active" data-style="adventurer">Cartoon</button>
+          <button class="avatar-filter-btn" data-style="fun-emoji">Emoji</button>
+          <button class="avatar-filter-btn" data-style="bottts">Robô</button>
+          <button class="avatar-filter-btn" data-style="lorelei">Realista</button>
+        </div>
+
+        <!-- GRID DE AVATARES -->
+        <div id="avatar-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; max-height:360px; overflow-y:auto; padding:4px;">
+        </div>
+
+        <button id="btn-save-avatar" style="width:100%; margin-top:16px; padding:12px; background:#d62300; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+          Salvar Avatar
+        </button>
+
+      </div>
+    </div>
+  </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
