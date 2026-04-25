@@ -2290,6 +2290,18 @@ function setToken(t) {
     state.activeOrderData = null;
     state.cart = [];
     updateCartUI();
+
+    // Reset avatar na nav
+    const navImg = document.getElementById('nav-avatar-img');
+    const navIcon = document.getElementById('nav-perfil-icon');
+    if (navImg) navImg.style.display = 'none';
+    if (navIcon) navIcon.style.display = '';
+
+    // Reset avatar no header desktop
+    const imgDesktop = document.getElementById('current-avatar-img-desktop');
+    const headerName = document.getElementById('header-user-name');
+    if (imgDesktop) imgDesktop.src = '';
+    if (headerName) headerName.textContent = 'Perfil';
   }
 }
 
@@ -2504,7 +2516,8 @@ formSettings?.addEventListener('submit', async (e) => {
     const res = await apiSend('/auth/update', 'PATCH', payload);
 
     if (res.success) {
-      alert("✅ Dados atualizados com sucesso!");
+      // Toast bonito em vez de alert feio
+      showSettingsToast();
 
       state.user = res.user;
 
@@ -2968,3 +2981,35 @@ document.getElementById('pm-avatar')?.addEventListener('click', () => {
   document.getElementById('avatar-modal').setAttribute('aria-hidden', 'false');
   renderAvatarGrid(currentAvatarStyle);
 });
+
+
+function showSettingsToast() {
+  document.getElementById('settings-toast')?.remove();
+  const toast = document.createElement('div');
+  toast.id = 'settings-toast';
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    animation: fadeInUp 0.3s ease;
+  `;
+  toast.innerHTML = `<span style="color:#22c55e; font-size:18px;">✓</span> Dados salvos com sucesso!`;
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.4s';
+    setTimeout(() => toast.remove(), 400);
+  }, 2500);
+}
