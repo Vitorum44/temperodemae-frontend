@@ -19,25 +19,46 @@
 
 <body class="admin-page">
 
-    <header class="topbar">
-        <div class="topbar-content">
-            <div style="display:flex; align-items:center; gap:30px;">
-                <h2 style="margin:0; color:white; display:flex; align-items:center; gap:10px; font-size:20px;">
-                    🎨 Aparência
-                </h2>
-                <nav class="nav-menu">
-                    <a href="admin.html" class="nav-link">
-                        Pedidos <span id="order-badge" class="notification-badge" style="display:none">0</span>
-                    </a>
-                    <a href="estoque.html" class="nav-link">Estoque</a>
-                    <a href="#" class="nav-link active">Cardápio</a>
-                </nav>
-            </div>
-            <button onclick="logout()" id="btn-logout" class="btn-logout">SAIR</button>
+    <aside class="admin-sidebar" id="admin-sidebar">
+        <div class="sidebar-brand">
+            <span class="sidebar-brand-icon">🍔</span>
+            <span class="sidebar-brand-name">Tempero de Mãe</span>
+            <button class="sidebar-close-btn" id="sidebar-close-btn">
+                <span class="material-icons-outlined" style="font-size:20px;">close</span>
+            </button>
         </div>
-    </header>
+        <nav class="sidebar-nav">
+            <a href="admin.html" class="sidebar-link">
+                <span class="material-icons-outlined">receipt_long</span>
+                <span>Pedidos</span>
+            </a>
+            <a href="estoque.html" class="sidebar-link">
+                <span class="material-icons-outlined">inventory_2</span>
+                <span>Estoque</span>
+            </a>
+            <a href="cardapio.html" class="sidebar-link active">
+                <span class="material-icons-outlined">restaurant_menu</span>
+                <span>Cardápio</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button onclick="logout()" class="sidebar-logout-btn">
+                <span class="material-icons-outlined" style="font-size:18px;">logout</span>
+                Sair
+            </button>
+        </div>
+    </aside>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-    <div class="main-content">
+    <div class="admin-topbar">
+        <button class="topbar-menu-btn" id="topbar-menu-btn">
+            <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="topbar-title">🎨 Aparência</div>
+        <div style="width:40px;"></div>
+    </div>
+
+    <div class="main-content" style="margin-left:260px;">
         <div class="config-grid">
 
             <div class="edit-panel">
@@ -138,31 +159,41 @@
     <div class="toast-container"></div>
 
     <!-- MENU INFERIOR MOBILE -->
-<div class="bottom-nav">
-  <a href="admin.html">
-    <span class="material-icons-outlined">home</span>
-    <small>Pedidos</small>
-  </a>
+    <div class="bottom-nav">
+        <a href="admin.html">
+            <span class="material-icons-outlined">home</span>
+            <small>Pedidos</small>
+        </a>
 
-  <a href="estoque.html">
-    <span class="material-icons-outlined">inventory_2</span>
-    <small>Estoque</small>
-  </a>
+        <a href="estoque.html">
+            <span class="material-icons-outlined">inventory_2</span>
+            <small>Estoque</small>
+        </a>
 
-  <a href="cardapio.html" class="active">
-    <span class="material-icons-outlined">restaurant_menu</span>
-    <small>Cardápio</small>
-  </a>
-</div>
+        <a href="cardapio.html" class="active">
+            <span class="material-icons-outlined">restaurant_menu</span>
+            <small>Cardápio</small>
+        </a>
+    </div>
 
 
     <script>
         function logout() {
-            if (confirm("Sair do sistema?")) {
-                localStorage.removeItem('token');
-                window.location.href = 'admin.html';
-            }
-        }
+      localStorage.removeItem('token');
+      window.location.href = 'admin.html';
+    }
+
+    const sidebar = document.getElementById('admin-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const menuBtn = document.getElementById('topbar-menu-btn');
+    const closeBtn = document.getElementById('sidebar-close-btn');
+
+    function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('active'); }
+    function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+
+    menuBtn?.addEventListener('click', openSidebar);
+    closeBtn?.addEventListener('click', closeSidebar);
+    overlay?.addEventListener('click', closeSidebar);
     </script>
 
     <script type="module" src="./js/cardapio.js"></script>
