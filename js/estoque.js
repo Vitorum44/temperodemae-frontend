@@ -565,7 +565,7 @@ tr.innerHTML = `
         <button onclick="editProduct('${p.id}')">Editar</button>
 
         <button class="btn-acomp" data-id="${p.id}">
-          🔥 TESTE ACOMP
+          ⚙️ Acomp.
         </button>
 
         <button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button>
