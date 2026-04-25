@@ -1292,6 +1292,12 @@ body.admin-page { background: #F1F5F9; }
 .topbar { display: none !important; }
 .admin-grid { display: none !important; }
 
+/* Responsivo para estoque e cardapio */
+@media (max-width: 768px) {
+  .container { margin-left: 0 !important; }
+  .main-content { margin-left: 0 !important; }
+}
+
 
 
 
