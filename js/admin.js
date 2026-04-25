@@ -497,6 +497,17 @@ function updateStats(orders) {
     countToday.textContent = todaysOrders.length;
     const total = todaysOrders.reduce((acc, curr) => acc + Number(curr.total), 0);
     totalToday.textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+    // Métricas do topo
+    const novos = document.getElementById('metric-novos');
+    const preparo = document.getElementById('metric-preparo');
+    const saiu = document.getElementById('metric-saiu');
+    const cancelados = document.getElementById('metric-cancelados');
+
+    if (novos) novos.textContent = orders.filter(o => o.status === 'novo' || o.status === 'agendado').length;
+    if (preparo) preparo.textContent = orders.filter(o => o.status === 'em_preparo').length;
+    if (saiu) saiu.textContent = orders.filter(o => o.status === 'saiu_entrega').length;
+    if (cancelados) cancelados.textContent = orders.filter(o => o.status === 'cancelado').length;
 }
 
 function updateBadge(count) {
