@@ -4157,6 +4157,24 @@ margin-top:10px;
   to { transform: scale(1); opacity: 1; }
 }
 
+/* ===== SIDEBAR LAYOUT ===== */
+@media (min-width: 769px) {
+  .container {
+    margin-left: 260px !important;
+    margin-top: 0 !important;
+    max-width: calc(100% - 260px) !important;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
 
 
 
