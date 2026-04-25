@@ -2894,12 +2894,20 @@ function getAvatarUrl(style, seed) {
 }
 
 function loadCurrentAvatar() {
+  const navImg = document.getElementById('nav-avatar-img');
+  const navIcon = document.getElementById('nav-perfil-icon');
+
+  // Se não estiver logado, esconde avatar e mostra ícone genérico
+  if (!state.user) {
+    if (navImg) navImg.style.display = 'none';
+    if (navIcon) navIcon.style.display = '';
+    return;
+  }
+
   const saved = localStorage.getItem('userAvatar');
   const img = document.getElementById('current-avatar-img');
   const imgDesktop = document.getElementById('current-avatar-img-desktop');
   const imgMenu = document.getElementById('avatar-menu-preview');
-  const navImg = document.getElementById('nav-avatar-img');
-  const navIcon = document.getElementById('nav-perfil-icon');
   const fallback = getAvatarUrl('adventurer', state.user?.name || 'User');
   const url = saved || fallback;
   if (img) img.src = url;
