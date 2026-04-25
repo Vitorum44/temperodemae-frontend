@@ -461,6 +461,7 @@ function renderOrders(orders) {
             ${cust.reference ? `<span class="card-ref">📍 ${cust.reference}</span>` : ''}
            </div>`
       }
+      ${cust.postalCode ? `<div class="card-distance" style="color:#6b7280;">📮 CEP: ${cust.postalCode}</div>` : ''}
       ${order.distance_km ? `<div class="card-distance">🚚 ${Number(order.distance_km).toFixed(1)} km</div>` : ''}
       ${cust.change ? `<div class="card-change">💰 ${cust.change}</div>` : ''}
     </div>
@@ -576,7 +577,7 @@ window.updateStatus = async (id, status, silent = false) => {
 
 // === CONFIGURAÇÕES E HORÁRIOS ===
 const formSettings = document.querySelector('#settings-form');
-const btnsMode = document.querySelectorAll('.btn-mode');
+const btnsMode = document.querySelectorAll('.sidebar-btn-mode');
 
 function toggleSchedule(mode) {
     if (scheduleWrapper) scheduleWrapper.style.display = (mode === 'auto') ? 'block' : 'none';
