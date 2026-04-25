@@ -1157,19 +1157,20 @@
 
   <script>
     function toggleEdit(id, btn) {
-
-      const input = document.getElementById(id)
-
-      if (input.hasAttribute("readonly")) {
-        input.removeAttribute("readonly")
-        input.focus()
-        btn.innerText = "✔"
-      } else {
-        input.setAttribute("readonly", true)
-        btn.innerText = "✏️"
-      }
-
-    }
+  const input = document.getElementById(id);
+  if (input.hasAttribute("readonly")) {
+    input.removeAttribute("readonly");
+    input.focus();
+    input.style.background = '#fff9f0';
+    input.style.borderBottom = '2px solid #d62300';
+    btn.innerText = "✔";
+  } else {
+    input.setAttribute("readonly", true);
+    input.style.background = 'transparent';
+    input.style.borderBottom = '';
+    btn.innerText = "✏️";
+  }
+}
   </script>
 
 
