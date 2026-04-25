@@ -18,45 +18,56 @@
 <body>
 
   <aside class="admin-sidebar" id="admin-sidebar">
-  <div class="sidebar-brand">
-    <span class="sidebar-brand-icon">🍔</span>
-    <span class="sidebar-brand-name">Tempero de Mãe</span>
-    <button class="sidebar-close-btn" id="sidebar-close-btn">
-      <span class="material-icons-outlined" style="font-size:20px;">close</span>
-    </button>
-  </div>
-  <nav class="sidebar-nav">
-    <a href="admin.html" class="sidebar-link">
-      <span class="material-icons-outlined">receipt_long</span>
-      <span>Pedidos</span>
-    </a>
-    <a href="estoque.html" class="sidebar-link active">
-      <span class="material-icons-outlined">inventory_2</span>
-      <span>Estoque</span>
-    </a>
-    <a href="cardapio.html" class="sidebar-link">
-      <span class="material-icons-outlined">restaurant_menu</span>
-      <span>Cardápio</span>
-    </a>
-  </nav>
-  <div class="sidebar-footer">
-          <button id="btn-logout" class="Btn">
-            <div class="sign">
-              <svg viewBox="0 0 512 512"><path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"></path></svg>
-            </div>
-            <div class="text">Logout</div>
-          </button>
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-icon">🍔</span>
+      <span class="sidebar-brand-name">Tempero de Mãe</span>
+      <button class="sidebar-close-btn" id="sidebar-close-btn">
+        <span class="material-icons-outlined" style="font-size:20px;">close</span>
+      </button>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="admin.html" class="sidebar-link">
+        <span class="material-icons-outlined">receipt_long</span>
+        <span>Pedidos</span>
+      </a>
+      <a href="estoque.html" class="sidebar-link active">
+        <span class="material-icons-outlined">inventory_2</span>
+        <span>Estoque</span>
+      </a>
+      <a href="cardapio.html" class="sidebar-link">
+        <span class="material-icons-outlined">restaurant_menu</span>
+        <span>Cardápio</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <img src="./assets/admin-avatar.png" alt="Admin" class="sidebar-avatar">
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">Administrador</div>
+          <div class="sidebar-user-role">Proprietária</div>
         </div>
-</aside>
-<div class="sidebar-overlay" id="sidebar-overlay"></div>
+      </div>
+      <button id="btn-logout" class="Btn">
+        <div class="sign">
+          <svg viewBox="0 0 512 512">
+            <path
+              d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z">
+            </path>
+          </svg>
+        </div>
+        <div class="text">Logout</div>
+      </button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
-<div class="admin-topbar">
-  <button class="topbar-menu-btn" id="topbar-menu-btn">
-    <span class="material-icons-outlined">menu</span>
-  </button>
-  <div class="topbar-title">📊 Estoque</div>
-  <div style="width:40px;"></div>
-</div>
+  <div class="admin-topbar">
+    <button class="topbar-menu-btn" id="topbar-menu-btn">
+      <span class="material-icons-outlined">menu</span>
+    </button>
+    <div class="topbar-title">📊 Estoque</div>
+    <div style="width:40px;"></div>
+  </div>
 
   <main class="container" style="margin-left:260px; padding:24px; max-width:100%; box-sizing:border-box;">
 
@@ -298,36 +309,36 @@
     </div>
   </div>
 
-<div id="modal-acomp" class="modal-acomp hidden">
-  <div class="modal-acomp-content">
+  <div id="modal-acomp" class="modal-acomp hidden">
+    <div class="modal-acomp-content">
 
-    <!-- HEADER -->
-    <div class="acomp-header">
-      <h2>⚙️ Configurar Acompanhamentos</h2>
-      <button onclick="fecharAcomp()" class="close-btn">✕</button>
-    </div>
-
-    <p class="acomp-subtitle">
-      Configure os acompanhamentos deste produto
-    </p>
-
-    <!-- CONTEÚDO -->
-    <div id="acomp-groups" class="acomp-groups"></div>
-
-    <!-- FOOTER -->
-    <div class="acomp-footer">
-      <button id="btn-add-group" class="btn-secondary">
-        + Criar grupo
-      </button>
-
-      <div>
-        <button id="save-acomp" class="btn-success">Salvar</button>
-        <button onclick="fecharAcomp()" class="btn-cancel">Fechar</button>
+      <!-- HEADER -->
+      <div class="acomp-header">
+        <h2>⚙️ Configurar Acompanhamentos</h2>
+        <button onclick="fecharAcomp()" class="close-btn">✕</button>
       </div>
-    </div>
 
+      <p class="acomp-subtitle">
+        Configure os acompanhamentos deste produto
+      </p>
+
+      <!-- CONTEÚDO -->
+      <div id="acomp-groups" class="acomp-groups"></div>
+
+      <!-- FOOTER -->
+      <div class="acomp-footer">
+        <button id="btn-add-group" class="btn-secondary">
+          + Criar grupo
+        </button>
+
+        <div>
+          <button id="save-acomp" class="btn-success">Salvar</button>
+          <button onclick="fecharAcomp()" class="btn-cancel">Fechar</button>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
 
 
   <!-- SCRIPT -->
@@ -336,21 +347,21 @@
 
   <script>
     document.getElementById("btn-logout").onclick = () => {
-    localStorage.removeItem("token");
-    window.location.href = "admin.html";
-  };
+      localStorage.removeItem("token");
+      window.location.href = "admin.html";
+    };
 
-  const sidebar = document.getElementById('admin-sidebar');
-  const overlay = document.getElementById('sidebar-overlay');
-  const menuBtn = document.getElementById('topbar-menu-btn');
-  const closeBtn = document.getElementById('sidebar-close-btn');
+    const sidebar = document.getElementById('admin-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const menuBtn = document.getElementById('topbar-menu-btn');
+    const closeBtn = document.getElementById('sidebar-close-btn');
 
-  function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('active'); }
-  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+    function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('active'); }
+    function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
 
-  menuBtn?.addEventListener('click', openSidebar);
-  closeBtn?.addEventListener('click', closeSidebar);
-  overlay?.addEventListener('click', closeSidebar);
+    menuBtn?.addEventListener('click', openSidebar);
+    closeBtn?.addEventListener('click', closeSidebar);
+    overlay?.addEventListener('click', closeSidebar);
   </script>
 
 </body>
