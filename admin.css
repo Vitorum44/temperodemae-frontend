@@ -1450,17 +1450,81 @@ body.admin-page { background: #F1F5F9; }
   background: #D62300;
 }
 
-/* ===== ANIMAÇÃO DE ENTRADA DOS CARDS ===== */
-.order-card {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.4s ease, transform 0.4s ease;
-}
-.order-card.visible {
-  opacity: 1;
-  transform: translateY(0);
+/* ===== MÉTRICAS DO TOPO ===== */
+.orders-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 20px 24px 0;
 }
 
+.metric-card {
+  background: #1E293B;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: white;
+}
+
+.metric-icon {
+  font-size: 20px;
+  margin-left: auto;
+}
+
+/* ===== GRID 2 COLUNAS DESKTOP ===== */
+@media (min-width: 769px) {
+  .orders-wrapper {
+    padding: 16px 24px 24px;
+  }
+
+  #orders-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    align-items: start;
+  }
+
+  #orders-list .loader-wrapper {
+    grid-column: 1 / -1;
+  }
+
+  .order-card {
+    margin-bottom: 0;
+  }
+
+  .order-actions {
+    flex-wrap: wrap;
+  }
+
+  .order-actions .btn {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .orders-metrics {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 12px 12px 0;
+  }
+  .metric-value { font-size: 22px; }
+}
 
 
 
