@@ -2229,3 +2229,35 @@ html {
   background: linear-gradient(135deg, #fff8f0, #fff3e6) !important;
   border-bottom: 1px solid #fde68a !important;
 }
+
+/* ===== AVATAR SELECTOR ===== */
+.avatar-filter-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+.avatar-filter-btn.active {
+  background: #d62300;
+  color: white;
+  border-color: #d62300;
+}
+
+.avatar-option {
+  border: 2.5px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avatar-option:hover { border-color: #d62300; transform: scale(1.08); }
+.avatar-option.selected { border-color: #d62300; background: #fff0ee; }
+.avatar-option img { width: 60px; height: 60px; border-radius: 50%; display: block; }
