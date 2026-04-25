@@ -73,7 +73,8 @@
           <button id="edit-profile" class="cart-badge btn text">👤 Perfil</button>
           <div id="profile-menu" class="profile-menu" aria-hidden="true">
             <div class="pm-item" id="pm-avatar" style="display:flex; align-items:center; gap:10px;">
-              <img id="current-avatar-img-desktop" src="" alt="Avatar" style="width:32px; height:32px; border-radius:50%; border:2px solid #d62300; background:#f3f4f6;">
+              <img id="current-avatar-img-desktop" src="" alt="Avatar"
+                style="width:32px; height:32px; border-radius:50%; border:2px solid #d62300; background:#f3f4f6;">
               <span>Meu Avatar</span>
             </div>
             <div class="pm-item" id="pm-history">📜 Meus Pedidos</div>
@@ -790,7 +791,9 @@
     </a>
 
     <a href="#" class="nav-item" id="btn-perfil">
-      <span class="material-icons-outlined">person</span>
+      <img id="nav-avatar-img" src="" alt="Perfil"
+        style="width:26px; height:26px; border-radius:50%; border:2px solid #d62300; object-fit:cover; display:none;">
+      <span class="material-icons-outlined" id="nav-perfil-icon">person</span>
       <small>Perfil</small>
     </a>
 
@@ -809,8 +812,10 @@
 
         <!-- AVATAR ATUAL -->
         <div style="display:flex; flex-direction:column; align-items:center; gap:12px; padding:16px 0;">
-          <img id="current-avatar-img" src="" alt="Avatar" style="width:80px; height:80px; border-radius:50%; border:3px solid #d62300; background:#f3f4f6;">
-          <button id="btn-change-avatar" class="btn" style="background:#d62300; color:white; border:none; padding:8px 20px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;">
+          <img id="current-avatar-img" src="" alt="Avatar"
+            style="width:80px; height:80px; border-radius:50%; border:3px solid #d62300; background:#f3f4f6;">
+          <button id="btn-change-avatar" class="btn"
+            style="background:#d62300; color:white; border:none; padding:8px 20px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;">
             Trocar Avatar
           </button>
         </div>
@@ -849,10 +854,12 @@
         </div>
 
         <!-- GRID DE AVATARES -->
-        <div id="avatar-grid" style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; max-height:360px; overflow-y:auto; padding:4px;">
+        <div id="avatar-grid"
+          style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; max-height:360px; overflow-y:auto; padding:4px;">
         </div>
 
-        <button id="btn-save-avatar" style="width:100%; margin-top:16px; padding:12px; background:#d62300; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
+        <button id="btn-save-avatar"
+          style="width:100%; margin-top:16px; padding:12px; background:#d62300; color:white; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer;">
           Salvar Avatar
         </button>
 
