@@ -1095,6 +1095,202 @@ body.admin-page {
   .card-total-box { text-align: left; }
 }
 
+/* ============================================================
+   NOVO LAYOUT COM SIDEBAR
+   ============================================================ */
+
+body.admin-page { background: #F1F5F9; }
+
+.admin-layout { display: flex; min-height: 100vh; }
+
+.admin-sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: #0F172A;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 200;
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.sidebar-brand-icon { font-size: 24px; }
+.sidebar-brand-name { font-size: 15px; font-weight: 700; color: white; flex: 1; }
+.sidebar-close-btn { display: none; background: none; border: none; color: #94A3B8; cursor: pointer; padding: 4px; }
+
+.sidebar-nav { padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #94A3B8;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.sidebar-link:hover { background: rgba(255,255,255,0.07); color: white; }
+.sidebar-link.active { background: #D62300; color: white; }
+.sidebar-link .material-icons-outlined { font-size: 20px; }
+
+.sidebar-badge {
+  margin-left: auto;
+  background: #EF4444;
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 20px;
+  animation: pulse 1.5s infinite;
+}
+
+.sidebar-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 8px 16px; }
+
+.sidebar-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 20px 6px;
+}
+
+.sidebar-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 12px; margin-bottom: 10px; }
+
+.sidebar-stat-box {
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar-stat-label { font-size: 10px; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.sidebar-stat-value { font-size: 18px; font-weight: 800; color: white; }
+.sidebar-stat-value.green { color: #10B981; }
+
+.sidebar-report-btn {
+  margin: 0 12px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  color: #94A3B8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: calc(100% - 24px);
+}
+
+.sidebar-report-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+
+.sidebar-mode-toggles {
+  display: flex;
+  background: rgba(255,255,255,0.05);
+  padding: 3px;
+  border-radius: 10px;
+  margin: 0 12px;
+}
+
+.sidebar-btn-mode {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  border-radius: 7px;
+  transition: all 0.2s;
+}
+
+.sidebar-btn-mode.active { background: white; color: #111827; font-weight: 700; }
+.sidebar-btn-mode[data-mode="force_open"].active { background: #dcfce7; color: #059669; }
+.sidebar-btn-mode[data-mode="force_closed"].active { background: #fee2e2; color: #DC2626; }
+
+.sidebar-save-btn {
+  margin: 12px 12px 0;
+  width: calc(100% - 24px);
+  padding: 10px;
+  background: #D62300;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.sidebar-save-btn:hover { background: #b71c1c; }
+
+.sidebar-footer { margin-top: auto; padding: 16px 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+
+.sidebar-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: #94A3B8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sidebar-logout-btn:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #EF4444; }
+
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; backdrop-filter: blur(2px); }
+.sidebar-overlay.active { display: block; }
+
+.admin-main { margin-left: 260px; flex: 1; min-height: 100vh; display: flex; flex-direction: column; background: #F1F5F9; }
+
+.admin-topbar { display: none; align-items: center; justify-content: space-between; padding: 0 16px; height: 56px; background: #0F172A; position: sticky; top: 0; z-index: 100; }
+
+.topbar-menu-btn { background: none; border: none; color: white; cursor: pointer; padding: 8px; border-radius: 8px; display: flex; align-items: center; }
+.topbar-title { font-size: 16px; font-weight: 700; color: white; }
+
+.orders-wrapper { padding: 24px; flex: 1; }
+
+#schedule-container { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 8px 12px; margin: 0 12px; border: 1px solid rgba(255,255,255,0.06); }
+#schedule-container .schedule-row { border-bottom: 1px dashed rgba(255,255,255,0.08); }
+#schedule-container .schedule-row label { color: #94A3B8; }
+.time-inputs input[type="time"] { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; border-radius: 4px; padding: 2px 4px; font-size: 11px; }
+
+@media (max-width: 768px) {
+  .admin-sidebar { transform: translateX(-100%); width: 280px; }
+  .admin-sidebar.open { transform: translateX(0); }
+  .sidebar-close-btn { display: flex; }
+  .admin-main { margin-left: 0; }
+  .admin-topbar { display: flex; }
+  .orders-wrapper { padding: 12px; padding-bottom: 80px; }
+}
+
+.topbar { display: none !important; }
+.admin-grid { display: none !important; }
 
 
 
