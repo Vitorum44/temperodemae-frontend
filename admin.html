@@ -18,7 +18,8 @@
 
   <div id="auth-card" class="login-container">
     <div class="login-box">
-      <h2 style="color:#111827; margin-top:0;">Painel Admin</h2>
+      <div style="font-size:40px; margin-bottom:12px;">🍔</div>
+      <h2 style="color:#111827; margin-top:0; font-size:22px;">Painel Admin</h2>
       <p style="color:#6b7280; font-size:14px; margin-bottom:20px;">Entre para gerenciar sua loja</p>
       <form id="login-form">
         <input type="email" id="adm-email" placeholder="Email" required>
@@ -30,209 +31,209 @@
   </div>
 
   <div id="orders-panel" hidden>
-    
-    <header class="topbar">
-      <div class="topbar-content">
-        <div style="display:flex; align-items:center; gap:30px;">
-          <h2 style="margin:0; color:white; display:flex; align-items:center; gap:10px; font-size:20px;">
-            🍔 Pedidos
-          </h2>
-          <nav class="nav-menu">
-            <a href="#" class="nav-link active">
-              Pedidos <span id="order-badge" class="notification-badge" style="display:none">0</span>
-            </a>
-            <a href="estoque.html" class="nav-link">Estoque</a>
-            <a href="cardapio.html" class="nav-link">Cardápio</a>
-          </nav>
-        </div>
-        <button id="btn-logout" class="btn-logout">SAIR</button>
-      </div>
-    </header>
 
     <audio id="audio-notification" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
-    <div class="admin-grid">
-      
-      <div class="col-sidebar">
-        
-        <div class="sidebar-card">
-          <h3 style="display:flex; justify-content:space-between; align-items:center;">
-            <span>📊 Resumo Hoje</span>
-            <button id="btn-open-report" title="Ver relatórios" style="background:none; border:none; cursor:pointer; padding:4px; color:#6b7280; transition:0.2s; border-radius:6px;" onmouseover="this.style.color='#d62300'" onmouseout="this.style.color='#6b7280'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-              </svg>
-            </button>
-          </h3>
-          <div class="stats-grid">
-            <div class="stat-box">
-              <div class="stat-box-label">Pedidos</div>
-              <div id="count-today" class="stat-box-value">0</div>
-            </div>
-            <div class="stat-box">
-              <div class="stat-box-label">Faturamento</div>
-              <div id="total-today" class="stat-box-value green">R$ 0,00</div>
+    <div class="admin-layout">
+
+      <aside class="admin-sidebar" id="admin-sidebar">
+
+        <div class="sidebar-brand">
+          <span class="sidebar-brand-icon">🍔</span>
+          <span class="sidebar-brand-name">Tempero de Mãe</span>
+          <button class="sidebar-close-btn" id="sidebar-close-btn">
+            <span class="material-icons-outlined" style="font-size:20px;">close</span>
+          </button>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="admin.html" class="sidebar-link active">
+            <span class="material-icons-outlined">receipt_long</span>
+            <span>Pedidos</span>
+            <span id="order-badge" class="sidebar-badge" style="display:none">0</span>
+          </a>
+          <a href="estoque.html" class="sidebar-link">
+            <span class="material-icons-outlined">inventory_2</span>
+            <span>Estoque</span>
+          </a>
+          <a href="cardapio.html" class="sidebar-link">
+            <span class="material-icons-outlined">restaurant_menu</span>
+            <span>Cardápio</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section-title">Resumo Hoje</div>
+        <div class="sidebar-stats">
+          <div class="sidebar-stat-box">
+            <div class="sidebar-stat-label">Pedidos</div>
+            <div id="count-today" class="sidebar-stat-value">0</div>
+          </div>
+          <div class="sidebar-stat-box">
+            <div class="sidebar-stat-label">Faturamento</div>
+            <div id="total-today" class="sidebar-stat-value green">R$ 0,00</div>
+          </div>
+        </div>
+
+        <button id="btn-open-report" class="sidebar-report-btn">
+          <span class="material-icons-outlined" style="font-size:16px;">bar_chart</span>
+          Ver Relatório
+        </button>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section-title">Controle da Loja</div>
+        <form id="settings-form">
+          <input type="hidden" id="store-mode" value="auto">
+          <div class="sidebar-mode-toggles">
+            <button type="button" class="sidebar-btn-mode" data-mode="auto">Auto</button>
+            <button type="button" class="sidebar-btn-mode" data-mode="force_open">Aberto</button>
+            <button type="button" class="sidebar-btn-mode" data-mode="force_closed">Fechado</button>
+          </div>
+
+          <div id="schedule-wrapper" style="display:none; margin-top:12px;">
+            <div class="sidebar-section-title" style="margin-top:0; padding-left:0;">Horários</div>
+            <div id="schedule-container"></div>
+          </div>
+
+          <button type="submit" class="sidebar-save-btn">Salvar Alterações</button>
+        </form>
+
+        <div class="sidebar-footer">
+          <button id="btn-logout" class="sidebar-logout-btn">
+            <span class="material-icons-outlined" style="font-size:18px;">logout</span>
+            Sair
+          </button>
+        </div>
+
+      </aside>
+
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+      <main class="admin-main">
+
+        <div class="admin-topbar">
+          <button class="topbar-menu-btn" id="topbar-menu-btn">
+            <span class="material-icons-outlined">menu</span>
+          </button>
+          <div class="topbar-title">🍔 Pedidos</div>
+          <div style="width:40px;"></div>
+        </div>
+
+        <div class="orders-wrapper">
+          <div id="orders-list">
+            <div style="text-align:center; padding:60px; color:#9CA3AF">
+              <div style="font-size:40px; margin-bottom:10px;">📭</div>
+              Carregando pedidos...
             </div>
           </div>
         </div>
 
-        <div class="sidebar-card">
-          <h3>⚙️ Controle da Loja</h3>
-          <form id="settings-form">
-            <span class="settings-label">Status Atual</span>
-            <input type="hidden" id="store-mode" value="auto">
-            
-            <div class="mode-toggles">
-              <button type="button" class="btn-mode" data-mode="auto">Automático</button>
-              <button type="button" class="btn-mode" data-mode="force_open">Aberto</button>
-              <button type="button" class="btn-mode" data-mode="force_closed">Fechado</button>
-            </div>
-            
-            <div id="schedule-wrapper" style="display: none;">
-              <span class="settings-label" style="margin-top: 15px;">Configuração Automática</span>
-              <div id="schedule-container"></div>
-            </div>
-            
-            <button type="submit" class="btn-save-config">SALVAR ALTERAÇÕES</button>
-          </form>
-        </div>
-      </div>
-
-      <div class="col-main">
-        <div id="orders-list">
-          <div style="text-align:center; padding:60px; color:#9CA3AF">
-            <div style="font-size:40px; margin-bottom:10px;">📭</div>
-            Carregando pedidos...
-          </div>
-        </div>
-      </div>
-
+      </main>
     </div>
   </div>
 
-  <div id="custom-confirm" class="modal-overlay" style="display: none;">
+  <div id="custom-confirm" class="modal-overlay" style="display:none;">
     <div class="confirm-card">
-        <div id="confirm-icon" class="confirm-icon">❓</div>
-        <h3 id="confirm-title">Confirmar Ação</h3>
-        <p id="confirm-message">Você tem certeza que deseja prosseguir?</p>
-        <div class="confirm-buttons">
-            <button id="confirm-cancel" class="btn-modal btn-modal-cancel">Cancelar</button>
-            <button id="confirm-ok" class="btn-modal btn-modal-ok">Confirmar</button>
-        </div>
-    </div>
-</div>
-
-<!-- MENU INFERIOR MOBILE -->
-<div class="bottom-nav">
-  <a href="admin.html" class="active">
-    <span class="material-icons-outlined">home</span>
-    <small>Pedidos</small>
-  </a>
-
-  <a href="estoque.html">
-    <span class="material-icons-outlined">inventory_2</span>
-    <small>Estoque</small>
-  </a>
-
-  <a href="cardapio.html">
-    <span class="material-icons-outlined">restaurant_menu</span>
-    <small>Cardápio</small>
-  </a>
-</div>
-
-<!-- MODAL RELATÓRIO -->
-<div id="report-modal" style="
-  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6);
-  z-index:10000; align-items:center; justify-content:center;
-  backdrop-filter:blur(4px);
-">
-  <div style="
-    background:white; border-radius:20px; width:90%; max-width:480px;
-    max-height:85vh; overflow-y:auto; padding:28px;
-    box-shadow:0 20px 60px rgba(0,0,0,0.3);
-  ">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-      <h2 style="margin:0; font-size:18px; color:#111;">📈 Relatório de Vendas</h2>
-      <button id="btn-close-report" style="
-        background:#f3f4f6; border:none; width:32px; height:32px;
-        border-radius:50%; cursor:pointer; font-size:18px; color:#555;
-      ">✕</button>
-    </div>
-
-    <!-- PERÍODO -->
-    <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
-      <button class="report-period-btn active" data-period="today">Hoje</button>
-      <button class="report-period-btn" data-period="week">7 dias</button>
-      <button class="report-period-btn" data-period="month">30 dias</button>
-      <button class="report-period-btn" data-period="custom">Personalizado</button>
-    </div>
-
-    <!-- DATAS PERSONALIZADAS -->
-    <div id="report-custom-dates" style="display:none; gap:10px; margin-bottom:20px;">
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <div style="flex:1;">
-          <label style="font-size:12px; font-weight:600; color:#6b7280; display:block; margin-bottom:4px;">De</label>
-          <input type="date" id="report-date-from" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px; font-size:13px;">
-        </div>
-        <div style="flex:1;">
-          <label style="font-size:12px; font-weight:600; color:#6b7280; display:block; margin-bottom:4px;">Até</label>
-          <input type="date" id="report-date-to" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px; font-size:13px;">
-        </div>
+      <div id="confirm-icon" class="confirm-icon">❓</div>
+      <h3 id="confirm-title">Confirmar Ação</h3>
+      <p id="confirm-message">Você tem certeza que deseja prosseguir?</p>
+      <div class="confirm-buttons">
+        <button id="confirm-cancel" class="btn-modal btn-modal-cancel">Cancelar</button>
+        <button id="confirm-ok" class="btn-modal btn-modal-ok">Confirmar</button>
       </div>
-      <button id="btn-apply-custom" style="
-        margin-top:8px; width:100%; padding:10px; background:#d62300; color:white;
-        border:none; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;
-      ">Aplicar</button>
-    </div>
-
-    <!-- CARDS DE MÉTRICAS -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
-      <div style="background:#f0fdf4; border-radius:12px; padding:16px; border:1px solid #bbf7d0;">
-        <div style="font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:6px;">Faturamento</div>
-        <div id="report-total" style="font-size:22px; font-weight:800; color:#059669;">R$ 0,00</div>
-      </div>
-      <div style="background:#eff6ff; border-radius:12px; padding:16px; border:1px solid #bfdbfe;">
-        <div style="font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:6px;">Pedidos</div>
-        <div id="report-count" style="font-size:22px; font-weight:800; color:#2563eb;">0</div>
-      </div>
-      <div style="background:#fff7ed; border-radius:12px; padding:16px; border:1px solid #fed7aa;">
-        <div style="font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:6px;">Ticket Médio</div>
-        <div id="report-avg" style="font-size:22px; font-weight:800; color:#ea580c;">R$ 0,00</div>
-      </div>
-      <div style="background:#fdf4ff; border-radius:12px; padding:16px; border:1px solid #e9d5ff;">
-        <div style="font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:6px;">Cancelados</div>
-        <div id="report-cancelled" style="font-size:22px; font-weight:800; color:#9333ea;">0</div>
-      </div>
-    </div>
-
-    <!-- PAGAMENTOS -->
-    <div style="background:#f9fafb; border-radius:12px; padding:16px; margin-bottom:16px;">
-      <div style="font-size:13px; font-weight:700; color:#111; margin-bottom:12px;">💳 Por forma de pagamento</div>
-      <div id="report-payments"></div>
-    </div>
-
-    <!-- TOP PRODUTOS -->
-    <div style="background:#f9fafb; border-radius:12px; padding:16px;">
-      <div style="font-size:13px; font-weight:700; color:#111; margin-bottom:12px;">🏆 Produtos mais vendidos</div>
-      <div id="report-top-products"></div>
     </div>
   </div>
-</div>
 
-<style>
-.report-period-btn {
-  padding: 8px 16px; border: 1px solid #e5e7eb; background: white;
-  border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
-  color: #6b7280; transition: all 0.2s;
-}
-.report-period-btn.active {
-  background: #d62300; color: white; border-color: #d62300;
-}
-.report-period-btn:hover:not(.active) {
-  border-color: #d62300; color: #d62300;
-}
-</style>
+  <div class="bottom-nav">
+    <a href="admin.html" class="active">
+      <span class="material-icons-outlined">home</span>
+      <small>Pedidos</small>
+    </a>
+    <a href="estoque.html">
+      <span class="material-icons-outlined">inventory_2</span>
+      <small>Estoque</small>
+    </a>
+    <a href="cardapio.html">
+      <span class="material-icons-outlined">restaurant_menu</span>
+      <small>Cardápio</small>
+    </a>
+  </div>
 
+  <div id="report-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:white; border-radius:20px; width:90%; max-width:480px; max-height:85vh; overflow-y:auto; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <h2 style="margin:0; font-size:18px; color:#111;">📈 Relatório de Vendas</h2>
+        <button id="btn-close-report" style="background:#f3f4f6; border:none; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:18px; color:#555;">✕</button>
+      </div>
+      <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+        <button class="report-period-btn active" data-period="today">Hoje</button>
+        <button class="report-period-btn" data-period="week">7 dias</button>
+        <button class="report-period-btn" data-period="month">30 dias</button>
+        <button class="report-period-btn" data-period="custom">Personalizado</button>
+      </div>
+      <div id="report-custom-dates" style="display:none; gap:10px; margin-bottom:20px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <div style="flex:1;">
+            <label style="font-size:12px; font-weight:600; color:#6b7280; display:block; margin-bottom:4px;">De</label>
+            <input type="date" id="report-date-from" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px; font-size:13px;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:12px; font-weight:600; color:#6b7280; display:block; margin-bottom:4px;">Até</label>
+            <input type="date" id="report-date-to" style="width:100%; padding:8px; border:1px solid #e5e7eb; border-radius:8px; font-size:13px;">
+          </div>
+        </div>
+        <button id="btn-apply-custom" style="margin-top:8px; width:100%; padding:10px; background:#d62300; color:white; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;">Aplicar</button>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+        <div style="background:#f0fdf4; border-radius:12px; padding:16px; border:1px solid #bbf7d0;">
+          <div style="font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:6px;">Faturamento</div>
+          <div id="report-total" style="font-size:22px; font-weight:800; color:#059669;">R$ 0,00</div>
+        </div>
+        <div style="background:#eff6ff; border-radius:12px; padding:16px; border:1px solid #bfdbfe;">
+          <div style="font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:6px;">Pedidos</div>
+          <div id="report-count" style="font-size:22px; font-weight:800; color:#2563eb;">0</div>
+        </div>
+        <div style="background:#fff7ed; border-radius:12px; padding:16px; border:1px solid #fed7aa;">
+          <div style="font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:6px;">Ticket Médio</div>
+          <div id="report-avg" style="font-size:22px; font-weight:800; color:#ea580c;">R$ 0,00</div>
+        </div>
+        <div style="background:#fdf4ff; border-radius:12px; padding:16px; border:1px solid #e9d5ff;">
+          <div style="font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; margin-bottom:6px;">Cancelados</div>
+          <div id="report-cancelled" style="font-size:22px; font-weight:800; color:#9333ea;">0</div>
+        </div>
+      </div>
+      <div style="background:#f9fafb; border-radius:12px; padding:16px; margin-bottom:16px;">
+        <div style="font-size:13px; font-weight:700; color:#111; margin-bottom:12px;">💳 Por forma de pagamento</div>
+        <div id="report-payments"></div>
+      </div>
+      <div style="background:#f9fafb; border-radius:12px; padding:16px;">
+        <div style="font-size:13px; font-weight:700; color:#111; margin-bottom:12px;">🏆 Produtos mais vendidos</div>
+        <div id="report-top-products"></div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+  .report-period-btn { padding:8px 16px; border:1px solid #e5e7eb; background:white; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; color:#6b7280; transition:all 0.2s; }
+  .report-period-btn.active { background:#d62300; color:white; border-color:#d62300; }
+  .report-period-btn:hover:not(.active) { border-color:#d62300; color:#d62300; }
+  </style>
+
+  <script>
+    const sidebar = document.getElementById('admin-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const menuBtn = document.getElementById('topbar-menu-btn');
+    const closeBtn = document.getElementById('sidebar-close-btn');
+
+    function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('active'); }
+    function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('active'); }
+
+    menuBtn?.addEventListener('click', openSidebar);
+    closeBtn?.addEventListener('click', closeSidebar);
+    overlay?.addEventListener('click', closeSidebar);
+  </script>
 
   <script type="module" src="./js/app-api.js"></script>
   <script type="module" src="./js/admin.js"></script>
