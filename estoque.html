@@ -15,8 +15,7 @@
   <link rel="icon" href="data:,">
 </head>
 
-<body>
-  
+<body class="admin-page">
   <script>
     if (!localStorage.getItem('token')) {
       window.location.href = 'admin.html';
@@ -356,11 +355,6 @@
 
 
   <script>
-    document.getElementById("btn-logout").onclick = () => {
-      localStorage.removeItem("token");
-      window.location.href = "admin.html";
-    };
-
     const sidebar = document.getElementById('admin-sidebar');
     const overlay = document.getElementById('sidebar-overlay');
     const menuBtn = document.getElementById('topbar-menu-btn');
