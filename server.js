@@ -346,7 +346,11 @@ app.patch("/auth/update", authMiddleware, async (req, res) => {
       );
     }
 
-    res.json({ success: true });
+    const { rows: updatedRows } = await pool.query(
+      "SELECT id, name, phone, email FROM customers WHERE id = $1 LIMIT 1",
+      [req.user.id]
+    );
+    res.json({ success: true, user: updatedRows[0] });
 
   } catch (err) {
     console.error("Erro ao atualizar usuário:", err);
