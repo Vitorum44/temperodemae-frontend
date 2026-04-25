@@ -2470,30 +2470,30 @@ pmSettings?.addEventListener('click', async () => {
     return;
   }
 
-  const btnSave = formSettings.querySelector('button[type="submit"]');
-  const originalText = btnSave.textContent;
-  btnSave.textContent = "Carregando...";
-  btnSave.disabled = true;
-
   profileMenu.setAttribute('aria-hidden', 'true');
   settingsModal.setAttribute('aria-hidden', 'false');
 
+  // Preenche imediatamente com dados já em memória
+  if (setName) { setName.value = state.user.name || ''; setName.setAttribute('readonly', true); }
+  if (setPhone) { setPhone.value = state.user.phone || ''; setPhone.setAttribute('readonly', true); }
+  if (setEmail) { setEmail.value = state.user.email || ''; setEmail.setAttribute('readonly', true); }
+  if (setPass) { setPass.value = ''; setPass.setAttribute('readonly', true); }
+  if (settingsFb) settingsFb.textContent = '';
+
+  const btnSave = formSettings.querySelector('button[type="submit"]');
+
+  // Atualiza em background sem travar o modal
   try {
     const freshUser = await apiGet('/auth/me');
     setUser(freshUser);
+    if (setName) setName.value = freshUser.name || '';
+    if (setPhone) setPhone.value = freshUser.phone || '';
+    if (setEmail) setEmail.value = freshUser.email || '';
   } catch (err) {
-    console.error("Erro ao carregar perfil fresco:", err);
-    // Fallback
-    if (setName) setName.value = state.user.name || '';
-    if (setPhone) setPhone.value = state.user.phone || '';
-    if (setEmail) setEmail.value = state.user.email || '';
-  } finally {
-    if (setPass) setPass.value = '';
-    if (settingsFb) settingsFb.textContent = '';
-    btnSave.textContent = originalText;
-    btnSave.disabled = false;
+    console.error("Erro ao carregar perfil:", err);
   }
 });
+
 
 formSettings?.addEventListener('submit', async (e) => {
   e.preventDefault();
