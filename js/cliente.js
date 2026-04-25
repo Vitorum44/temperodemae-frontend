@@ -2473,10 +2473,25 @@ pmSettings?.addEventListener('click', async () => {
   profileMenu.setAttribute('aria-hidden', 'true');
   settingsModal.setAttribute('aria-hidden', 'false');
 
+  // Pequeno delay para garantir que o modal está visível antes de preencher
+  await new Promise(resolve => setTimeout(resolve, 50));
+
   // Busca dados frescos do servidor
   try {
     const freshUser = await apiGet('/auth/me');
     console.log('👤 freshUser:', freshUser);
+
+    state.user = freshUser;
+
+    // Força preenchimento após render do DOM
+    setTimeout(() => {
+      const nameEl = document.getElementById('set-name');
+      const phoneEl = document.getElementById('set-phone');
+      const emailEl = document.getElementById('set-email');
+      if (nameEl) { nameEl.removeAttribute('readonly'); nameEl.value = freshUser.name || ''; nameEl.setAttribute('readonly', true); }
+      if (phoneEl) { phoneEl.removeAttribute('readonly'); phoneEl.value = freshUser.phone || ''; phoneEl.setAttribute('readonly', true); }
+      if (emailEl) { emailEl.removeAttribute('readonly'); emailEl.value = freshUser.email || ''; emailEl.setAttribute('readonly', true); }
+    }, 10);
 
     // Força preenchimento direto nos elementos
     const nameEl = document.getElementById('set-name');
@@ -2486,9 +2501,9 @@ pmSettings?.addEventListener('click', async () => {
 
     console.log('nameEl:', nameEl, 'valor:', freshUser.name);
 
-    if (nameEl) { nameEl.removeAttribute('readonly'); nameEl.value = freshUser.name || ''; nameEl.setAttribute('readonly', true); }
-    if (phoneEl) { phoneEl.removeAttribute('readonly'); phoneEl.value = freshUser.phone || ''; phoneEl.setAttribute('readonly', true); }
-    if (emailEl) { emailEl.removeAttribute('readonly'); emailEl.value = freshUser.email || ''; emailEl.setAttribute('readonly', true); }
+    if (nameEl) { nameEl.removeAttribute('readonly'); nameEl.value = freshUser.name || ''; nameEl.defaultValue = freshUser.name || ''; nameEl.setAttribute('readonly', true); }
+    if (phoneEl) { phoneEl.removeAttribute('readonly'); phoneEl.value = freshUser.phone || ''; phoneEl.defaultValue = freshUser.phone || ''; phoneEl.setAttribute('readonly', true); }
+    if (emailEl) { emailEl.removeAttribute('readonly'); emailEl.value = freshUser.email || ''; emailEl.defaultValue = freshUser.email || ''; emailEl.setAttribute('readonly', true); }
     if (passEl) { passEl.removeAttribute('readonly'); passEl.value = ''; passEl.setAttribute('readonly', true); }
 
     // Atualiza header do modal
