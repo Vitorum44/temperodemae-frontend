@@ -2257,10 +2257,14 @@ function setUser(u) {
     if (inputPhone) inputPhone.value = u.phone || '';
     if (inputEmail) inputEmail.value = u.email || '';
 
-    // ✅ preenche também os campos do modal "Meus Dados"
-    if (setName) setName.value = u.name || '';
-    if (setPhone) setPhone.value = u.phone || '';
-    if (setEmail) setEmail.value = u.email || '';
+    // Atualiza avatar e nome no modal de settings
+    const settingsAvatar = document.getElementById('settings-avatar-img');
+    const settingsName = document.getElementById('settings-user-name');
+    const settingsPhone = document.getElementById('settings-user-phone');
+    const avatarUrl = localStorage.getItem('userAvatar') || getAvatarUrl('adventurer', u.name);
+    if (settingsAvatar) settingsAvatar.src = avatarUrl;
+    if (settingsName) settingsName.textContent = u.name?.split(' ')[0] || 'Usuário';
+    if (settingsPhone) settingsPhone.textContent = u.phone || '';
 
     // 👉 AQUI A MÁGICA: Se veio endereço do banco ou cache, calcula AGORA.
     if (inputAddress.value) {
