@@ -2246,7 +2246,13 @@ function setUser(u) {
     state.cart = savedCart ? JSON.parse(savedCart) : [];
     updateCartUI();
 
-    if (btnProfile) btnProfile.textContent = `Olá, ${u.name.split(' ')[0]}`;
+    if (btnProfile) {
+  const avatarUrl = localStorage.getItem('userAvatar') || getAvatarUrl('adventurer', u.name);
+  const headerAvatarImg = document.getElementById('current-avatar-img-desktop');
+  if (headerAvatarImg) headerAvatarImg.src = avatarUrl;
+  const headerName = document.getElementById('header-user-name');
+  if (headerName) headerName.textContent = `Olá, ${u.name.split(' ')[0]}`;
+}
     if (inputName) inputName.value = u.name || '';
     if (inputPhone) inputPhone.value = u.phone || '';
     if (inputEmail) inputEmail.value = u.email || '';
