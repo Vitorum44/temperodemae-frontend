@@ -1388,7 +1388,8 @@ orderForm?.addEventListener('submit', async (e) => {
     email: inputEmail?.value || state.user?.email || '',
     paymentMethod: selectedPayment,
     change: changeData,
-    scheduledTo: (!state.isStoreOpen) ? orderSchedule.value : null
+    scheduledTo: (!state.isStoreOpen) ? orderSchedule.value : null,
+    avatar: localStorage.getItem('userAvatar') || ''
   };
   const order = {
     items: state.cart.map(i => ({
@@ -2850,4 +2851,98 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+});
+
+
+// ===== SISTEMA DE AVATAR =====
+
+const AVATAR_SEEDS = [
+  'Felix','Mia','Liam','Sofia','Noah','Emma','Lucas','Olivia',
+  'Pedro','Ana','Carlos','Julia','Bruno','Laura','Diego','Bia',
+  'Marcos','Camila','Rafael','Leticia','Gustavo','Fernanda','Victor','Alice'
+];
+
+let currentAvatarStyle = 'adventurer';
+let selectedAvatarSeed = null;
+let selectedAvatarUrl = null;
+
+function getAvatarUrl(style, seed) {
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}&size=80`;
+}
+
+function loadCurrentAvatar() {
+  const saved = localStorage.getItem('userAvatar');
+  const img = document.getElementById('current-avatar-img');
+  if (!img) return;
+  if (saved) {
+    img.src = saved;
+  } else {
+    const name = state.user?.name || 'User';
+    img.src = getAvatarUrl('adventurer', name);
+  }
+}
+
+function renderAvatarGrid(style) {
+  const grid = document.getElementById('avatar-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const saved = localStorage.getItem('userAvatar') || '';
+
+  AVATAR_SEEDS.forEach(seed => {
+    const url = getAvatarUrl(style, seed);
+    const div = document.createElement('div');
+    div.className = 'avatar-option' + (saved.includes(seed) && saved.includes(style) ? ' selected' : '');
+    div.dataset.seed = seed;
+    div.dataset.url = url;
+    div.innerHTML = `<img src="${url}" alt="${seed}" loading="lazy">`;
+    div.addEventListener('click', () => {
+      document.querySelectorAll('.avatar-option').forEach(a => a.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedAvatarSeed = seed;
+      selectedAvatarUrl = url;
+    });
+    grid.appendChild(div);
+  });
+}
+
+// Abre modal de avatar
+document.getElementById('btn-change-avatar')?.addEventListener('click', () => {
+  document.getElementById('avatar-modal').setAttribute('aria-hidden', 'false');
+  renderAvatarGrid(currentAvatarStyle);
+});
+
+// Fecha modal de avatar
+document.getElementById('avatar-modal-close')?.addEventListener('click', () => {
+  document.getElementById('avatar-modal').setAttribute('aria-hidden', 'true');
+});
+
+// Troca estilo (filtro)
+document.querySelectorAll('.avatar-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.avatar-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentAvatarStyle = btn.dataset.style;
+    renderAvatarGrid(currentAvatarStyle);
+  });
+});
+
+// Salva avatar
+document.getElementById('btn-save-avatar')?.addEventListener('click', () => {
+  if (!selectedAvatarUrl) {
+    alert('Selecione um avatar primeiro!');
+    return;
+  }
+  localStorage.setItem('userAvatar', selectedAvatarUrl);
+  loadCurrentAvatar();
+  document.getElementById('avatar-modal').setAttribute('aria-hidden', 'true');
+});
+
+// Carrega avatar ao abrir perfil
+document.getElementById('btn-perfil')?.addEventListener('click', () => {
+  loadCurrentAvatar();
+}, true);
+
+// Inicializa avatar
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(loadCurrentAvatar, 500);
 });
