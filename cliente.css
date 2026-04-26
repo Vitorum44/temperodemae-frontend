@@ -2262,16 +2262,21 @@ html {
 .avatar-option img { width: 60px; height: 60px; border-radius: 50%; display: block; }
 
 /* ============ CARD INFO MOBILE ============ */
-.mobile-store-card { display: none; }
+.mobile-store-card {
+  display: block;
+  background: #fff;
+  border-radius: 0 0 16px 16px;
+  padding: 10px 16px 12px;
+  margin: -4px 0 12px 0;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
 
 @media (max-width: 768px) {
   .mobile-store-card {
     display: block;
-    background: #fff;
     border-radius: 0 0 16px 16px;
     padding: 10px 16px 12px;
     margin: -4px 0 12px 0;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
   }
   .msc-status-row {
     display: flex;
