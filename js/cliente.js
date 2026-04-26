@@ -2463,49 +2463,41 @@ hmClose?.addEventListener('click', () => {
 });
 
 
-// ================= CONFIGURAÇÕES (MEUS DADOS) =================
 pmSettings?.addEventListener('click', async () => {
   if (!state.user) {
     openAuthModal('login');
     return;
   }
 
-  document.activeElement?.blur(); // ← libera o foco antes de mudar aria-hidden
+  document.activeElement?.blur();
   profileMenu.setAttribute('aria-hidden', 'true');
   settingsModal.setAttribute('aria-hidden', 'false');
 
-  // Pequeno delay para garantir que o modal está visível antes de preencher
   await new Promise(resolve => setTimeout(resolve, 50));
 
-  // Busca dados frescos do servidor
   try {
     const freshUser = await apiGet('/auth/me');
-    console.log('👤 freshUser:', freshUser);
-
     state.user = freshUser;
 
-    // Força preenchimento após render do DOM
-    setTimeout(() => {
-      const nameEl = document.getElementById('set-name');
-      const phoneEl = document.getElementById('set-phone');
-      const emailEl = document.getElementById('set-email');
-      if (nameEl) { nameEl.removeAttribute('readonly'); nameEl.value = freshUser.name || ''; nameEl.setAttribute('readonly', true); }
-      if (phoneEl) { phoneEl.removeAttribute('readonly'); phoneEl.value = freshUser.phone || ''; phoneEl.setAttribute('readonly', true); }
-      if (emailEl) { emailEl.removeAttribute('readonly'); emailEl.value = freshUser.email || ''; emailEl.setAttribute('readonly', true); }
-    }, 10);
+    // Preenche campos
+    const fields = [
+      { id: 'set-name', val: freshUser.name || '' },
+      { id: 'set-phone', val: freshUser.phone || '' },
+      { id: 'set-email', val: freshUser.email || '' },
+    ];
 
-    // Força preenchimento direto nos elementos
-    const nameEl = document.getElementById('set-name');
-    const phoneEl = document.getElementById('set-phone');
-    const emailEl = document.getElementById('set-email');
+    fields.forEach(({ id, val }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.removeAttribute('readonly');
+      el.setAttribute('value', val);
+      el.value = val;
+      el.defaultValue = val;
+      el.setAttribute('readonly', 'true');
+    });
+
     const passEl = document.getElementById('set-pass');
-
-    console.log('nameEl:', nameEl, 'valor:', freshUser.name);
-
-    if (nameEl) { nameEl.removeAttribute('readonly'); nameEl.value = freshUser.name || ''; nameEl.defaultValue = freshUser.name || ''; nameEl.setAttribute('readonly', true); }
-    if (phoneEl) { phoneEl.removeAttribute('readonly'); phoneEl.value = freshUser.phone || ''; phoneEl.defaultValue = freshUser.phone || ''; phoneEl.setAttribute('readonly', true); }
-    if (emailEl) { emailEl.removeAttribute('readonly'); emailEl.value = freshUser.email || ''; emailEl.defaultValue = freshUser.email || ''; emailEl.setAttribute('readonly', true); }
-    if (passEl) { passEl.removeAttribute('readonly'); passEl.value = ''; passEl.setAttribute('readonly', true); }
+    if (passEl) { passEl.removeAttribute('readonly'); passEl.value = ''; passEl.setAttribute('readonly', 'true'); }
 
     // Atualiza header do modal
     const settingsName = document.getElementById('settings-user-name');
@@ -2515,17 +2507,22 @@ pmSettings?.addEventListener('click', async () => {
     if (settingsPhone) settingsPhone.textContent = freshUser.phone || '';
     if (settingsAvatar) settingsAvatar.src = localStorage.getItem('userAvatar') || getAvatarUrl('adventurer', freshUser.name);
 
-    state.user = freshUser;
-
   } catch (err) {
     console.error("Erro ao carregar perfil:", err);
-    // Fallback com dados em memória
-    const nameEl = document.getElementById('set-name');
-    const phoneEl = document.getElementById('set-phone');
-    const emailEl = document.getElementById('set-email');
-    if (nameEl) { nameEl.removeAttribute('readonly'); nameEl.value = state.user.name || ''; nameEl.setAttribute('readonly', true); }
-    if (phoneEl) { phoneEl.removeAttribute('readonly'); phoneEl.value = state.user.phone || ''; phoneEl.setAttribute('readonly', true); }
-    if (emailEl) { emailEl.removeAttribute('readonly'); emailEl.value = state.user.email || ''; emailEl.setAttribute('readonly', true); }
+    const fields = [
+      { id: 'set-name', val: state.user?.name || '' },
+      { id: 'set-phone', val: state.user?.phone || '' },
+      { id: 'set-email', val: state.user?.email || '' },
+    ];
+    fields.forEach(({ id, val }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.removeAttribute('readonly');
+      el.setAttribute('value', val);
+      el.value = val;
+      el.defaultValue = val;
+      el.setAttribute('readonly', 'true');
+    });
   }
 
   if (settingsFb) settingsFb.textContent = '';
