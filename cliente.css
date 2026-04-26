@@ -2261,3 +2261,57 @@ html {
 .avatar-option:hover { border-color: #d62300; transform: scale(1.08); }
 .avatar-option.selected { border-color: #d62300; background: #fff0ee; }
 .avatar-option img { width: 60px; height: 60px; border-radius: 50%; display: block; }
+
+/* ============ CARD INFO MOBILE ============ */
+.mobile-store-card { display: none; }
+
+@media (max-width: 768px) {
+  .mobile-store-card {
+    display: block;
+    background: #fff;
+    border-radius: 0 0 16px 16px;
+    padding: 10px 16px 12px;
+    margin: 0 0 12px 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .msc-status-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 10px;
+  }
+  .msc-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #22c55e;
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .msc-dot.closed { background: #ef4444; }
+  .msc-status-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a1a;
+    flex: 1;
+  }
+  .msc-days { font-size: 11px; color: #888; }
+  .msc-stats {
+    display: flex;
+    align-items: center;
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 8px 0;
+  }
+  .msc-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .msc-stat-divider { width: 1px; height: 30px; background: #e5e5e5; flex-shrink: 0; }
+  .msc-stat-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.4px; }
+  .msc-stat-val { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+  .msc-stat-val.msc-green { color: #16a34a; }
+}
