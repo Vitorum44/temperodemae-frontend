@@ -2961,9 +2961,15 @@ async function getAvatarForUser(name) {
     const res = await fetch(`https://api.genderize.io/?name=${firstName}`);
     const data = await res.json();
     const style = data.gender === 'female' ? 'lorelei' : 'adventurer';
-    return getAvatarUrl(style, name || 'User');
+    const url = getAvatarUrl(style, name || 'User');
+    
+    // ✅ Salva no localStorage para não mudar mais
+    localStorage.setItem('userAvatar', url);
+    return url;
   } catch {
-    return getAvatarUrl('adventurer', name || 'User');
+    const url = getAvatarUrl('adventurer', name || 'User');
+    localStorage.setItem('userAvatar', url); // ✅ salva o fallback também
+    return url;
   }
 }
 
