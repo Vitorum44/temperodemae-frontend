@@ -655,7 +655,7 @@ async function calcShip(lat, lng) {
       updateCartUI();
       return;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   const service = new google.maps.DirectionsService();
 
@@ -687,17 +687,17 @@ async function calcShip(lat, lng) {
       }
 
       // ✅ Salva no cache local E no servidor
-  if (state.calculatedFee !== -1) {
-    saveAddressCache(enderecoAtual, km, state.calculatedFee);
-    // Salva no banco para não recalcular nunca mais
-    fetch(`${API_URL}/delivery-fee`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address: enderecoAtual, distance_km: km, fee: state.calculatedFee })
-    }).catch(() => {});
-  }
+      if (state.calculatedFee !== -1) {
+        saveAddressCache(enderecoAtual, km, state.calculatedFee);
+        // Salva no banco para não recalcular nunca mais
+        fetch(`${API_URL}/delivery-fee`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: enderecoAtual, distance_km: km, fee: state.calculatedFee })
+        }).catch(() => { });
+      }
 
-  updateCartUI();
+      updateCartUI();
     }
   );
 }
@@ -2247,24 +2247,26 @@ function setUser(u) {
     updateCartUI();
 
     if (btnProfile) {
-  const avatarUrl = localStorage.getItem('userAvatar') || getAvatarUrl('adventurer', u.name);
-  const headerAvatarImg = document.getElementById('current-avatar-img-desktop');
-  if (headerAvatarImg) headerAvatarImg.src = avatarUrl;
-  const headerName = document.getElementById('header-user-name');
-  if (headerName) headerName.textContent = `Olá, ${u.name.split(' ')[0]}`;
-}
+      const headerName = document.getElementById('header-user-name');
+      if (headerName) headerName.textContent = `Olá, ${u.name.split(' ')[0]}`;
+    }
     if (inputName) inputName.value = u.name || '';
     if (inputPhone) inputPhone.value = u.phone || '';
     if (inputEmail) inputEmail.value = u.email || '';
 
-    // Atualiza avatar e nome no modal de settings
-    const settingsAvatar = document.getElementById('settings-avatar-img');
+    // Atualiza avatar com detecção de gênero
     const settingsName = document.getElementById('settings-user-name');
     const settingsPhone = document.getElementById('settings-user-phone');
-    const avatarUrl = localStorage.getItem('userAvatar') || getAvatarUrl('adventurer', u.name);
-    if (settingsAvatar) settingsAvatar.src = avatarUrl;
     if (settingsName) settingsName.textContent = u.name?.split(' ')[0] || 'Usuário';
     if (settingsPhone) settingsPhone.textContent = u.phone || '';
+
+    getAvatarForUser(u.name).then(avatarUrl => {
+      const headerAvatarImg = document.getElementById('current-avatar-img-desktop');
+      if (headerAvatarImg) headerAvatarImg.src = avatarUrl;
+      const settingsAvatar = document.getElementById('settings-avatar-img');
+      if (settingsAvatar) settingsAvatar.src = avatarUrl;
+      loadCurrentAvatar();
+    });
 
     // 👉 AQUI A MÁGICA: Se veio endereço do banco ou cache, calcula AGORA.
     if (inputAddress.value) {
@@ -2937,9 +2939,9 @@ window.addEventListener('DOMContentLoaded', () => {
 // ===== SISTEMA DE AVATAR =====
 
 const AVATAR_SEEDS = [
-  'Felix','Mia','Liam','Sofia','Noah','Emma','Lucas','Olivia',
-  'Pedro','Ana','Carlos','Julia','Bruno','Laura','Diego','Bia',
-  'Marcos','Camila','Rafael','Leticia','Gustavo','Fernanda','Victor','Alice'
+  'Felix', 'Mia', 'Liam', 'Sofia', 'Noah', 'Emma', 'Lucas', 'Olivia',
+  'Pedro', 'Ana', 'Carlos', 'Julia', 'Bruno', 'Laura', 'Diego', 'Bia',
+  'Marcos', 'Camila', 'Rafael', 'Leticia', 'Gustavo', 'Fernanda', 'Victor', 'Alice'
 ];
 
 let currentAvatarStyle = 'adventurer';
@@ -2950,23 +2952,35 @@ function getAvatarUrl(style, seed) {
   return `https://api.dicebear.com/7.x/${style}/svg?seed=${seed}&size=80`;
 }
 
-function loadCurrentAvatar() {
+async function getAvatarForUser(name) {
+  const saved = localStorage.getItem('userAvatar');
+  if (saved) return saved;
+
+  try {
+    const firstName = name?.split(' ')[0]?.toLowerCase() || 'user';
+    const res = await fetch(`https://api.genderize.io/?name=${firstName}`);
+    const data = await res.json();
+    const style = data.gender === 'female' ? 'lorelei' : 'adventurer';
+    return getAvatarUrl(style, name || 'User');
+  } catch {
+    return getAvatarUrl('adventurer', name || 'User');
+  }
+}
+
+async function loadCurrentAvatar() {
   const navImg = document.getElementById('nav-avatar-img');
   const navIcon = document.getElementById('nav-perfil-icon');
 
-  // Se não estiver logado, esconde avatar e mostra ícone genérico
   if (!state.user) {
     if (navImg) navImg.style.display = 'none';
     if (navIcon) navIcon.style.display = '';
     return;
   }
 
-  const saved = localStorage.getItem('userAvatar');
+  const url = await getAvatarForUser(state.user?.name || 'User');
   const img = document.getElementById('current-avatar-img');
   const imgDesktop = document.getElementById('current-avatar-img-desktop');
   const imgMenu = document.getElementById('avatar-menu-preview');
-  const fallback = getAvatarUrl('adventurer', state.user?.name || 'User');
-  const url = saved || fallback;
   if (img) img.src = url;
   if (imgDesktop) imgDesktop.src = url;
   if (imgMenu) imgMenu.src = url;
