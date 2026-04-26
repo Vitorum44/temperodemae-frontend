@@ -2470,6 +2470,7 @@ pmSettings?.addEventListener('click', async () => {
     return;
   }
 
+  document.activeElement?.blur(); // ← libera o foco antes de mudar aria-hidden
   profileMenu.setAttribute('aria-hidden', 'true');
   settingsModal.setAttribute('aria-hidden', 'false');
 
