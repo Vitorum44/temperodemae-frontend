@@ -2286,6 +2286,7 @@ function setToken(t) {
     localStorage.removeItem('cart');
     localStorage.removeItem('lastOrderId');
     localStorage.removeItem('lastPixData');
+    localStorage.removeItem('userAvatar'); // ← limpa avatar ao deslogar
     state.currentOrderId = null;
     state.activeOrderData = null;
     state.cart = [];
