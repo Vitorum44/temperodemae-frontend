@@ -653,13 +653,12 @@ max-height: 95vh;
 .app-footer::before {
   content: '';
   position: absolute;
-  top: -40px;
+  top: -38px;
   left: -5%;
   width: 110%;
-  height: 40px;
+  height: 42px;
   background: #502314;
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  overflow: hidden;
 }
 
 .footer-logo {
