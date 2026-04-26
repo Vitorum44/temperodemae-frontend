@@ -1914,7 +1914,63 @@ formLogin?.addEventListener('submit', async (e) => { e.preventDefault(); loginFb
 formSignup?.addEventListener('submit', async (e) => { e.preventDefault(); suFb.textContent = 'Cadastrando...'; try { const cleanPhone = suPhone.value.replace(/\D/g, ''); const r = await apiSend('/auth/register', 'POST', { name: suName.value, phone: cleanPhone, email: suEmail.value, password: suPass.value }); setToken(r.token); setUser(r.user); authModal.setAttribute('aria-hidden', 'true'); loadData(); } catch (err) { suFb.textContent = err.message; } });
 
 // ================= LOADER (CORREÇÃO DE UX: CÁLCULO AUTOMÁTICO) =================
+function updateMobileStoreCard(config) {
+  const dot        = document.getElementById('msc-dot');
+  const statusText = document.getElementById('msc-status-text');
+  const daysEl     = document.getElementById('msc-days');
+  if (!dot || !statusText) return;
+
+  const dayKeys   = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  const dayLabels = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+  if (config.mode === 'force_closed') {
+    dot.classList.add('closed');
+    statusText.textContent = 'Fechado temporariamente';
+    if (daysEl) daysEl.textContent = '';
+    return;
+  }
+
+  const schedule = config.weekly_schedule;
+  if (!schedule) { statusText.textContent = 'Aberto'; return; }
+
+  const now     = new Date();
+  const dayKey  = dayKeys[now.getDay()];
+  const today   = schedule[dayKey];
+  let isOpenNow = false;
+  let closeHour = '';
+
+  if (today && today.open) {
+    const [oH, oM] = (today.open_time  || '00:00').split(':').map(Number);
+    const [cH, cM] = (today.close_time || '23:59').split(':').map(Number);
+    const nowMin   = now.getHours() * 60 + now.getMinutes();
+    isOpenNow  = nowMin >= oH * 60 + oM && nowMin < cH * 60 + cM;
+    closeHour  = today.close_time || '';
+  }
+
+  const openDays = dayKeys.map((k, i) => schedule[k]?.open ? dayLabels[i] : null).filter(Boolean);
+  if (daysEl) daysEl.textContent = openDays.join(' · ');
+
+  if (isOpenNow) {
+    dot.classList.remove('closed');
+    statusText.textContent = closeHour ? `Aberto · Fecha às ${closeHour}` : 'Aberto agora';
+  } else {
+    dot.classList.add('closed');
+    let nextOpen = '';
+    for (let i = 1; i <= 7; i++) {
+      const nk = dayKeys[(now.getDay() + i) % 7];
+      if (schedule[nk]?.open) {
+        const label = i === 1 ? 'Amanhã' : dayLabels[(now.getDay() + i) % 7];
+        nextOpen = `${label} às ${schedule[nk].open_time || ''}`;
+        break;
+      }
+    }
+    statusText.textContent = nextOpen ? `Fechado · Abre ${nextOpen}` : 'Fechado';
+  }
+}
+
 async function loadData() {
+
+
   // Limpa cache de frete antigo para forçar busca do servidor
   localStorage.removeItem('addressCache');
   await tryLoadMe();
@@ -1938,11 +1994,13 @@ async function loadData() {
 
   try {
     const s = await apiGet("/settings");
-    state.storeConfig = s;
-    if (s.mode === 'force_closed') {
+    const cfg = Array.isArray(s) ? s[0] : s;
+    state.storeConfig = cfg;
+    if (cfg?.mode === 'force_closed') {
       state.isStoreOpen = false;
       if (fb) fb.textContent = "Fechado temporariamente.";
     }
+    if (cfg) updateMobileStoreCard(cfg);
   } catch (e) { }
 
   try {
