@@ -3,9 +3,10 @@
 /* 1. CONFIGURAÇÃO SEGURA DO CORPO (Sem travar scroll) */
 body {
   overflow-x: hidden;
-  /* Apenas esconde o que vazar lateralmente */
+  overflow-y: auto;
   width: 100%;
   position: relative;
+  max-width: 100vw;
 }
 
 /* 2. HEADER */
@@ -658,6 +659,7 @@ max-height: 95vh;
   height: 40px;
   background: #502314;
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  overflow: hidden;
 }
 
 .footer-logo {
