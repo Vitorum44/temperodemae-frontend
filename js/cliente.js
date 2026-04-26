@@ -2953,8 +2953,14 @@ function getAvatarUrl(style, seed) {
 }
 
 async function getAvatarForUser(name) {
-  const saved = localStorage.getItem('userAvatar');
-  if (saved) return saved;
+  const userId = state.user?.id;
+  const key = userId ? `userAvatar_${userId}` : 'userAvatar';
+  
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    localStorage.setItem('userAvatar', saved); // sincroniza chave global
+    return saved;
+  }
 
   try {
     const firstName = name?.split(' ')[0]?.toLowerCase() || 'user';
@@ -2962,13 +2968,13 @@ async function getAvatarForUser(name) {
     const data = await res.json();
     const style = data.gender === 'female' ? 'lorelei' : 'adventurer';
     const url = getAvatarUrl(style, name || 'User');
-    
-    // ✅ Salva no localStorage para não mudar mais
+    localStorage.setItem(key, url);
     localStorage.setItem('userAvatar', url);
     return url;
   } catch {
     const url = getAvatarUrl('adventurer', name || 'User');
-    localStorage.setItem('userAvatar', url); // ✅ salva o fallback também
+    localStorage.setItem(key, url);
+    localStorage.setItem('userAvatar', url);
     return url;
   }
 }
@@ -3042,10 +3048,11 @@ document.querySelectorAll('.avatar-filter-btn').forEach(btn => {
 
 // Salva avatar
 document.getElementById('btn-save-avatar')?.addEventListener('click', () => {
-  if (!selectedAvatarUrl) {
-    alert('Selecione um avatar primeiro!');
-    return;
-  }
+  if (!selectedAvatarUrl) { alert('Selecione um avatar primeiro!'); return; }
+  
+  const userId = state.user?.id;
+  const key = userId ? `userAvatar_${userId}` : 'userAvatar';
+  localStorage.setItem(key, selectedAvatarUrl);        // ← salva por usuário
   localStorage.setItem('userAvatar', selectedAvatarUrl);
   loadCurrentAvatar();
   document.getElementById('avatar-modal').setAttribute('aria-hidden', 'true');
