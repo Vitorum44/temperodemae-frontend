@@ -1920,7 +1920,6 @@ function updateMobileStoreCard(config) {
   const daysEl     = document.getElementById('msc-days');
   if (!dot || !statusText) return;
 
-  const dayKeys   = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
   const dayLabels = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 
   if (config.mode === 'force_closed') {
@@ -1930,24 +1929,25 @@ function updateMobileStoreCard(config) {
     return;
   }
 
+  // Admin salva como array: [{ day: 0, active: true, start: '18:00', end: '23:00' }]
   const schedule = config.weekly_schedule;
-  if (!schedule) { statusText.textContent = 'Aberto'; return; }
+  if (!schedule || !Array.isArray(schedule)) { statusText.textContent = 'Aberto'; return; }
 
-  const now     = new Date();
-  const dayKey  = dayKeys[now.getDay()];
-  const today   = schedule[dayKey];
-  let isOpenNow = false;
-  let closeHour = '';
+  const now      = new Date();
+  const todayIdx = now.getDay(); // 0=Dom, 1=Seg...
+  const today    = schedule.find(d => d.day === todayIdx);
+  let isOpenNow  = false;
+  let closeHour  = '';
 
-  if (today && today.open) {
-    const [oH, oM] = (today.open_time  || '00:00').split(':').map(Number);
-    const [cH, cM] = (today.close_time || '23:59').split(':').map(Number);
+  if (today && today.active) {
+    const [oH, oM] = (today.start || '00:00').split(':').map(Number);
+    const [cH, cM] = (today.end   || '23:59').split(':').map(Number);
     const nowMin   = now.getHours() * 60 + now.getMinutes();
-    isOpenNow  = nowMin >= oH * 60 + oM && nowMin < cH * 60 + cM;
-    closeHour  = today.close_time || '';
+    isOpenNow = nowMin >= oH * 60 + oM && nowMin < cH * 60 + cM;
+    closeHour = today.end || '';
   }
 
-  const openDays = dayKeys.map((k, i) => schedule[k]?.open ? dayLabels[i] : null).filter(Boolean);
+  const openDays = schedule.filter(d => d.active).map(d => dayLabels[d.day]);
   if (daysEl) daysEl.textContent = openDays.join(' · ');
 
   if (isOpenNow) {
@@ -1957,17 +1957,17 @@ function updateMobileStoreCard(config) {
     dot.classList.add('closed');
     let nextOpen = '';
     for (let i = 1; i <= 7; i++) {
-      const nk = dayKeys[(now.getDay() + i) % 7];
-      if (schedule[nk]?.open) {
-        const label = i === 1 ? 'Amanhã' : dayLabels[(now.getDay() + i) % 7];
-        nextOpen = `${label} às ${schedule[nk].open_time || ''}`;
+      const nextIdx = (todayIdx + i) % 7;
+      const nextDay = schedule.find(d => d.day === nextIdx);
+      if (nextDay && nextDay.active) {
+        const label = i === 1 ? 'Amanhã' : dayLabels[nextIdx];
+        nextOpen = `${label} às ${nextDay.start || ''}`;
         break;
       }
     }
     statusText.textContent = nextOpen ? `Fechado · Abre ${nextOpen}` : 'Fechado';
   }
 }
-
 async function loadData() {
 
 
